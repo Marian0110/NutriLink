@@ -1,0 +1,78 @@
+:root {
+    font-size: 16px;
+    --primary-color: #173b4c;
+    --secondary-color: #3f5c69;
+    --accent-color: #62f485;
+    --text-color: #000000;
+    --light-text: #747474;
+    --white: #ffffff;
+}
+
+h1.h3 {
+  color: var(--primary-color);
+  display: flex;
+  align-items: center;
+}
+
+/* MODAL Formulario registro paciente*/
+.modal-dialog {
+    max-width: 800px;
+  }
+
+  .form-header {
+    margin-bottom: 20px;
+    text-align: center;
+  }
+  .form-title {
+    font-size: 1.5rem;
+    font-weight: bold;
+
+  }
+  .section-title {
+    font-size: 1.2rem;
+    font-weight: bold;
+    padding: 0 10px;
+  }
+  .required-field {
+    color: red;
+  }
+
+.modal-header.background {
+    background-color: var(--secondary-color);
+    color: #ffffff;
+    position: relative; 
+}
+
+.modal-header.background .modal-title {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+  /* Card contenedora */
+  .card {
+    min-height: calc(100vh - 180px);
+  }
+  
+  /* Tabla */
+  .table th {
+    font-weight: 600;
+    background-color: #f8f9fa;
+  }
+  
+  /* Badges de estado activo/inactivo */
+  .badge {
+    font-size: 0.85em;
+    padding: 0.35em 0.65em;
+  }
+
+.bg-statusA {
+  background-color: #43ec6b;
+}
+
+.bg-statusD {
+  background-color: #e35555;
+}

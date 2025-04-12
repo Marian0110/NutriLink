@@ -1,0 +1,84 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro - NutriLink</title>
+    <link rel="stylesheet" href="{% static 'accounts/css/registro.css' %}">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Average+Sans&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- LOGO -->
+    <main class="registro-page">
+        <div class="brand-section">
+            <div class="logo">
+                <img src="{% static 'img/NutrilinkLOGO.svg' %}" alt="Logo de nutrilink">
+            </div>
+        </div>
+        <!-- Seccion bienvenida registro -->
+        <div class="registro-container">
+            <div class="form-section">
+                <div class="welcome-header">
+                    <h2>Registrate y potencia tus consultas!</h2>
+                    <div>
+                        <article class="benefit">
+                          <img src="{% static 'accounts/img/tick-mark-icon.svg' %}" alt="Visualiza progreso" />
+                          <p class="subtitle">Visualiza el progreso de tus pacientes en gráficos.</p>
+                        </article>
+                        <article class="benefit">
+                          <img src="{% static 'accounts/img/tick-mark-icon.svg' %}" alt="Calcula nutrientes" />
+                          <p class="subtitle">Calcula requerimientos calóricos y macronutrientes en segundos.</p>
+                        </article>
+                        <article class="benefit">
+                          <img src="{% static 'accounts/img/tick-mark-icon.svg' %}" alt="Genera minutas" />
+                          <p class="subtitle">Genera minutas rápidamente y más!</p>
+                        </article>
+                    </div>
+                </div>
+                <!-- Formulario de registro -->
+                <div class="form-container">
+                    <form method="post" class="registro-form">
+                        {% csrf_token %}
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="primer-nombre">Primer nombre:</label>
+                                <input type="text" id="primer-nombre" name="primer_nombre" placeholder="Ingresar nombre" />
+                            </div>
+                            <div class="form-group">
+                                <label for="primer-apellido">Primer apellido:</label>
+                                <input type="text" id="primer-apellido" name="primer_apellido" placeholder="Ingresar apellido" />
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="rut">Rut:</label>
+                                <input type="text" id="rut" name="rut" placeholder="99.999.999" />
+                            </div>
+                            <div class="form-group">
+                                <label for="correo">Correo:</label>
+                                <input type="email" id="correo" name="correo" placeholder="Ingresar correo" />
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="contraseña">Contraseña:</label>
+                                <input type="password" id="contraseña" name="contraseña" placeholder="Ingresar contraseña" />
+                            </div>
+                            <div class="form-group">
+                                <label for="confirmar-contraseña">Confirmar contraseña:</label>
+                                <input type="password" id="confirmar-contraseña" name="confirmar_contraseña" placeholder="Confirmar contraseña" />
+                            </div>
+                        </div>
+                        <a href="{% url 'accounts:login' %}"  class="registro-btn">REGISTRARSE</a> <!--Botones en modo link por el momento, falta el sweetalert-->
+                    </form>
+                    <p class="login-link">
+                        Ya tienes cuenta? <a href="{% url 'accounts:login' %}">Iniciar sesión</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </main>
+</body>
+</html>

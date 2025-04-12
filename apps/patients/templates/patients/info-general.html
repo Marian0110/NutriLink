@@ -1,0 +1,68 @@
+{% extends 'basePerfil.html' %}
+{% load static %}
+
+{% block perfilcontent %}
+<div class="patient-form-container">
+    <!-- Formulario informacion general -->
+    <div class="card-info">
+        <h1 class="card-title">Información general</h1>
+        <span class="subtext">Datos básicos del paciente</span>
+        <form method="post" class="form-compact">
+            {% csrf_token %}
+            <div class="form-group full-width">
+                <label class="form-label">Motivo de consulta:</label> <!--Form de django, al cargar la página se muestran los datos ya guardados en cada campo, Despues, si el usuario hace cambios y vuelve a enviar el formulario los datos modificados se actualizan y se siguen mostrando actualizados, por defecto se muestra en blanco-->
+                <textarea class="form-input" name="motivo_consulta">{{ form.motivo_consulta.value|default:'' }}</textarea>
+            </div> 
+            <div class="form-group">
+                <label class="form-label">Ocupación:</label>
+                <input type="text" class="form-input" name="ocupacion" value="{{ form.ocupacion.value|default:'' }}">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Horario laboral:</label>
+                <input type="text" class="form-input" name="horario_laboral" value="{{ form.horario_laboral.value|default:'' }}">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Con quién vive:</label>
+                <input type="text" class="form-input" name="convivencia" value="{{ form.convivencia.value|default:'' }}">
+            </div>
+            <div class="form-group full-width">
+                <label class="form-label">Compromiso acordado:</label>
+                <input type="text" class="form-input" name="compromiso" value="{{ form.compromiso.value|default:'' }}">
+            </div>
+            <span class="section-title">Antecedentes:</span>
+            <div class="form-group full-width">
+                <label class="form-label">Antecedentes mórbidos:</label>
+                <textarea class="form-input" name="antecedentes_morbidos">{{ form.antecedentes_morbidos.value|default:'' }}</textarea>
+            </div>
+            <div class="form-group full-width">
+                <label class="form-label">Antecedentes familiares:</label>
+                <textarea class="form-input" name="antecedentes_familiares">{{ form.antecedentes_familiares.value|default:'' }}</textarea>
+            </div>
+            <button type="submit" class="btn-submit full-width" name="guardar_info">GUARDAR</button>
+        </form>
+    </div>
+    <!-- Card credenciales, aqui se crearia la peticion de registro en la API pacientes -->
+    <div class="card-credenciales">
+        <h1 class="card-title" style="text-align: center;">
+            Credenciales de acceso
+            <span class="tooltip-container">
+              <i class="info-icon">ℹ</i>
+              <span class="tooltip-text">Estas credenciales serán enviadas al correo</span>
+            </span>
+          </h1>
+        <span class="subtext" style="text-align: center;">Establezca las credenciales de su paciente para el primer ingreso en la app NutriLink</span>
+        <form method="post" class="credential-form">
+            {% csrf_token %}
+            <div class="form-group">
+                <label class="form-label">Correo:</label>
+                <input type="email" class="form-input" name="email" placeholder="correo@ejemplo.com" value="{{ credencial_form.email.value|default:'' }}">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Contraseña provisoria:</label>
+                <input type="password" class="form-input" name="password" placeholder="••••••••">
+            </div>
+            <button type="submit" class="btn-submit" name="guardar_credenciales">REGISTRAR</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

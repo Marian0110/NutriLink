@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+<link href="{% static 'basePerfil.css' %}" rel="stylesheet" />
+<link href="{% static 'patients/css/info-general.css' %}" rel="stylesheet" />
+
+<div class="patient-profile-container">
+  <!-- Card de perfil -->
+  <div class="patient-card">
+    <div class="profile-header">
+      <div class="avatar-section">
+        <div class="avatar-icon"><i class="bi bi-person-fill"></i></div>
+        <div><!--Datos en duro por el momento -->
+          <div class="patient-name" id="patient-name">Juan Pérez González</div>
+          <div class="patient-rut" id="patient-rut">RUT: 12.345.678-9</div>
+        </div>
+      </div>
+      <div class="divider"></div>
+      <div class="info-section container">
+        <div class="basic-info-title mb-3">Información Básica</div>
+        <div class="row">
+          <div class="col-md-6">
+            <div class="basic-info-item"><strong>Edad:</strong> <span id="patient-age">38</span> años</div>
+            <div class="basic-info-item mt-2"><strong>Género:</strong> <span id="patient-gender">Masculino</span></div>
+          </div>
+          <div class="col-md-6">
+            <div class="basic-info-item"><strong>Correo:</strong> <span id="patient-email">juan.perez@example.com</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Navbar secciones del paciente -->
+    <div class="nav-buttons">
+      <a href="{% url 'patients:info-general' %}" class="nav-button {% if section == 'general' %}active{% endif %}" data-section="general">
+        <i class="bi bi-info-circle"></i> Información general
+      </a>
+      <a href="{% url 'patients:historial-clinico' %}" class="nav-button {% if section == 'historial-clinico' %}active{% endif %}" data-section="historial-clinico">
+        <i class="bi bi-file-earmark-medical"></i> Historial clínico
+      </a>
+      <a href="#" class="nav-button {% if section == 'metricas' %}active{% endif %}" data-section="metricas">
+        <i class="bi bi-graph-up"></i> Métricas
+      </a>
+      <a href="#" class="nav-button {% if section == 'indicaciones' %}active{% endif %}" data-section="indicaciones">
+        <i class="bi bi-list-check"></i> Indicaciones
+      </a>
+    </div>
+  </div>
+
+  <!-- Contenido dinamico -->
+  {% block perfilcontent %}
+  <!-- Aquí se inserta el contenido especifico de cada vista hija -->
+  {% endblock %}
+</div>
+{% endblock %}

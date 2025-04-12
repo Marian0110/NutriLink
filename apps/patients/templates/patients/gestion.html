@@ -1,0 +1,358 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Gestión de Pacientes{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row">
+    <!-- Contenido principal -->
+    <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+      <!-- Encabezado -->
+      <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h3">
+          <i class="fas fa-users me-2"></i>Gestión de pacientes
+        </h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+          <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#patientModal" id="addPatientBtn">
+            <i class="fas fa-user-plus me-2"></i>Agregar
+          </button>
+        </div>
+      </div>
+      <!-- Card contenedora -->
+      <div class="card shadow-lg mt-3" style="border-radius: 15px; border: none;">
+        <div class="card-body">
+          <!-- Tabla de pacientes -->
+          <div class="table-responsive">
+            <table class="table table-hover align-middle">
+              <thead class="table-light">
+                <tr>
+                  <th scope="col">#</th>
+                  <th scope="col">Nombre Completo</th>
+                  <th scope="col">Email</th>
+                  <th scope="col">Estado</th>
+                  <th scope="col">Operaciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- Estructura paciente ejemplo 1 -->
+                <tr>
+                  <th scope="row">1</th>
+                  <td>Juan Pérez González</td>
+                  <td>juan.perez@example.com</td>
+                  <td><span class="badge bg-statusA">Activo</span></td>
+                  <td>
+                    <button class="btn btn-sm btn-outline-primary me-2 edit-btn"
+                            data-bs-toggle="modal" 
+                            data-bs-target="#patientModal"
+                            data-patient-id="1"
+                            data-patient-data='{
+                              "firstName":"Juan",
+                              "secondName":"",
+                              "lastName":"Pérez",
+                              "mothersMaidenName":"González",
+                              "rut":"12.345.678-9",
+                              "birthDate":"1985-03-15",
+                              "gender":"masculino",
+                              "email":"juan.perez@example.com",
+                              "phone":"+56987654321"
+                            }'>
+                      <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger delete-btn">
+                      <i class="fas fa-trash-alt"></i>
+                    </button>
+                  </td>
+                </tr>
+                <!-- Paciente 2 -->
+                <tr>
+                  <th scope="row">2</th>
+                  <td>María García López</td>
+                  <td>maria.garcia@example.com</td>
+                  <td><span class="badge bg-statusD">Inactivo</span></td>
+                  <td>
+                    <button class="btn btn-sm btn-outline-primary me-2 edit-btn"
+                            data-bs-toggle="modal" 
+                            data-bs-target="#patientModal"
+                            data-patient-id="2"
+                            data-patient-data='{
+                              "firstName":"María",
+                              "secondName":"",
+                              "lastName":"García",
+                              "mothersMaidenName":"López",
+                              "rut":"98.765.432-1",
+                              "birthDate":"1990-07-22",
+                              "gender":"femenino",
+                              "email":"maria.garcia@example.com",
+                              "phone":"+56912345678"
+                            }'>
+                      <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger delete-btn">
+                      <i class="fas fa-trash-alt"></i>
+                    </button>
+                  </td>
+                </tr>
+                <!-- Paciente 3 -->
+                <tr>
+                  <th scope="row">3</th>
+                  <td>Carlos Rodríguez Martínez</td>
+                  <td>carlos.rodriguez@example.com</td>
+                  <td><span class="badge bg-statusA">Activo</span></td>
+                  <td>
+                    <button class="btn btn-sm btn-outline-primary me-2 edit-btn"
+                            data-bs-toggle="modal" 
+                            data-bs-target="#patientModal"
+                            data-patient-id="3"
+                            data-patient-data='{
+                              "firstName":"Carlos",
+                              "secondName":"",
+                              "lastName":"Rodríguez",
+                              "mothersMaidenName":"Martínez",
+                              "rut":"76.543.210-9",
+                              "birthDate":"1978-11-30",
+                              "gender":"masculino",
+                              "email":"carlos.rodriguez@example.com",
+                              "phone":"+56955556666"
+                            }'>
+                      <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger delete-btn">
+                      <i class="fas fa-trash-alt"></i>
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <!-- Paginacion estatica por el momento-->
+          <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-end mt-4">
+              <li class="page-item disabled">
+                <a class="page-link" href="#" tabindex="-1">Anterior</a>
+              </li>
+              <li class="page-item active"><a class="page-link" href="#">1</a></li>
+              <li class="page-item"><a class="page-link" href="#">2</a></li>
+              <li class="page-item"><a class="page-link" href="#">3</a></li>
+              <li class="page-item">
+                <a class="page-link" href="#">Siguiente</a>
+              </li>
+            </ul>
+          </nav>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+<!-- Modal para agregar/editar paciente -->
+<div class="modal fade" id="patientModal" tabindex="-1" aria-labelledby="patientModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <div class="modal-header background">
+        <h5 class="modal-title" id="modalTitle">
+          <i class="fas fa-user-plus me-2" id="modalIcon"></i>
+          <span id="modalActionText">Registrar</span> Paciente
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="patientForm">
+          <input type="hidden" id="patientId">
+          
+          <!-- Sección de información personal -->
+          <fieldset class="personal-info-section mb-4">
+            <legend class="section-title">Información Personal</legend>
+
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label">
+                  Primer nombre: <span class="text-danger">*</span>
+                </label>
+                <input type="text" class="form-control" id="firstName" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Segundo nombre:</label>
+                <input type="text" class="form-control" id="secondName">
+              </div>
+              
+              <div class="col-md-6">
+                <label class="form-label">
+                  Apellido paterno: <span class="text-danger">*</span>
+                </label>
+                <input type="text" class="form-control" id="lastName" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Apellido materno:</label>
+                <input type="text" class="form-control" id="mothersMaidenName">
+              </div>
+              
+              <div class="col-md-4">
+                <label class="form-label">
+                  R.U.T: <span class="text-danger">*</span>
+                </label>
+                <div class="input-group">
+                  <input type="text" class="form-control" id="rut" required>
+                  <span class="input-group-text"><i class="fas fa-id-card"></i></span>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">
+                  Fecha nacimiento: <span class="text-danger">*</span>
+                </label>
+                <div class="input-group">
+                  <input type="date" class="form-control" id="birthDate" required>
+                  <span class="input-group-text"><i class="fas fa-calendar-alt"></i></span>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">
+                  Sexo: <span class="text-danger">*</span>
+                </label>
+                <select class="form-select" id="gender" required>
+                  <option value="">Seleccionar</option>
+                  <option value="masculino">Masculino</option>
+                  <option value="femenino">Femenino</option>
+                </select>
+              </div>
+            </div>
+          </fieldset>
+          <!-- Sección de informacion de contacto -->
+          <fieldset class="contact-info-section mb-4">
+            <legend class="section-title">Información de Contacto</legend>
+
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label">Teléfono:</label>
+                <div class="input-group">
+                  <input type="tel" class="form-control" id="phone">
+                  <span class="input-group-text"><i class="fas fa-phone"></i></span>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">
+                  Correo: <span class="text-danger">*</span>
+                </label>
+                <div class="input-group">
+                  <input type="email" class="form-control" id="email" required>
+                  <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                </div>
+              </div>
+            </div>
+          </fieldset>
+          <!-- Botones de accion -->
+          <div class="d-flex justify-content-end gap-2 mt-4">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+              <i class="fas fa-times me-2"></i>Cancelar
+            </button>
+            <button type="submit" class="btn btn-primary" id="submitBtn">
+              <i class="fas fa-save me-2"></i><span id="submitBtnText">Registrar</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- JavaScript para el sweet alert de eliminacion y el modal dinámico (registro/edicion) por el momento aqui, luego se pasa a archivo en static/js-->
+<script>
+document.querySelectorAll('.delete-btn').forEach(btn => {
+  btn.addEventListener('click', function() {
+    const patientName = this.getAttribute('data-patient-name');
+    
+    Swal.fire({
+      title: 'Confirmar eliminación',
+      text: `¿Está seguro que desea eliminar a ${patientName}?`,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar',
+      customClass: {
+        confirmButton: 'btn btn-danger me-2',
+        cancelButton: 'btn btn-secondary'
+      },
+      buttonsStyling: false
+    }).then((result) => {
+      if (result.isConfirmed) {
+        // Simulación de eliminación
+        this.closest('tr').remove();
+        
+        Swal.fire({
+          title: '¡Eliminado!',
+          text: `${patientName} ha sido removido del sistema.`,
+          icon: 'success',
+          timer: 2000,
+          showConfirmButton: false
+        });
+      }
+    });
+  });
+});
+
+
+
+
+
+document.addEventListener('DOMContentLoaded', function() {
+  const patientModal = document.getElementById('patientModal');
+  
+  // Función para resetear el modal a modo "crear"
+  function resetModalToCreate() {
+    document.getElementById('modalActionText').textContent = 'Registrar';
+    document.getElementById('submitBtnText').textContent = 'Registrar';
+    document.getElementById('modalIcon').className = 'fas fa-user-plus me-2';
+    document.getElementById('patientForm').reset();
+    document.getElementById('patientId').value = '';
+  }
+  
+  // Función para configurar el modal en modo "editar"
+  function setModalToEdit(patientData) {
+    document.getElementById('modalActionText').textContent = 'Editar';
+    document.getElementById('submitBtnText').textContent = 'Actualizar';
+    document.getElementById('modalIcon').className = 'fas fa-user-edit me-2';
+    document.getElementById('patientId').value = patientData.patientId || '';
+    
+    // Llenar formulario con datos ejemplo
+    document.getElementById('firstName').value = patientData.firstName || '';
+    document.getElementById('secondName').value = patientData.secondName || '';
+    document.getElementById('lastName').value = patientData.lastName || '';
+    document.getElementById('mothersMaidenName').value = patientData.mothersMaidenName || '';
+    document.getElementById('rut').value = patientData.rut || '';
+    document.getElementById('birthDate').value = patientData.birthDate || '';
+    document.getElementById('gender').value = patientData.gender || '';
+    document.getElementById('email').value = patientData.email || '';
+    document.getElementById('phone').value = patientData.phone || '';
+  }
+  
+  // Botón para agregar nuevo paciente
+  document.getElementById('addPatientBtn').addEventListener('click', resetModalToCreate);
+  
+  // Botones de edición
+  document.querySelectorAll('.edit-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const patientData = JSON.parse(this.getAttribute('data-patient-data'));
+      patientData.patientId = this.getAttribute('data-patient-id');
+      setModalToEdit(patientData);
+    });
+  });
+  
+  // Resetear modal al cerrar
+  patientModal.addEventListener('hidden.bs.modal', resetModalToCreate);
+  
+  // Manejar envio del formulario (solo simulacion)
+  document.getElementById('patientForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const isEdit = document.getElementById('modalActionText').textContent === 'Editar';
+    const patientName = document.getElementById('firstName').value + ' ' + document.getElementById('lastName').value;
+    
+    // Simular accion
+    alert(`Paciente ${patientName} ${isEdit ? 'actualizado' : 'registrado'} correctamente\n\n(Simulación frontend - sin conexión a backend)`);
+    
+    // Cerrar modal
+    const modalInstance = bootstrap.Modal.getInstance(patientModal);
+    modalInstance.hide();
+  });
+});
+</script>
+{% endblock %}

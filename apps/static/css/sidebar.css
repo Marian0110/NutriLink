@@ -1,0 +1,68 @@
+:root {
+    font-size: 16px;
+    --primary-color: #173b4c;
+    --secondary-color: #3f5c69;
+    --accent-color: #62f485;
+    --text-color: #000000;
+    --light-text: #747474;
+    --white: #ffffff;
+    --shadow: #d1d0d057;
+}
+
+/* Estilo para el Sidebar */
+.side-bar {
+    height: 100vh;
+    width: 200px;
+    background: var(--primary-color);
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    padding-top: 20px;
+}
+
+.logo-container {
+    padding: 0;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    text-align: center;
+}
+
+.sidebar-logo {
+    width: 100%;
+    max-width: 120px;
+    height: auto;
+}
+  
+.menu {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    color: #ffffff;
+    padding: 0 15px;
+}
+  
+.menu .btn {
+    background-color: transparent;
+    color: #ffffff;
+    padding: 12px 20px;
+    margin: 5px 0;
+    border: none;
+    width: 100%;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 1rem;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.1rem;
+}
+  
+.menu .btn:hover {
+    background-color: var(--shadow);
+    transform: translateX(5px);
+}
+
