@@ -114,34 +114,6 @@ body {
     align-items: center;
 }
 
-/*universal */
-.form-group {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    flex: 1;
-}
-
-/*universal */
-.form-group label {
-    font-size: 1rem;
-    font-weight: 600;
-    color: var(--text-color);
-}
-
-.form-group input {
-    padding: 0.9rem;
-    border: 1px solid var(--primary-color);
-    border-radius: 0.6rem;
-    font-size: 0.9rem;
-    width: 100%;
-}
-
-.form-group input::placeholder {
-    color: var(--light-text);
-}
-
 /*login */
 .login-btn {
     background-color: var(--accent-color);

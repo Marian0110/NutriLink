@@ -11,3 +11,6 @@ def infoGeneral(request):
 
 def historialClinico(request):
     return render(request, 'patients/historial-clinico.html', {'section': 'historial-clinico'})
+
+def metricas(request):
+    return render(request, 'patients/metricas.html', {'section': 'metricas'})

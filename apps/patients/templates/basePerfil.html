@@ -5,6 +5,8 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
 <link href="{% static 'basePerfil.css' %}" rel="stylesheet" />
 <link href="{% static 'patients/css/info-general.css' %}" rel="stylesheet" />
+<link href="{% static 'patients/css/historial-clinico.css' %}" rel="stylesheet" >
+<link href="{% static 'patients/css/metricas.css' %}" rel="stylesheet" >
 
 <div class="patient-profile-container">
   <!-- Card de perfil -->
@@ -40,7 +42,7 @@
       <a href="{% url 'patients:historial-clinico' %}" class="nav-button {% if section == 'historial-clinico' %}active{% endif %}" data-section="historial-clinico">
         <i class="bi bi-file-earmark-medical"></i> Historial clínico
       </a>
-      <a href="#" class="nav-button {% if section == 'metricas' %}active{% endif %}" data-section="metricas">
+      <a href="{% url 'patients:metricas' %}" class="nav-button {% if section == 'metricas' %}active{% endif %}" data-section="metricas">
         <i class="bi bi-graph-up"></i> Métricas
       </a>
       <a href="#" class="nav-button {% if section == 'indicaciones' %}active{% endif %}" data-section="indicaciones">

@@ -1,0 +1,263 @@
+:root {
+    font-size: 16px;
+    --primary-color: #173b4c;
+    --secondary-color: #3f5c69;
+    --accent-color: #62f485;
+    --text-color: #000000;
+    --light-text: #747474;
+    --white: #ffffff;
+    --shadow: #d1d0d057;
+    --save: #03d435;
+}
+/*seccion perfil clinico*/
+.clinical-card {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    padding: 25px;
+    width: 100%;
+    margin: 0 auto;
+    margin-top: 2%;
+  }
+  
+  .section-title {
+    font-weight: 600;
+    color: var(--secondary-color);
+    margin-bottom: 15px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid #dee2e6;
+    width:100%;
+  }
+
+  .factors {
+    border: 1px solid #dee2e6;
+  }
+  
+  .clinical-label {
+    font-weight: 500;
+    color: var(--secondary-color);
+    margin-bottom: 8px;
+  }
+  
+  .form-control-custom {
+    border-radius: 5px;
+    padding: 10px 12px;
+    margin-bottom: 15px;
+    width: 80%;
+  }
+  
+  .checkbox-item {
+    margin-bottom: 8px;
+  }
+
+  .btn-save {
+    background-color: var(--accent-color);
+    color: white;
+    font-weight: 500;
+    padding: 10px 20px;
+    border-radius: 5px;
+    border: none;
+    margin-top: 5%;
+    width: 30%;
+  }
+  
+  .btn-save:hover {
+    background-color: var(--save);
+    color: white;
+  }
+
+  .btn-save3 {
+    background-color: var(--accent-color);
+    color: white;
+    font-weight: 500;
+    padding: 10px 20px;
+    border-radius: 5px;
+    border: none;
+    margin-top: 5%;
+    width: 30%;
+  }
+  
+  .btn-save3:hover {
+    background-color: var(--save);
+    color: white;
+  }
+  
+  .checkbox-grid {
+    display: flex;
+    gap: 30px;
+    flex-wrap: wrap;
+  }
+  
+  .checkbox-column {
+    flex: 1;
+    min-width: 250px;
+  }
+  
+/*seccion embarazo*/
+
+.pregnancy-card {
+  background-color: white;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  padding: 30px;
+  width: 100%;
+  max-width: 500px;
+  margin-top: 40px;
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.card-title {
+  color: #333;
+  font-size: 1.3rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.radio-group {
+  display: flex;
+  gap: 15px;
+}
+
+.radio-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.radio-option input[type="radio"] {
+  width: 18px;
+  height: 18px;
+  accent-color: #4a90e2;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+  color: var(--secondary-color);
+  font-size: 0.95rem;
+}
+
+.form-input {
+  width: 100%;
+  padding: 10px 15px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  font-size: 0.95rem;
+}
+
+.readonly-field {
+  background-color: #f8f9fa;
+  color: #555;
+  padding: 10px 15px;
+  border-radius: 5px;
+  border: 1px solid #eee;
+}
+
+.divider {
+  height: 1px;
+  background-color: #eee;
+  margin: 25px 0;
+}
+
+.btn-save2 {
+  background-color: var(--accent-color);
+  color: white;
+  border: none;
+  border-radius: 5px;
+  padding: 12px 25px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  width: 100%;
+  transition: background-color 0.3s;
+}
+
+.btn-save2:hover {
+  background-color: var(--save);
+  color: white;
+}
+
+.unit {
+  color: #666;
+  font-size: 0.9rem;
+  margin-left: 5px;
+}
+
+
+/*seccion informacion nutricional adicional*/
+
+.rejection-card {
+  background-color: white;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  padding: 30px;
+  width: 100%;
+  margin-top: 40px;
+}
+
+.card-title {
+  color: #333;
+  font-weight: 600;
+}
+
+.card-subtitle {
+  color: #666;
+}
+
+.form-label {
+  font-weight: 500;
+  color: var(--secondary-color);
+}
+
+.divider {
+  height: 1px;
+  background-color: #eee;
+  margin: 25px 0;
+}
+
+.form-control-custom {
+  padding: 10px 15px;
+  border-radius: 5px;
+}
+
+.selected-items-container {
+  margin-top: 10px;
+}
+
+.selected-item {
+  display: inline-block;
+  background-color: #ffffff;
+  color: #173b4c;
+  padding: 5px 10px;
+  border-radius: 15px;
+  margin-right: 8px;
+  margin-bottom: 8px;
+  font-size: 0.9rem;
+}
+
+.selected-item .remove-item {
+  color: #b80012;
+  margin-left: 5px;
+  cursor: pointer;
+}
+
+.add-another {
+  color: #049ca1;
+  cursor: pointer;
+  font-size: 0.9rem;
+  margin-top: 5px;
+  display: inline-block;
+}

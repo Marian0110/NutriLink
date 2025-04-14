@@ -22,6 +22,6 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('accounts/', include('apps.accounts.urls')),
     path('patients/', include('apps.patients.urls')),
-    path('', lambda request: redirect('patients:info-general')), # Levantamiento inicial para tests
+    path('', lambda request: redirect('accounts:login')), # Levantamiento inicial para tests
 
 ]

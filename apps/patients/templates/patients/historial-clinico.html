@@ -2,5 +2,384 @@
 {% load static %}
 
 {% block perfilcontent %}
+<div class="row">
+  <div class="container py-4">
+    <!-- Formulario perfil clinico -->
+    <form method="#" action="#">
+      {% csrf_token %}
+      <div class="clinical-card">
+        <h1 class="h4 fw-bold mb-2">Perfil clínico</h1>
+        <p class="text-muted mb-4">Datos relevantes del paciente para el manejo nutricional</p>
+        <div class="row">
+          <!-- Columna izquierda: Inputs clinicos -->
+          <div class="col-md-6">
+            <div class="mb-3">
+              <label class="clinical-label d-block">Adherencia a medicamentos:</label>
+              <input type="text" class="form-control form-control-custom"/>
+            </div>
+            <div class="mb-3">
+              <label class="clinical-label d-block">Síntomas:</label>
+              <input type="text" class="form-control form-control-custom"/>
+            </div>
+            <div class="mb-3">
+              <label class="clinical-label d-block">Etapa de cambio psicológico:</label>
+              <input type="text" class="form-control form-control-custom"/>
+            </div>
+            <div class="mb-4">
+              <label class="clinical-label d-block">Suplementos:</label>
+              <input type="text" class="form-control form-control-custom"/>
+            </div>
+            <div>
+              <label class="clinical-label d-block">Actividad física:</label>
+              <select class="form-select form-control-custom">
+                <option selected>Sedentaria</option>
+                <option>Ligera</option>
+                <option>Moderada</option>
+                <option>Intensa</option>
+              </select>
+            </div>
+          </div>
+          <!-- Columna derecha: Factores patologicos ejemplo estructura -->
+  
+          <!-- <h2 class="section-title h5 mb-3">Factores patológicos</h2>
+          {% for factor in factores %}
+            <div class="form-check mb-2">
+              <input class="form-check-input" type="checkbox" id="factor{{ forloop.counter }}" name="factores" value="{{ factor.id}}" />
+              <label class="form-check-label" for="factor{{ forloop.counter }}">{{ factor.descripcion }}</label>
+            </div>
+          {% endfor %} -->
+  
+          <div class="col-md-4 factors">
+              <h2 class="section-title h5">Factores patológicos</h2>
+              <div class="form-check mb-2">
+                <input class="form-check-input" type="checkbox" id="factor1" checked />
+                <label class="form-check-label" for="factor1">Desnutrido sin estrés</label>
+              </div>
+              <div class="form-check mb-2">
+                <input class="form-check-input" type="checkbox" id="factor2" />
+                <label class="form-check-label" for="factor2">Cirugía no complicada</label>
+              </div>
+              <div class="form-check mb-2">
+                <input class="form-check-input" type="checkbox" id="factor3" />
+                <label class="form-check-label" for="factor3">Infección o trauma moderado</label>
+              </div>
+              <div class="form-check mb-2">
+                <input class="form-check-input" type="checkbox" id="factor4" />
+                <label class="form-check-label" for="factor4">Sepsis, gran quemado</label>
+              </div>
+              <div class="form-check mb-2">
+                <input class="form-check-input" type="checkbox" id="factor5"  />
+                <label class="form-check-label" for="factor5">Corticoterapia</label>
+              </div>
+              <div class="form-check mb-2">
+                <input class="form-check-input" type="checkbox" id="factor6"  />
+                <label class="form-check-label" for="factor6">Alcoholismo</label>
+              </div>
+              <div class="form-check mb-2">
+                <input class="form-check-input" type="checkbox" id="factor7"  />
+                <label class="form-check-label" for="factor7">Cáncer</label>
+              </div>
+              <div class="form-check mb-2">
+                <input class="form-check-input" type="checkbox" id="factor8"  />
+                <label class="form-check-label" for="factor8">Traumatismo craneal</label>
+              </div>
+              <div class="form-check mb-2">
+                <input class="form-check-input" type="checkbox" id="factor9"  />
+                <label class="form-check-label" for="factor9">Fractura de huesos largos</label>
+              </div>
+              <div class="form-check mb-2">
+                <input class="form-check-input" type="checkbox" id="factor10"  />
+                <label class="form-check-label" for="factor10">Inanición leve</label>
+              </div>
+              <div class="form-check mb-2">
+                <input class="form-check-input" type="checkbox" id="factor11"  />
+                <label class="form-check-label" for="factor11">Politraumatismo</label>
+              </div>
+              <div class="form-check mb-2">
+                <input class="form-check-input" type="checkbox" id="factor12"  />
+                <label class="form-check-label" for="factor12">Peritonitis</label>
+              </div>
+              <div class="form-check mb-2">
+                <input class="form-check-input" type="checkbox" id="factor13"  />
+                <label class="form-check-label" for="factor13">Infección grave</label>
+              </div>
+              <div class="form-check mb-2">
+                <input class="form-check-input" type="checkbox" id="factor14"  />
+                <label class="form-check-label" for="factor14">Recuperación postoperatoria no complicada</label>
+              </div>
+          </div>   
+          <div class="d-flex justify-content-center">
+              <button type="button" class="btn btn-save">GUARDAR</button>  <!-- Falta el sweet alert -->
+          </div>
+      </div>
+    </form>
+  </div>
+  <!-- Formulario condicion de embarazo -->
+  <div class="container-fluid">
+  <div class="row g-1"> <!-- gutter (espacio) entre columnas -->
+    <div class="col-md-6">
+      <form method="#" action="#">
+        {% csrf_token %}
+        <div class="pregnancy-card">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <h1 class="card-title mb-0">¿Condición de embarazo?</h1>
+            <div class="radio-group">
+              <label class="radio-option">
+                <input type="radio" name="condicion" value="si" checked>
+                SI
+              </label>
+              <label class="radio-option">
+                <input type="radio" name="condicion" value="no">
+                NO
+              </label>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Semanas de gestación:</label>
+            <input type="number" name="semanas" id="inputSemanas" class="form-control" placeholder="Ingresar valor">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Trimestre calculado:</label>
+            <div class="readonly-field p-2 bg-light rounded">1er trimestre</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Energía extra:</label>
+            <div class="readonly-field p-2 bg-light rounded">300 <span class="unit">kcal</span></div>
+          </div>
+          <div class="divider"></div>
+          <button type="button" class="btn btn-save2 w-100">REGISTRAR</button> <!-- Falta el sweet alert -->
+        </div>
+      </form>
+    </div>
+    <!-- Formulario información nutricional (columna derecha) -->
+    <div class="col-md-6">
+      <form method="#" action="#">
+        <div class="rejection-card ">
+          <h1 class="h4 card-title mb-2">Información nutricional</h1>
+          <p class="text-muted card-subtitle mb-4">Estos alimentos serán excluidos en los planes alimenticios.</p>
+          <!-- Rechazos alimenticios -->
+          <div class="mb-4">
+            <label class="form-label">Rechazos alimenticios</label>
+            <div class="selection-group">
+              <select class="form-select mb-2">
+                <option selected disabled>Seleccione un alimento</option>
+                <option>Leche</option>
+                <option>Huevos</option>
+                <option>Pescado</option>
+                <option>Mariscos</option>
+                <option>Frutos secos</option>
+                <option>Trigo</option>
+                <option>Soja</option>
+              </select>
+              <div class="selected-items-container" id="rejected-foods-container"></div>
+              <button type="button" class="btn btn-sm btn-secondary mt-2" onclick="addAnother('rejected-foods')">
+                + Agregar otro rechazo
+              </button>
+            </div>
+          </div>
+          <!-- Alergias -->
+          <div class="mb-4">
+            <label class="form-label">Alergias:</label>
+            <div class="selection-group">
+              <select class="form-select mb-2">
+                <option selected disabled>Seleccione una alergia</option>
+                <option>Alergia al maní</option>
+                <option>Alergia al gluten</option>
+              </select>
+              <div class="selected-items-container" id="allergies-container"></div>
+              <button type="button" class="btn btn-sm btn-secondary mt-2" onclick="addAnother('allergies')">
+                + Agregar otra alergia
+              </button>
+            </div>
+          </div>
+          <!-- Intolerancias -->
+          <div class="mb-4">
+            <label class="form-label">Intolerancias:</label>
+            <div class="selection-group">
+              <select class="form-select mb-2">
+                <option selected disabled>Seleccione una intolerancia</option>
+                <option>Intolerancia a la lactosa</option>
+                <option>Intolerancia a la fructosa</option>
+                <option>Intolerancia a la sacarosa</option>
+                <option>Intolerancia a la histamina</option>
+              </select>
+              <div class="selected-items-container" id="intolerances-container"></div>
+              <button type="button" class="btn btn-sm btn-secondary mt-2" onclick="addAnother('intolerances')">
+                + Agregar otra intolerancia
+              </button>
+            </div>
+          </div>
+          <div class="divider"></div>
+          <button type="button" class="btn btn-save3 w-100">REGISTRAR</button> <!-- Falta el sweet alert -->
+        </div>
+      </form>
+    </div> 
+  </div>
+</div>
+
+<!-- Script aqui por el momento -->
+<script>
+// SweetAlert: success para el boton GUARDAR (Perfil clinico)
+document.querySelector('.btn-save').addEventListener('click', function (e) {
+    Swal.fire({
+      title: '¿Estás segura/o?',
+      text: 'Se guardarán los datos del perfil clínico.',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, guardar',
+      cancelButtonText: 'Cancelar'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        Swal.fire({
+          title: 'Guardado exitosamente',
+          icon: 'success',
+          timer: 2000,
+          showConfirmButton: false
+        });
+
+        // enviar form al servidor
+        // e.target.closest('form').submit();
+      }
+    });
+  });
+
+  // SweetAlert: success para el boton REGISTRAR (Condicion de embarazo)
+  document.querySelector('.btn-save2').addEventListener('click', function (e) {
+    Swal.fire({
+      title: '¿Confirmar registro?',
+      text: 'Se guardará la condición de embarazo.',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, registrar',
+      cancelButtonText: 'Cancelar'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        Swal.fire({
+          title: 'Registrado correctamente',
+          icon: 'success',
+          timer: 2000,
+          showConfirmButton: false
+        });
+
+        // e.target.closest('form').submit();
+      }
+    });
+  });
+
+  // SweetAlert: success para el boton REGISTRAR (Informacion nutricional)
+  document.querySelector('.btn-save3').addEventListener('click', function (e) {
+    Swal.fire({
+      title: '¿Confirmar registro?',
+      text: 'Se guardará la información nutricional adicional.',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, registrar',
+      cancelButtonText: 'Cancelar'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        Swal.fire({
+          title: 'Registrado correctamente',
+          icon: 'success',
+          timer: 2000,
+          showConfirmButton: false
+        });
+
+        // e.target.closest('form').submit();
+      }
+    });
+  });
+
+  // script de condicion de embarazo
+  const radios = document.querySelectorAll('input[name="condicion"]');
+  const inputSemanas = document.getElementById('inputSemanas');
+
+  // Funcion para actualizar el readonly
+  function actualizarInput() {
+    const valorSeleccionado = document.querySelector('input[name="condicion"]:checked').value;
+    if (valorSeleccionado === "si") {
+      inputSemanas.removeAttribute('readonly');
+    } else {
+      inputSemanas.setAttribute('readonly', true);
+      inputSemanas.value = ""; // opcional: limpia el valor si no aplica
+    }
+  }
+
+  // inicializa el estado al cargar
+  actualizarInput();
+
+  // evento a cada radio
+  radios.forEach(radio => {
+    radio.addEventListener('change', actualizarInput);
+  });
+
+  // script de informacion nutricional manejo de comboboxes
+  // Agrega el evento de cambio a todos los selects
+  document.querySelectorAll('.form-select').forEach(select => {
+            select.addEventListener('change', function () {
+                if (this.value && !this.disabled) {
+                    const containerId = this.closest('.selection-group').querySelector('.selected-items-container').id;
+                    const container = document.getElementById(containerId);
+    
+                    const existingValues = Array.from(container.querySelectorAll('input[type="hidden"]')).map(input => input.value);
+    
+                    if (!existingValues.includes(this.value)) {
+                        addSelectedItem(containerId, this.value);
+                        disableSelectedOptions(this);
+                    } else {
+                        alert('Esta opción ya fue seleccionada');
+                    }
+    
+                    // Reset al valor seleccionar x
+                    this.selectedIndex = 0;
+                }
+            });
+        });
+    
+        function disableSelectedOptions(selectElement) {
+            const containerId = selectElement.closest('.selection-group').querySelector('.selected-items-container').id;
+            const selectedValues = Array.from(document.getElementById(containerId).querySelectorAll('input[type="hidden"]')).map(input => input.value);
+    
+            Array.from(selectElement.options).forEach(option => {
+                if (selectedValues.includes(option.value)) {
+                    option.disabled = true;
+                }
+            });
+        }
+    
+        function addSelectedItem(containerId, value) {
+            const container = document.getElementById(containerId);
+            const itemId = 'item-' + Math.random().toString(36).substr(2, 9);
+    
+            const itemElement = document.createElement('div');
+            itemElement.className = 'selected-item';
+            itemElement.id = itemId;
+            itemElement.innerHTML = `
+                ${value}
+                <span class="remove-item" onclick="removeItem('${itemId}', '${containerId}', '${value}')">×</span>
+                <input type="hidden" name="${containerId.replace('-container', '')}[]" value="${value}">
+            `;
+    
+            container.appendChild(itemElement);
+        }
+    
+        function removeItem(itemId, containerId, value) {
+            document.getElementById(itemId).remove();
+    
+            // Rehabilitar la opción en el combobox
+            const select = document.getElementById(containerId).closest('.selection-group').querySelector('.form-select');
+            Array.from(select.options).forEach(option => {
+                if (option.value === value) {
+                    option.disabled = false;
+                }
+            });
+        }
+    
+        // El actual select se mantenga actualizado
+        function addAnother(type) {
+            const select = document.getElementById(`${type}-container`).closest('.selection-group').querySelector('.form-select');
+            disableSelectedOptions(select); // refrescamos los disabled
+            select.focus();
+        }
+</script>
 
 {% endblock %}
