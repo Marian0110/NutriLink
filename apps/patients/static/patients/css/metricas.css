@@ -1,0 +1,65 @@
+:root {
+    font-size: 16px;
+    --primary-color: #173b4c;
+    --secondary-color: #3f5c69;
+    --accent-color: #62f485;
+    --text-color: #000000;
+    --light-text: #747474;
+    --white: #ffffff;
+    --shadow: #d1d0d057;
+    --save: #03d435;
+}
+
+.metrica-card {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    padding: 25px;
+    width: 100%;
+    margin: 0 auto;
+    margin-top: 2%;
+  }
+
+.historial-card {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    padding: 25px;
+    width: 100%;
+    margin: 0 auto;
+    margin-top: 2%;
+    margin-bottom: 5%;
+  }
+
+.card-body {
+    padding: 10px;
+}
+
+.input-group-text {
+    min-width: 50px;
+}
+
+.form-control {
+    height: 38px;
+}
+
+.mb-3 {
+    margin-bottom: 10px; 
+}
+
+.btn-save {
+    background-color: var(--accent-color);
+    color: white;
+    font-weight: 500;
+    padding: 10px 20px;
+    border-radius: 5px;
+    border: none;
+    margin-top: 5%;
+    width: 20%;
+  }
+  
+  .btn-save:hover {
+    background-color: var(--save);
+    color: white;
+  }
+  
