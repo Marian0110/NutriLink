@@ -15,6 +15,13 @@
     box-sizing: border-box;
     font-family: 'Inter', sans-serif;
 }
+/* manejo de errores en front */
+.error-message {
+    color: red;
+    font-size: 0.85rem;
+    display: none;
+    margin-top: 0.1rem;
+}
 
 /* img check beneficios */
 img {
@@ -63,7 +70,7 @@ body {
     display: flex;
     width: 100%;
     max-width: 100rem;
-    height: 90vh;
+    height: 100vh;
     overflow: hidden;
     margin-right: 7%;
 }
@@ -135,7 +142,7 @@ body {
 }
 
 .form-control {
-    width: 90%;
+    width: 95%;
     padding: 12px;
     border: 1px solid #ddd;
     font-size: 14px;
