@@ -57,7 +57,8 @@ TEMPLATES = [
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [
             BASE_DIR / 'apps' / 'accounts' / 'templates',
-            BASE_DIR / 'apps' / 'patients' / 'templates', # Aqui se ponen las rutas personalizadas
+            BASE_DIR / 'apps' / 'patients' / 'templates',
+            BASE_DIR / 'apps' / 'foods' / 'templates', # Aqui se ponen las rutas personalizadas
         ],
         'APP_DIRS': True,
         'OPTIONS': {
@@ -123,7 +124,7 @@ STATIC_URL = 'static/' #agregado
 
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'apps', app, 'static')
-    for app in ['accounts', 'patients'] #agregar app para ruta personalizada 
+    for app in ['accounts', 'patients', 'foods'] #agregar app para ruta personalizada 
 ]
 
 
