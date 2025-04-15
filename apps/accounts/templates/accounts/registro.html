@@ -31,19 +31,21 @@
                         <img src="{% static 'accounts/img/tick-mark-icon.svg' %}" alt="Visualiza progreso" />
                         Genera minutas rápidamente y más!</li>
                 </ul>
-                <form method="#" action="#">
+                <form id="registro-form" method="#" action="#">
                     {% csrf_token %}
                     <div class="form-row">
                         <div class="form-col">
                             <div class="form-group">
                                 <label for="primerNombre">Primer nombre:</label>
                                 <input type="text" id="primerNombre" class="form-control" placeholder="Ingresar nombre">
+                                <span class="error-message" id="error-primerNombre"></span>
                             </div>
                         </div>
                         <div class="form-col">
                             <div class="form-group">
                                 <label for="apellidoP">Primer apellido:</label>
                                 <input type="text" id="apellidoP" class="form-control" placeholder="Ingresar apellido">
+                                <span class="error-message" id="error-apellidoP"></span>
                             </div>
                         </div>
                     </div>
@@ -51,13 +53,15 @@
                         <div class="form-col">
                             <div class="form-group">
                                 <label for="rut">Rut:</label>
-                                <input type="text" id="rut" class="form-control" placeholder="99.999.999">
+                                <input type="text" id="rut" class="form-control" placeholder="Ej: 99.999.999-K">
+                                <span class="error-message" id="error-rut"></span>
                             </div>
                         </div>
                         <div class="form-col">
                             <div class="form-group">
                                 <label for="email">Correo:</label>
                                 <input type="email" id="email" class="form-control" placeholder="Ingresar correo">
+                                <span class="error-message" id="error-email"></span>
                             </div>
                         </div>
                     </div>
@@ -66,12 +70,14 @@
                             <div class="form-group">
                                 <label for="contraseña">Contraseña:</label>
                                 <input type="password" id="contraseña" class="form-control" placeholder="Ingresar contraseña">
+                                <span class="error-message" id="error-contraseña"></span>
                             </div>
                         </div>
                         <div class="form-col">
                             <div class="form-group">
                                 <label for="confirmarC">Confirmar contraseña:</label>
                                 <input type="password" id="confirmarC" class="form-control" placeholder="Confirmar contraseña">
+                                <span class="error-message" id="error-confirmarC"></span>
                             </div>
                         </div>
                     </div>
@@ -83,3 +89,141 @@
     </main>
 </body>
 </html>
+<!-- Script de validaciones frontend en campos aqui por el momento -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+document.getElementById('registro-form').addEventListener('submit', function(e) {
+    e.preventDefault(); // Evita que se envie o se envie con errores
+
+    // Obtencion de valores
+    const primerNombre = document.getElementById('primerNombre').value.trim();
+    const apellidoP = document.getElementById('apellidoP').value.trim();
+    const rut = document.getElementById('rut').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const contraseña = document.getElementById('contraseña').value;
+    const confirmarC = document.getElementById('confirmarC').value;
+
+    // Mensajes de error
+    const errorPrimerNombre = document.getElementById('error-primerNombre');
+    const errorApellidoP = document.getElementById('error-apellidoP');
+    const errorRut = document.getElementById('error-rut');
+    const errorEmail = document.getElementById('error-email');
+    const errorContraseña = document.getElementById('error-contraseña');
+    const errorConfirmarC = document.getElementById('error-confirmarC');
+
+    let valid = true; // Variable para saber si todo es válido
+
+    // Validar campos vacios (solo al principio)
+    if (primerNombre === "" && apellidoP === "" && rut === "" && email === "" && contraseña === "" & confirmarC === "") {
+        Swal.fire({
+            icon: 'error',
+            title: '¡Campos vacíos!',
+            text: 'Por favor, rellene todos los campos obligatorios.',
+            confirmButtonText: 'Aceptar'
+        });
+        valid = false;
+    }
+
+    // Si el formulario no esta vacio, se valida los otros campos
+    if (valid) {
+        // Validar RUT
+        if (!validarRutChileno(rut)) {
+            errorRut.textContent = "RUT inválido";
+            errorRut.style.display = "block";
+            valid = false;
+        } else {
+            errorRut.style.display = "none";
+        }
+
+        // Validar nombre y apellido
+        const nombreRegex = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]{3,}$/;
+        if (!nombreRegex.test(primerNombre)) {
+            errorPrimerNombre.textContent = "El nombre debe tener al menos 3 caracteres";
+            errorPrimerNombre.style.display = "block";
+            valid = false;
+        } else {
+            errorPrimerNombre.style.display = "none";
+        }
+
+        if (!nombreRegex.test(apellidoP)) {
+            errorApellidoP.textContent = "El primer apellido debe tener al menos 3 caracteres";
+            errorApellidoP.style.display = "block";
+            valid = false;
+        } else {
+            errorApellidoP.style.display = "none";
+        }
+
+        // Validar email
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            errorEmail.textContent = "Correo electrónico inválido";
+            errorEmail.style.display = "block";
+            valid = false;
+        } else {
+            errorEmail.style.display = "none";
+        }
+
+        // Validar contraseña
+        const passRegex = /^(?=.*[A-Z]).{6,}$/;
+        if (!passRegex.test(contraseña)) {
+            errorContraseña.textContent = "La contraseña debe tener al menos 6 caracteres y una mayúscula";
+            errorContraseña.style.display = "block";
+            valid = false;
+        } else {
+            errorContraseña.style.display = "none";
+        }
+
+        // Validar que las contraseñas coincidan
+        if (contraseña !== confirmarC) {
+            errorConfirmarC.textContent = "Las contraseñas no coinciden";
+            errorConfirmarC.style.display = "block";
+            valid = false;
+        } else {
+            errorConfirmarC.style.display = "none";
+        }
+    }
+
+    // Si todo ok, se envia el formulario
+    if (valid) {
+        this.submit();
+    }
+});
+
+// Validación de RUT
+function validarRutChileno(rut) {
+    rut = rut.replace(/\./g, '').replace(/-/g, ''); // Eliminar puntos y guion
+    
+    if (rut.length < 9 || rut.length > 10) {
+        return false;
+    }
+
+    const cuerpo = rut.slice(0, -1);
+    let dv = rut.slice(-1).toUpperCase();
+
+    let suma = 0;
+    let multiplo = 2;
+
+    for (let i = cuerpo.length - 1; i >= 0; i--) {
+        suma += parseInt(cuerpo.charAt(i)) * multiplo;
+        multiplo = multiplo < 7 ? multiplo + 1 : 2;
+    }
+
+    const dvEsperado = 11 - (suma % 11);
+    let dvFinal = dvEsperado === 11 ? '0' : dvEsperado === 10 ? 'K' : dvEsperado.toString();
+
+    return dv === dvFinal;
+}
+
+// Eliminar mensaje de error cuando el usuario escribe en un campo
+document.querySelectorAll('input').forEach(input => {
+    input.addEventListener('input', function() {
+        const errorElement = document.getElementById(`error-${input.id}`);
+        if (errorElement && input.value.trim() !== "") {
+            errorElement.style.display = "none"; // Oculta el mensaje de error cuando el campo no esta vacio
+        }
+    });
+});
+</script>
+
+
+    
