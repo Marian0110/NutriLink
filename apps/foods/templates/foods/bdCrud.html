@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Base de datos{% endblock %}
+
+{% block content %}
+<div class="info-card">
+    <div class="info">
+      <div class="card-icon">📊</div>
+      <div class="text-content">
+        <h1>Base de Datos Nutricional:</h1>
+        <p>Consulta, busca o crea información nutricional. Esta información será cargada para armar tus planes nutricionales personalizados.</p>
+      </div>
+    </div>
+</div>
+<div class="contenedor-alimentos">
+    <div class="encabezado">
+      <h1>Alimentos</h1>
+      <button class="btn-agregar">Agregar</button>
+    </div>
+    <div class="filtros">
+      <div class="buscador">
+        <div class="input-group">
+            <span class="input-group-text"><i class="fas fa-search"></i></span>
+            <input type="text" class="form-control" placeholder="Buscar alimento...">
+        </div>
+      </div>
+      <select class="ordenar-dropdown">
+        <option value="desc">Ordenar por nutrientes (desc)</option>
+        <option value="asc">Ordenar por nutrientes (asc)</option>
+      </select>
+    </div>
+    <!-- Ejemplo de estructura alimento -->
+    <div class="alimento-card">
+    <div class="alimento-info">
+        <div class="alimento-nombre">Brócoli</div>
+        <div class="alimento-origen">USDA</div>
+    </div>
+    <div class="alimento-derecha">
+        <div class="alimento-valores">
+        <div class="valor">
+            <span>0g</span>
+            Lípidos
+        </div>
+        <div class="valor">
+            <span>400 kcal</span>
+            Calorías
+        </div>
+        <div class="valor">
+            <span>25g</span>
+            Proteínas
+        </div>
+        <div class="valor">
+            <span>23g</span>
+            CarboH
+        </div>
+        </div>
+        <div class="expansor">
+            <button class="btn " type="button">
+                <i class="fas fa-expand"></i>
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
