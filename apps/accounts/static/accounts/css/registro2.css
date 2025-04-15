@@ -1,0 +1,188 @@
+:root {
+    font-size: 16px;
+    --primary-color: #173b4c;
+    --secondary-color: #3f5c69;
+    --accent-color: #62f485;
+    --text-color: #000000;
+    --light-text: #747474;
+    --white: #ffffff;
+    --save: #03d435;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Inter', sans-serif;
+}
+
+/* img check beneficios */
+img {
+    width: 20px;
+    height: auto;
+} 
+
+.benefit p {
+    margin-left: 2%;
+}
+
+/* universal */
+body {
+    background: linear-gradient(180deg, var(--secondary-color) 0%, var(--primary-color) 100%);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 1rem;
+}
+
+.brand-section {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 2rem;
+    background: none;
+}
+
+.brand-section, .container {
+    flex: 1;
+}
+
+.logo img {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.25rem;
+    width: 25rem;
+    height: auto;
+}
+
+/* Container for both sections universal */
+.registro-page {
+    display: flex;
+    width: 100%;
+    max-width: 100rem;
+    height: 90vh;
+    overflow: hidden;
+    margin-right: 7%;
+}
+
+.container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 10px;
+}
+
+.card {
+    background: white;
+    border-radius: 1.25rem;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 800px;
+    padding: 30px;
+}
+
+.title {
+    color: var(--text-color);
+    text-align: center;
+    margin-bottom: 10px;
+    font-size: 24px;
+}
+
+.subtitle {
+    color: #7f8c8d;
+    text-align: center;
+    margin-bottom: 30px;
+    font-size: 16px;
+}
+
+.benefits {
+    margin-bottom: 25px;
+    padding-left: 20px;
+}
+
+.benefits li {
+    margin-bottom: 8px;
+    color: var(--text-color);
+    list-style-type: none;
+    position: relative;
+}
+
+.form-row {
+    display: flex;
+    flex-wrap: wrap;
+    margin: 0 -10px;
+}
+
+.form-col {
+    flex: 0 0 50%;
+    padding: 0 10px;
+    box-sizing: border-box;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: var(--text-color);
+    font-size: 14px;
+}
+
+.form-control {
+    width: 90%;
+    padding: 12px;
+    border: 1px solid #ddd;
+    font-size: 14px;
+    transition: border-color 0.3s;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: #3498db;
+}
+
+.btn-register {
+    background-color: var(--accent-color);
+    color: white;
+    border: none;
+    padding: 14px;
+    width: 100%;
+    border-radius: 0.6rem;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: background-color 0.3s;
+}
+
+.btn-register:hover {
+    background-color: var(--save);
+}
+
+.login-link {
+    text-align: center;
+    margin-top: 20px;
+    color: #7f8c8d;
+    font-size: 14px;
+}
+
+.login-link a {
+    color: #3498db;
+    text-decoration: none;
+}
+
+.login-link a:hover {
+    text-decoration: underline;
+}
+
+@media (max-width: 600px) {
+    .form-col {
+        flex: 0 0 100%;
+    }
+}

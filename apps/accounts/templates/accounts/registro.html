@@ -5,9 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Registro - NutriLink</title>
-    <link rel="stylesheet" href="{% static 'accounts/css/registro.css' %}">
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Average+Sans&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'accounts/css/registro2.css' %}">
 </head>
 <body>
     <!-- LOGO -->
@@ -18,65 +16,68 @@
             </div>
         </div>
         <!-- Seccion bienvenida registro -->
-        <div class="registro-container">
-            <div class="form-section">
-                <div class="welcome-header">
-                    <h2>Registrate y potencia tus consultas!</h2>
-                    <div>
-                        <article class="benefit">
-                          <img src="{% static 'accounts/img/tick-mark-icon.svg' %}" alt="Visualiza progreso" />
-                          <p class="subtitle">Visualiza el progreso de tus pacientes en gráficos.</p>
-                        </article>
-                        <article class="benefit">
-                          <img src="{% static 'accounts/img/tick-mark-icon.svg' %}" alt="Calcula nutrientes" />
-                          <p class="subtitle">Calcula requerimientos calóricos y macronutrientes en segundos.</p>
-                        </article>
-                        <article class="benefit">
-                          <img src="{% static 'accounts/img/tick-mark-icon.svg' %}" alt="Genera minutas" />
-                          <p class="subtitle">Genera minutas rápidamente y más!</p>
-                        </article>
-                    </div>
-                </div>
-                <!-- Formulario de registro -->
-                <div class="form-container">
-                    <form class="registro-form" method="#" action="#" >
-                        {% csrf_token %}
-                        <div class="form-row">
+        <div class="container">
+            <div class="card">
+                <h2 class="title">Regístrate y potencia tus consultas!</h2>
+                <p class="subtitle">Comienza a usar nuestra plataforma hoy mismo</p>
+                <ul class="benefits">
+                    <li> 
+                        <img src="{% static 'accounts/img/tick-mark-icon.svg' %}" alt="Visualiza progreso" />
+                        Visualiza el progreso de tus pacientes en gráficos.</li>
+                    <li> 
+                        <img src="{% static 'accounts/img/tick-mark-icon.svg' %}" alt="Visualiza progreso" />
+                        Calcula requerimientos calóricos y macronutrientes en segundos.</li>
+                    <li> 
+                        <img src="{% static 'accounts/img/tick-mark-icon.svg' %}" alt="Visualiza progreso" />
+                        Genera minutas rápidamente y más!</li>
+                </ul>
+                <form method="#" action="#">
+                    {% csrf_token %}
+                    <div class="form-row">
+                        <div class="form-col">
                             <div class="form-group">
-                                <label for="primer-nombre">Primer nombre:</label>
-                                <input type="text" id="primer-nombre" name="primer_nombre" placeholder="Ingresar nombre" />
-                            </div>
-                            <div class="form-group">
-                                <label for="primer-apellido">Primer apellido:</label>
-                                <input type="text" id="primer-apellido" name="primer_apellido" placeholder="Ingresar apellido" />
+                                <label for="primerNombre">Primer nombre:</label>
+                                <input type="text" id="primerNombre" class="form-control" placeholder="Ingresar nombre">
                             </div>
                         </div>
-                        <div class="form-row">
+                        <div class="form-col">
+                            <div class="form-group">
+                                <label for="apellidoP">Primer apellido:</label>
+                                <input type="text" id="apellidoP" class="form-control" placeholder="Ingresar apellido">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-col">
                             <div class="form-group">
                                 <label for="rut">Rut:</label>
-                                <input type="text" id="rut" name="rut" placeholder="99.999.999" />
-                            </div>
-                            <div class="form-group">
-                                <label for="correo">Correo:</label>
-                                <input type="email" id="correo" name="correo" placeholder="Ingresar correo" />
+                                <input type="text" id="rut" class="form-control" placeholder="99.999.999">
                             </div>
                         </div>
-                        <div class="form-row">
+                        <div class="form-col">
+                            <div class="form-group">
+                                <label for="email">Correo:</label>
+                                <input type="email" id="email" class="form-control" placeholder="Ingresar correo">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-col">
                             <div class="form-group">
                                 <label for="contraseña">Contraseña:</label>
-                                <input type="password" id="contraseña" name="contraseña" placeholder="Ingresar contraseña" />
-                            </div>
-                            <div class="form-group">
-                                <label for="confirmar-contraseña">Confirmar contraseña:</label>
-                                <input type="password" id="confirmar-contraseña" name="confirmar_contraseña" placeholder="Confirmar contraseña" />
+                                <input type="password" id="contraseña" class="form-control" placeholder="Ingresar contraseña">
                             </div>
                         </div>
-                        <a href="{% url 'accounts:login' %}"  class="registro-btn">REGISTRARSE</a> <!--Botones en modo link por el momento, falta el sweetalert-->
-                    </form>
-                    <p class="login-link">
-                        Ya tienes cuenta? <a href="{% url 'accounts:login' %}">Iniciar sesión</a>
-                    </p>
-                </div>
+                        <div class="form-col">
+                            <div class="form-group">
+                                <label for="confirmarC">Confirmar contraseña:</label>
+                                <input type="password" id="confirmarC" class="form-control" placeholder="Confirmar contraseña">
+                            </div>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-register">REGISTRARSE</button>
+                </form>
+                <p class="login-link">Ya tienes cuenta? <a href="{% url 'accounts:login' %}">Iniciar sesión</a></p>
             </div>
         </div>
     </main>
