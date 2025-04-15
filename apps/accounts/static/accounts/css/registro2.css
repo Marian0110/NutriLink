@@ -23,6 +23,11 @@
     margin-top: 0.1rem;
 }
 
+.required {
+    color: red;
+    margin-left: 1%;
+}
+
 /* img check beneficios */
 img {
     width: 20px;
