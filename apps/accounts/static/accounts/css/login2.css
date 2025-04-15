@@ -26,6 +26,14 @@ body {
     padding: 1rem;
 }
 
+/* manejo de errores en front */
+.error-message {
+    color: red;
+    font-size: 0.85rem;
+    display: none;
+    margin-top: 0.1rem;
+}
+
 /* Imagen del logo */
 img {
     width: 50px;
