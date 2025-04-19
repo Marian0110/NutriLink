@@ -9,6 +9,17 @@
     --shadow: #d1d0d057;
     --save: #03d435;
 }
+/* modal */
+.colorBg {
+  color: #c7c7c7;
+}
+
+.section-title {
+  font-size: 1.2rem; 
+  font-weight: bold;
+  padding: 0 10px;
+}
+
 /* titulo */
 .info-card {
     background-color: white;
@@ -190,10 +201,9 @@
 }
 
 .filtros .form-select {
-  min-width: 200px; /* Ajusta este valor según necesites */
+  min-width: 200px;
 }
 
-/* Opcional: para eliminar cualquier borde o sombra no deseada */
 .filtros .form-select:focus {
   box-shadow: none;
   border-color: #ced4da;
