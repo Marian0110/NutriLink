@@ -23,7 +23,7 @@
                         <img class="welcome-icon" src="{% static 'accounts/img/waving-hand-noto.svg' %}" alt="Welcome icon">
                     </div>
                     <p class="subtitle">Gestiona tus consultas nutricionales con NutriLink.</p>
-                    <form id="login-form" class="login-form" method="#" action="#">
+                    <form id="login-form" class="login-form" method="POST">
                         {% csrf_token %}
                         <div class="form-group">
                             <label class="form-label" for="emailLogin">Correo:</label>
@@ -53,33 +53,26 @@
 <!-- Script de validaciones frontend en campos aqui por el momento -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-document.getElementById('login-form').addEventListener('submit', function(e) {
-    e.preventDefault(); // Evita que se envie o se envie con errores
-
-    // Obtencion de valores
-    const emailLogin = document.getElementById('emailLogin').value.trim();
-    const contraseñaLogin = document.getElementById('contraseñaLogin').value;
-
-    // Mensajes de error
-    const errorEmailLogin = document.getElementById('error-emailLogin');
-    const errorContraseñaLogin = document.getElementById('error-contraseñaLogin');
-
-    let valid = true; // Variable para saber si todo es válido
-
-    // Validar campos vacios (solo al principio)
-    if (emailLogin === "" && contraseñaLogin === "") {
-        Swal.fire({
-            icon: 'error',
-            title: '¡Campos vacíos!',
-            text: 'Por favor, rellene todos los campos obligatorios.',
-            confirmButtonText: 'Aceptar'
-        });
-        valid = false;
-    }
-
-    // Falta validar con backend
-    if (valid) {
-        // Validar email
+    document.getElementById('login-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+    
+        const emailLogin = document.getElementById('emailLogin').value.trim();
+        const contraseñaLogin = document.getElementById('contraseñaLogin').value;
+        const errorEmailLogin = document.getElementById('error-emailLogin');
+        const errorContraseñaLogin = document.getElementById('error-contraseñaLogin');
+    
+        let valid = true;
+    
+        if (emailLogin === "" && contraseñaLogin === "") {
+            Swal.fire({
+                icon: 'error',
+                title: '¡Campos vacíos!',
+                text: 'Por favor, rellene todos los campos obligatorios.',
+                confirmButtonText: 'Aceptar'
+            });
+            valid = false;
+        }
+    
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(emailLogin)) {
             errorEmailLogin.textContent = "Correo electrónico inválido";
@@ -88,30 +81,62 @@ document.getElementById('login-form').addEventListener('submit', function(e) {
         } else {
             errorEmailLogin.style.display = "none";
         }
-
-        // Validar contraseña
-        const passRegex = /^(?=.*[A-Z]).{6,}$/;
-        if (!passRegex.test(contraseñaLogin)) {
-            errorContraseñaLogin.textContent = "Contraseña invalida";
-            errorContraseñaLogin.style.display = "block";
-            valid = false;
-        } else {
-            errorContraseñaLogin.style.display = "none";
-        }}
-
-    // Si todo ok, se envia el formulario
-    if (valid) {
-        this.submit();
-    }
-});
-
-// Eliminar mensaje de error cuando el usuario escribe en un campo
-document.querySelectorAll('input').forEach(input => {
-    input.addEventListener('input', function() {
-        const errorElement = document.getElementById(`error-${input.id}`);
-        if (errorElement && input.value.trim() !== "") {
-            errorElement.style.display = "none"; // Oculta el mensaje de error cuando el campo no esta vacio
+    
+        if (valid) {
+            try {
+                const response = await fetch('https://nutrilinkapi-production.up.railway.app/api_nutrilink/nutricionista/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        correo: emailLogin,
+                        contrasena: contraseñaLogin
+                    })
+                });
+    
+                const data = await response.json();
+    
+                if (response.ok) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Autentificación exitosa',
+                        confirmButtonText: 'Aceptar'
+                    });
+                    setTimeout(() => {
+                    // // ✅ Login correcto, puedes guardar el token o redirigir
+                    // localStorage.setItem('token', data.token); // o sessionStorage
+                    window.location.href = '/accounts/perfil'; 
+                    }, 2000);
+                    
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error de autenticación',
+                        text: data.message || 'Correo o contraseña incorrectos',
+                        confirmButtonText: 'Aceptar'
+                    });
+                }
+            } catch (error) {
+                console.error('Error en la solicitud:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error de red',
+                    text: 'No se pudo conectar con el servidor. Intenta nuevamente.',
+                    confirmButtonText: 'Aceptar'
+                });
+            }
         }
     });
-});
+    
+    // Limpieza de errores al escribir
+    document.querySelectorAll('input').forEach(input => {
+        input.addEventListener('input', function() {
+            const errorElement = document.getElementById(`error-${input.id}`);
+            if (errorElement && input.value.trim() !== "") {
+                errorElement.style.display = "none";
+            }
+        });
+    });
 </script>
+    
