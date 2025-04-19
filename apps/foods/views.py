@@ -8,7 +8,7 @@ from django.shortcuts import render
 import requests
 
 def bdCrud(request):
-    url = 'https://nutrilinkapi-production.up.railway.app/api_nutrilink/mantenedor_alimentos/alimentos'
+    url = 'https://nutrilinkapi-production.up.railway.app/api_nutrilink/alimento/alimentos'
     alimentos = []
     grupos = set()
 
