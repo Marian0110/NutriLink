@@ -76,7 +76,6 @@
     background-color: var(--white);
     border-radius: 8px;
     margin-bottom: 20px;
-    border: 1px solid #ccc;
     width: 30%;
   }
 
@@ -186,14 +185,19 @@
 }
 
 .filtros {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 12px;
   margin-bottom: 20px;
+  border: none;
 }
 
+.filtros .form-select {
+  min-width: 200px; /* Ajusta este valor según necesites */
+}
+
+/* Opcional: para eliminar cualquier borde o sombra no deseada */
+.filtros .form-select:focus {
+  box-shadow: none;
+  border-color: #ced4da;
+}
 .ordenar-dropdown {
   padding: 8px 10px;
   font-size: 1rem;

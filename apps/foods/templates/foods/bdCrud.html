@@ -5,60 +5,75 @@
 {% block content %}
 <div class="info-card">
     <div class="info">
-      <div class="card-icon">📊</div>
-      <div class="text-content">
-        <h1>Base de Datos Nutricional:</h1>
-        <p>Consulta, busca o crea información nutricional. Esta información será cargada para armar tus planes nutricionales personalizados.</p>
-      </div>
+        <div class="card-icon">📊</div>
+        <div class="text-content">
+            <h1>Base de Datos Nutricional:</h1>
+            <p>Consulta, busca o crea información nutricional. Esta información será cargada para armar tus planes nutricionales personalizados.</p>
+        </div>
     </div>
 </div>
+
 <div class="contenedor-alimentos">
     <div class="encabezado">
-      <h1>Alimentos</h1>
-      <button class="btn-agregar">Agregar</button>
+        <h1>Alimentos</h1>
+        <button class="btn-agregar">Agregar</button>
     </div>
+
     <div class="filtros">
-      <div class="buscador">
-        <div class="input-group">
-            <span class="input-group-text"><i class="fas fa-search"></i></span>
-            <input type="text" class="form-control" placeholder="Buscar alimento...">
-        </div>
-      </div>
-      <select class="ordenar-dropdown">
-        <option value="desc">Ordenar por nutrientes (desc)</option>
-        <option value="asc">Ordenar por nutrientes (asc)</option>
-      </select>
+      <!-- Formulario de búsqueda -->
+      <form method="get" class="d-flex flex-wrap justify-content-between w-100 gap-3">
+          <div class="input-group" style="max-width: 500px;">
+              <span class="input-group-text"><i class="fas fa-search"></i></span>
+              <input type="text" name="q" class="form-control" placeholder="Buscar alimento..." value="{{ request.GET.q }}">
+              <button type="submit" class="btn btn-primary">Buscar</button>
+          </div>
+  
+          <div class="ms-auto">
+              <select name="grupo" class="form-select" onchange="this.form.submit()">
+                  <option value="">Todos los grupos</option>
+                  {% for grupo in grupos %}
+                      <option value="{{ grupo }}" {% if request.GET.grupo == grupo %}selected{% endif %}>
+                          {{ grupo }}
+                      </option>
+                  {% endfor %}
+              </select>
+          </div>
+      </form>
     </div>
-    <!-- Ejemplo de estructura alimento -->
+
+    <!-- Loop de alimentos -->
+    {% for alimento in alimentos %}
     <div class="alimento-card">
-    <div class="alimento-info">
-        <div class="alimento-nombre">Brócoli</div>
-        <div class="alimento-origen">USDA</div>
+        <div class="alimento-info">
+            <div class="alimento-nombre">{{ alimento.nombre_alimento }}</div>
+            <div class="alimento-origen"></div>
+        </div>
+        <div class="alimento-derecha">
+            <div class="alimento-valores">
+                <div class="valor">
+                    <span>{{ alimento.lipidos_gr }}g</span>
+                    Lípidos
+                </div>
+                <div class="valor">
+                    <span>{{ alimento.kcal }} kcal</span>
+                    Calorías
+                </div>
+                <div class="valor">
+                    <span>{{ alimento.proteinas_gr }}g</span>
+                    Proteínas
+                </div>
+                <div class="valor">
+                    <span>{{ alimento.carbohidratos_gr }}g</span>
+                    CarboH
+                </div>
+            </div>
+            <div class="expansor">
+                <button class="btn" type="button" data-bs-toggle="modal" data-bs-target="#detalleModal{{ forloop.counter }}">
+                    <i class="fas fa-expand"></i>
+                </button>
+            </div>
+        </div>
     </div>
-    <div class="alimento-derecha">
-        <div class="alimento-valores">
-        <div class="valor">
-            <span>0g</span>
-            Lípidos
-        </div>
-        <div class="valor">
-            <span>400 kcal</span>
-            Calorías
-        </div>
-        <div class="valor">
-            <span>25g</span>
-            Proteínas
-        </div>
-        <div class="valor">
-            <span>23g</span>
-            CarboH
-        </div>
-        </div>
-        <div class="expansor">
-            <button class="btn " type="button">
-                <i class="fas fa-expand"></i>
-            </button>
-        </div>
-    </div>
+    {% endfor %}
 </div>
 {% endblock %}
