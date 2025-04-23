@@ -50,11 +50,19 @@
                         </div>
                     </div>
                     <div class="form-row">
-                        <div class="form-col">
+                        <div class="form-col" style="flex: 2;">
                             <div class="form-group">
                                 <label for="rut">Rut:<span class="required">*</span></label>
-                                <input type="text" id="rut" name="rut" class="form-control" placeholder="Ej: 99.999.999-K">
+                                <input style="font-size: small;" type="text" id="rut" name="rut" class="form-control" placeholder="Rut sin puntos y guión">
                                 <span class="error-message" id="error-rut"></span>
+                            </div>
+                        </div>
+                        <span style="font-size: 1.5rem; padding-top: 30px;">-</span>
+                        <div class="form-col" style="flex: 1;">
+                            <div class="form-group">
+                                <label for="id">Verificador:<span class="required">*</span></label>
+                                <input  type="text" id="dv" name="dv" class="form-control" placeholder="Digito">
+                                <span class="error-message" id="error-dv"></span>
                             </div>
                         </div>
                         <div class="form-col">
@@ -106,6 +114,7 @@ document.getElementById('registro-form').addEventListener('submit', async functi
     const primerNombre = document.getElementById('primerNombre').value.trim();
     const apellidoP = document.getElementById('apellidoP').value.trim();
     const rut = document.getElementById('rut').value.trim();
+    const digitoV = document.getElementById('dv').value;
     const email = document.getElementById('email').value.trim();
     const contraseña = document.getElementById('contraseña').value;
     const confirmarC = document.getElementById('confirmarC').value;
@@ -114,17 +123,14 @@ document.getElementById('registro-form').addEventListener('submit', async functi
     const errorPrimerNombre = document.getElementById('error-primerNombre');
     const errorApellidoP = document.getElementById('error-apellidoP');
     const errorRut = document.getElementById('error-rut');
+    const errorDv = document.getElementById('error-dv');
     const errorEmail = document.getElementById('error-email');
     const errorContraseña = document.getElementById('error-contraseña');
     const errorConfirmarC = document.getElementById('error-confirmarC');
-
-    const rutLimpio = rut.replace(/\./g, '').replace(/-/g, ''); //separador de dv y rut
-    const rutNumerico = rutLimpio.slice(0, -1);
-    const dv = rutLimpio.slice(-1).toUpperCase();
-
+    
     let valid = true;
 
-    if (primerNombre === "" || apellidoP === "" || rut === "" || email === "" || contraseña === "" || confirmarC === "") {
+    if (primerNombre === "" && apellidoP === "" && rut === "" && digitoV === "" && email === "" && contraseña === "" && confirmarC === "") {
         Swal.fire({
             icon: 'error',
             title: '¡Campos vacíos!',
@@ -135,7 +141,17 @@ document.getElementById('registro-form').addEventListener('submit', async functi
     }
 
     if (valid) {
-        if (!validarRutChileno(rut)) {
+
+        const dvRegex = /^[0-9Kk]{1}$/;
+        if (!dvRegex.test(digitoV)) {
+            errorDv.textContent = "Dígito verificador inválido (debe ser un número o K)";
+            errorDv.style.display = "block";
+            valid = false;
+        } else {
+            errorDv.style.display = "none";
+        }
+        
+        if (!validarRutChileno(rut, digitoV)) {
             errorRut.textContent = "RUT inválido";
             errorRut.style.display = "block";
             valid = false;
@@ -205,8 +221,8 @@ document.getElementById('registro-form').addEventListener('submit', async functi
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    rut_nutricionista: rutNumerico,
-                    dv: dv,
+                    rut_nutricionista: rut,
+                    dv: digitoV,
                     primer_nombre: primerNombre,
                     apellido_paterno: apellidoP,
                     correo: email,
@@ -266,18 +282,23 @@ document.getElementById('registro-form').addEventListener('submit', async functi
 });
 
 // Validación de RUT
-function validarRutChileno(rut) {
-    rut = rut.replace(/\./g, '').replace(/-/g, '');
-    if (rut.length < 9 || rut.length > 10) return false;
-    const cuerpo = rut.slice(0, -1);
-    let dv = rut.slice(-1).toUpperCase();
-    let suma = 0, multiplo = 2;
-    for (let i = cuerpo.length - 1; i >= 0; i--) {
-        suma += parseInt(cuerpo.charAt(i)) * multiplo;
+function validarRutChileno(rut, dv) {
+    rut = rut.replace(/\./g, ''); // Eliminamos puntos si los hay
+    if (rut.length < 7 || rut.length > 8) return false; // Validamos largo
+
+    dv = dv.toUpperCase(); // En caso de que sea 'k'
+
+    let suma = 0;
+    let multiplo = 2;
+
+    for (let i = rut.length - 1; i >= 0; i--) {
+        suma += parseInt(rut.charAt(i)) * multiplo;
         multiplo = multiplo < 7 ? multiplo + 1 : 2;
     }
+
     const dvEsperado = 11 - (suma % 11);
-    let dvFinal = dvEsperado === 11 ? '0' : dvEsperado === 10 ? 'K' : dvEsperado.toString();
+    const dvFinal = dvEsperado === 11 ? '0' : dvEsperado === 10 ? 'K' : dvEsperado.toString();
+
     return dv === dvFinal;
 }
 
