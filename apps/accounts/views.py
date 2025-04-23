@@ -44,11 +44,15 @@ def registro(request):
 
     return render(request, 'accounts/registro.html')
 
-def login(request):
-    return render(request, 'accounts/login.html')
+def logout(request):
+    request.session.flush()
+    return redirect('accounts:login')
 
 def perfil(request):
     return render(request, 'accounts/perfil.html')
+
+def login(request):
+    return render(request, 'accounts/login.html')
 
 def redirectPerfil(request):
     return render(request, 'accounts/perfil.html') #por el momento
