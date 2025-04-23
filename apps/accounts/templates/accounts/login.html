@@ -104,8 +104,10 @@
                         confirmButtonText: 'Aceptar'
                     });
                     setTimeout(() => {
-                    // // ✅ Login correcto, puedes guardar el token o redirigir
-                    // localStorage.setItem('token', data.token); // o sessionStorage
+                    // // Login correcto, guardar el token o guardar credenciales en sessionStorage (no recomendado para produccion)
+                    sessionStorage.setItem('correo', emailLogin);
+                    sessionStorage.setItem('contrasena', contraseñaLogin);
+                    // localStorage.setItem('token', data.token); // falta esto en lugar del sessionStorage
                     window.location.href = '/accounts/perfil'; 
                     }, 2000);
                     
