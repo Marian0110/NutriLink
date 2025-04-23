@@ -1,125 +1,66 @@
 :root {
-    font-size: 16px;
-    --primary-color: #173b4c;
-    --secondary-color: #3f5c69;
-    --accent-color: #62f485;
-    --text-color: #000000;
-    --light-text: #747474;
-    --white: #ffffff;
-    --shadow: #d1d0d057;
+  font-size: 16px;
+  --primary-color: #173b4c;
+  --secondary-color: #3f5c69;
+  --accent-color: #62f485;
+  --text-color: #000000;
+  --light-text: #747474;
+  --white: #ffffff;
+  --shadow: #d1d0d057;
 }
 
 .cards-wrapper {
-    display: flex;
-    height: calc(100vh - 60px);
-    padding: 1rem;
-    margin-left: 20%;
-    gap: 1rem;
-  }
-  
-  .perfil-card {
-    flex: 2;
-    margin-left: 1rem;
-  }
-  
-  .form-section {
-    background-color: #ffffff;
-    border-radius: 15px;
-    padding: 0.5rem 1.5rem 1.5rem 1.5rem; /* arriba, derecha, abajo, izquierda */
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-    overflow-y: unset;
-    border: 1px solid var(--shadow);
-    max-height: 100%;
-  }
-  
-  .form-sectionP {
-    width: 40%;
-    background-color: #ffffff;
-    border-radius: 15px;
-    padding: 1.5rem;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-    overflow-y: auto;
-    border: 1px solid var(--shadow);
-    height: 100%;
-  }
+  display: flex;
+  margin-left: 13%;
+  gap: 1rem;
+}
 
-  .form-containerIA {
-    width: 100%;
-  }
-  
-  .form-containerC {
-    width: 90%;
-  }
+.form-section {
+  width: 40%;
+  background-color: var(--white);
+  border-radius: 15px;
+  padding: 0.5rem 1.5rem 1.5rem 1.5rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  max-height: 400px;
+}
 
-  .form-group {
-    margin-bottom: 1rem;
-  }
-  
-  .perfil-form .row {
-    margin-bottom: 1rem;
-  }
-  
+.form-sectionP {
+  width: 60%;
+  background-color: var(--white);
+  border-radius: 15px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  border: 1px solid var(--shadow);
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+  color: var(--text-color);
+  font-size: 12px;
+}
+
+.perfil-form .row {
+  margin-bottom: 1rem;
+}
+
 .profile-picture img {
-    object-fit: cover;
-    width: 100%;
-    border-radius: 15px;
-    margin-bottom: 10% ;
-  }
-
-
-/* Minimum (768px and up) */
-@media (min-width: 768px) {
-    .registro-container {
-        flex-direction: row;
-        height: 90vh;
-        min-height: auto;
-    }
-    
-    .logo {
-        flex-direction: row;
-        text-align: left;
-    }
-    
-    .leaf-icon {
-        width: 6.0625rem;
-    }
+  object-fit: cover;
+  width: 100%;
+  border-radius: 15px;
+  margin-bottom: 10%;
 }
 
-
-/* Desktop (1024px and up) */
-@media (min-width: 1024px) {
-    .form-container {
-        height: 70%;
-    }
+.btn {
+  cursor: pointer;
 }
 
-/* Large Desktop (1440px and up) */
-@media (min-width: 1440px) {
-    .registro-container {
-        max-height: 64rem;
-    }
-    
-    .brand-section {
-        padding: 4rem;
-    }
-    
-    .form-section {
-        padding: 4rem;
-    }
-
-    .form-group {
-        font-size: 13px;
-    }
-
-}
-
-/* Ultra-wide screens (1920px and up) */
-@media (min-width: 1920px) {
-    :root {
-        font-size: 18px;
-    }
-    
-    .registro-container {
-        max-width: 140rem;
-    }
+.error-message {
+  color: red;
+  font-size: 11px;
 }

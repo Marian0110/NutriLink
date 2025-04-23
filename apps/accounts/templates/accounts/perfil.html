@@ -3,103 +3,95 @@
 {% block title %}Perfil{% endblock %}
 
 {% block content %}
-<!-- Contenido principal -->
-<main class="cards-wrapper d-flex p-6">
-    <!-- Card1 Perfil -->
-    <div class="form-sectionP me-3">
-      <!-- Foto de perfil predeterminada -->
-      <div class="profile-picture">
-        <img src="{% static 'accounts/img/defaultPhoto.jpg' %}" alt="Foto de perfil" class="default-photo" width="120" height="120" />
-      </div>
-      <div class="form-containerP">
-        <div class="title d-flex text-center justify-content-between mb-3">
-          <h3>Mi Perfil</h3>
-        </div>
-        <form class="perfil-form">
-          <div class="row">
-            <div class="form-group col-md-6 mb-4">
-              <label for="pNombre">Primer nombre *</label>
-              <input type="text" id="pNombre" class="form-control" placeholder="nombre" />
-            </div>
-            <div class="form-group col-md-6 mb-3">
-              <label for="sNombre">Segundo nombre </label>
-              <input type="text" id="sNombre" class="form-control" placeholder="nombre" />
-            </div>
-            <div class="form-group col-md-6 mb-3">
-              <label for="apePater">Apellido paterno *</label>
-              <input type="text" id="apePater" class="form-control" placeholder="apellido" />
-            </div>
-            <div class="form-group col-md-6 mb-3">
-              <label for="apeMater">Apellido materno</label>
-              <input type="text" id="apeMater" class="form-control" placeholder="apellido" />
-            </div>
-            <div class="form-group col-12 mb-3">
-              <label for="email">Correo *</label>
-              <input type="email" id="email" class="form-control" placeholder="correo" />
-            </div>
-          </div>
-          <button class="btn btn-success mt-2 w-100" type="submit">Actualizar</button><!-- Falta el sweetalert--> 
-        </form>
-      </div>
+<main class="cards-wrapper d-flex p-5">
+  <!-- Card1 Perfil -->
+  <div class="form-sectionP me-3">
+    <div class="profile-picture">
+      <img src="{% static 'accounts/img/defaultPhoto.jpg' %}" id="profilePhoto" alt="Foto de perfil" class="default-photo" width="120" height="120" />
     </div>
-    <!-- Cards laterales -->
-    <div class="d-flex flex-column flex-shrink-1 w-50">
-      <!-- Card2 info adicional -->
-      <div class="form-section mb-2">
-        <div class="form-containerIA shadow-sm  mx-auto">
-          <div class="mb-3">
-            <h6>Información adicional</h6>
-          </div>
-          <form>
-            <div class="row">
-              <div class="form-group col-md-6 mb-3">
-                <label for="rut">RUT *</label>
-                <input type="text" id="rut" class="form-control" placeholder="Ej: 99.999.999-K" />
-              </div>
-              <div class="form-group col-md-6 mb-3">
-                <label for="fechaNacimiento">Fecha de nacimiento:</label>
-                <input type="date" id="fechaNacimiento" class="form-control" />
-              </div>
-              <div class="form-group col-md-6 mb-3">
-                <label for="telefono">Teléfono:</label>
-                <input type="text" id="telefono" class="form-control" placeholder="Número de contacto" />
-              </div>
-              <div class="form-group col-md-6 mb-3">
-                <label for="especializacion">Especialización:</label>
-                <input type="text" id="especializacion" class="form-control" placeholder="Nutricionista Deportivo" />
-              </div>
-            </div>
-            <button class="btn btn-success w-100" type="submit">Guardar</button> <!-- Falta el sweetalert-->         
-          </form>
-        </div>
+    <div class="form-containerP">
+      <div class="d-flex text-center justify-content-between mb-3">
+        <h3>Mi Perfil</h3>
       </div>
-      <!-- Card3 cambio de contraseña -->
-      <div class="form-section">
-        <div class="form-containerC shadow-sm">
-          <div class="title mb-3">
-            <h6>Cambiar contraseña</h6>
+      <form class="perfil-form" id="profile-form" method="POST">
+        {% csrf_token %}
+        <div class="row">
+          <div class="form-group col-md-6 mb-4">
+            <label for="pNombre">Primer nombre *</label>
+            <input type="text" id="pNombre" name="pNombre" class="form-control" placeholder="nombre" disabled />
+            <span class="error-message" id="error-pNombre"></span>
           </div>
-          <form>
-            <div class="row">
-              <div style="width: 50%;" class="form-group mb-3">
-                <label for="passActual">Contraseña actual *</label>
-                <input type="password" id="passActual" class="form-control" placeholder="********" />
-              </div>
-            </div>
-            <div class="row">
-              <div class="form-group col-md-6 mb-3">
-                <label for="passNueva">Nueva contraseña:</label>
-                <input type="password" id="passNueva" class="form-control" placeholder="********" />
-              </div>
-              <div class="form-group col-md-6 mb-3">
-                <label for="confirmarPass">Confirmar contraseña:</label>
-                <input type="password" id="confirmarPass" class="form-control" placeholder="********" />
-              </div>
-            </div>
-            <button class="btn btn-success w-100" type="submit">Actualizar contraseña</button> <!-- Falta el sweetalert--> 
-          </form>
+          <div class="form-group col-md-6 mb-3">
+            <label for="sNombre">Segundo nombre </label>
+            <input type="text" id="sNombre" name="sNombre" class="form-control" placeholder="nombre" />
+            <span class="error-message" id="error-sNombre"></span>
+          </div>
+          <div class="form-group col-md-6 mb-3">
+            <label for="apePater">Apellido paterno *</label>
+            <input type="text" id="apePater" name="apePater" class="form-control" placeholder="apellido" disabled />
+            <span class="error-message" id="error-apePater"></span>
+          </div>
+          <div class="form-group col-md-6 mb-3">
+            <label for="apeMater">Apellido materno</label>
+            <input type="text" id="apeMater" name="apeMater" class="form-control" placeholder="apellido" />
+            <span class="error-message" id="error-apeMater"></span>
+          </div>
+          <div class="form-group col-md-6 mb-3">
+            <label for="email">Correo *</label>
+            <input type="email" id="email" name="email" class="form-control" placeholder="correo" disabled />
+            <span class="error-message" id="error-email"></span>
+          </div> <!-- Información adicional ahora en la misma card -->
+          <div class="form-group col-md-6 mb-3">
+            <label for="rut">RUT *</label>
+            <input type="text" id="rut" name="rut" class="form-control" placeholder="Rut" disabled />
+            <span class="error-message" id="error-rut"></span>
+          </div>
+          <div class="form-group col-md-6 mb-3">
+            <label for="fechaNacimiento">Fecha de nacimiento:</label>
+            <input type="date" id="fechaNacimiento" name="fechaNacimiento" class="form-control" />
+            <span class="error-message" id="error-fechaNacimiento"></span>
+          </div>
+          <div class="form-group col-md-6 mb-3">
+            <label for="telefono">Teléfono:</label>
+            <input type="text" id="telefono" name="telefono" class="form-control" placeholder="Número de contacto" />
+            <span class="error-message" id="error-telefono"></span>
+          </div>
+          <div class="form-group col-md-6 mb-3">
+            <label for="especializacion">Especialización:</label>
+            <input type="text" id="especializacion" name="especializacion" class="form-control" placeholder="Nutricionista Deportivo" />
+            <span class="error-message" id="error-especializacion"></span>
+          </div>
         </div>
-      </div>
+        <button class="btn btn-success mt-2 w-100" type="submit">Actualizar</button>
+      </form>
     </div>
-  </main>
+  </div>
+
+  <!-- Card3 cambio de contraseña -->
+  <div class="form-section">
+    <div class="title mb-3 mt-5">
+      <h5>Cambiar contraseña</h5>
+    </div>
+    <form id="password-form" method="POST">
+      {% csrf_token %}
+      <div class="form-group mb-3">
+        <label for="passActual">Contraseña actual: *</label>
+        <input type="password" id="passActual" name="passActual" class="form-control" placeholder="********" required />
+        <span class="error-message" id="error-passActual"></span>
+      </div>
+      <div class="form-group mb-3">
+        <label for="passNueva">Nueva contraseña:</label>
+        <input type="password" id="passNueva" name="passNueva" class="form-control" placeholder="********" required />
+        <span class="error-message" id="error-passNueva"></span>
+      </div>
+      <div class="form-group mb-3">
+        <label for="confirmarPass">Confirmar contraseña:</label>
+        <input type="password" id="confirmarPass" name="confirmarPass" class="form-control" placeholder="********" required />
+        <span class="error-message" id="error-confirmarPass"></span>
+      </div>
+      <button class="btn btn-success w-100" type="submit">Actualizar contraseña</button>
+    </form>
+  </div>
+</main>
+
 {% endblock %}
