@@ -64,64 +64,6 @@
                     </button>
                   </td>
                 </tr>
-                <!-- Paciente 2 -->
-                <tr>
-                  <th scope="row">2</th>
-                  <td>María García López</td>
-                  <td>maria.garcia@example.com</td>
-                  <td><span class="badge bg-statusD">Inactivo</span></td>
-                  <td>
-                    <button class="btn btn-sm btn-outline-primary me-2 edit-btn"
-                            data-bs-toggle="modal" 
-                            data-bs-target="#patientModal"
-                            data-patient-id="2"
-                            data-patient-data='{
-                              "firstName":"María",
-                              "secondName":"",
-                              "lastName":"García",
-                              "mothersMaidenName":"López",
-                              "rut":"98.765.432-1",
-                              "birthDate":"1990-07-22",
-                              "gender":"femenino",
-                              "email":"maria.garcia@example.com",
-                              "phone":"+56912345678"
-                            }'>
-                      <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="btn btn-sm btn-outline-danger delete-btn">
-                      <i class="fas fa-trash-alt"></i>
-                    </button>
-                  </td>
-                </tr>
-                <!-- Paciente 3 -->
-                <tr>
-                  <th scope="row">3</th>
-                  <td>Carlos Rodríguez Martínez</td>
-                  <td>carlos.rodriguez@example.com</td>
-                  <td><span class="badge bg-statusA">Activo</span></td>
-                  <td>
-                    <button class="btn btn-sm btn-outline-primary me-2 edit-btn"
-                            data-bs-toggle="modal" 
-                            data-bs-target="#patientModal"
-                            data-patient-id="3"
-                            data-patient-data='{
-                              "firstName":"Carlos",
-                              "secondName":"",
-                              "lastName":"Rodríguez",
-                              "mothersMaidenName":"Martínez",
-                              "rut":"76.543.210-9",
-                              "birthDate":"1978-11-30",
-                              "gender":"masculino",
-                              "email":"carlos.rodriguez@example.com",
-                              "phone":"+56955556666"
-                            }'>
-                      <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="btn btn-sm btn-outline-danger delete-btn">
-                      <i class="fas fa-trash-alt"></i>
-                    </button>
-                  </td>
-                </tr>
               </tbody>
             </table>
           </div>
@@ -156,8 +98,8 @@
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
-        <form id="patientForm">
-          <input type="hidden" id="patientId">
+        <form id="paciente-form" method="POST">
+          <input type="hidden" id="id">
           
           <!-- Sección de información personal -->
           <fieldset class="personal-info-section mb-4">
@@ -168,51 +110,58 @@
                 <label class="form-label">
                   Primer nombre: <span class="text-danger">*</span>
                 </label>
-                <input type="text" class="form-control" id="firstName" required>
+                <input type="text" class="form-control" id="pNombre" name="pNombre" required>
               </div>
               <div class="col-md-6">
                 <label class="form-label">Segundo nombre:</label>
-                <input type="text" class="form-control" id="secondName">
+                <input type="text" class="form-control" id="sNombre" name="sNombre">
               </div>
               
               <div class="col-md-6">
                 <label class="form-label">
                   Apellido paterno: <span class="text-danger">*</span>
                 </label>
-                <input type="text" class="form-control" id="lastName" required>
+                <input type="text" class="form-control" id="apePater" name="apePater" required>
               </div>
               <div class="col-md-6">
                 <label class="form-label">Apellido materno:</label>
-                <input type="text" class="form-control" id="mothersMaidenName">
+                <input type="text" class="form-control" id="apeMater" name="apeMater">
               </div>
               
-              <div class="col-md-4">
+              <div class="col-md-3">
                 <label class="form-label">
                   R.U.T: <span class="text-danger">*</span>
                 </label>
                 <div class="input-group">
-                  <input type="text" class="form-control" id="rut" required>
+                  <input type="text" class="form-control" id="rut" name="rut" required>
                   <span class="input-group-text"><i class="fas fa-id-card"></i></span>
                 </div>
+              </div>
+              <div class="col-md-2">
+                <label class="form-label">
+                  Digito: <span class="text-danger">*</span>
+                </label>
+                <div class="input-group">
+                  <input type="text" class="form-control" id="digitoV" name="digitoV" placeholder="verificador" required>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">
+                  Sexo: <span class="text-danger">*</span>
+                </label>
+                <select class="form-select" id="sexo" name="sexo" required>
+                  <option value="">Seleccionar</option>
+                  <option value="masculino">Masculino</option>
+                  <option value="femenino">Femenino</option>
+                </select>
               </div>
               <div class="col-md-4">
                 <label class="form-label">
                   Fecha nacimiento: <span class="text-danger">*</span>
                 </label>
                 <div class="input-group">
-                  <input type="date" class="form-control" id="birthDate" required>
-                  <span class="input-group-text"><i class="fas fa-calendar-alt"></i></span>
+                  <input type="date" class="form-control" id="fechaNacimiento" name="fechaNacimiento" required>
                 </div>
-              </div>
-              <div class="col-md-4">
-                <label class="form-label">
-                  Sexo: <span class="text-danger">*</span>
-                </label>
-                <select class="form-select" id="gender" required>
-                  <option value="">Seleccionar</option>
-                  <option value="masculino">Masculino</option>
-                  <option value="femenino">Femenino</option>
-                </select>
               </div>
             </div>
           </fieldset>
@@ -224,7 +173,7 @@
               <div class="col-md-6">
                 <label class="form-label">Teléfono:</label>
                 <div class="input-group">
-                  <input type="tel" class="form-control" id="phone">
+                  <input type="tel" class="form-control" id="telefono" name="telefono">
                   <span class="input-group-text"><i class="fas fa-phone"></i></span>
                 </div>
               </div>
@@ -233,7 +182,7 @@
                   Correo: <span class="text-danger">*</span>
                 </label>
                 <div class="input-group">
-                  <input type="email" class="form-control" id="email" required>
+                  <input type="email" class="form-control" id="email" name="email" required>
                   <span class="input-group-text"><i class="fas fa-envelope"></i></span>
                 </div>
               </div>
