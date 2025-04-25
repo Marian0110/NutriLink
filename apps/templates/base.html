@@ -49,7 +49,7 @@
             </svg>
             <span style="margin-left: 8px;">Agenda</span>
         </a>
-        <a href="#" class="btn" style="display: flex; align-items: center;">
+        <a href="{% url 'foods:bdCrud' %}" class="btn" style="display: flex; align-items: center;">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" style="fill: rgb(255, 255, 255);">
               <path d="M20 6c0-2.168-3.663-4-8-4S4 3.832 4 6v2c0 2.168 3.663 4 8 4s8-1.832 8-4V6zm-8 13c-4.337 0-8-1.832-8-4v3c0 2.168 3.663 4 8 4s8-1.832 8-4v-3c0 2.168-3.663 4-8 4z"></path>
               <path d="M20 10c0 2.168-3.663 4-8 4s-8-1.832-8-4v3c0 2.168 3.663 4 8 4s8-1.832 8-4v-3z"></path>
@@ -73,7 +73,7 @@
           <ul class="dropdown-menu dropdown-menu-end">
             <li><a class="dropdown-item" href="{% url 'accounts:perfil' %}">Mi cuenta</a></li>
             <li><hr class="dropdown-divider" /></li>
-            <li><a class="dropdown-item" href="#" id="logout_link">Cerrar sesión</a></li>
+            <li><a class="dropdown-item" href="#" id="logout-link">Cerrar sesión</a></li>
           </ul>
         </div>
     </div>
@@ -87,35 +87,40 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
   <!-- Script para cerrar sesion aqui por el momento -->
-  <script>
-  document.getElementById('logout_link').addEventListener('click', function(e) {
-    e.preventDefault();
+<script>
+document.getElementById("logout-link").addEventListener("click", function(e) {
+  e.preventDefault();
 
-    Swal.fire({
-      title: '¿Estás seguro/a?',
-      text: '¿Deseas cerrar sesión?',
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonText: 'Sí, cerrar sesión',
-      cancelButtonText: 'Cancelar',
-      reverseButtons: true
-    }).then((result) => {
-      if (result.isConfirmed) {
-        Swal.fire({
-          title: 'Cerrando sesión...',
-          html: 'Espere un momento',
-          allowOutsideClick: false,
-          didOpen: () => {
-            Swal.showLoading()
-          }
-        });
-        // Redireccion despues de delay
-        setTimeout(() => {
-          window.location.href = "{% url 'accounts:logout' %}";
-        }, 3000);
-      }
-    });
+  Swal.fire({
+    title: '¿Estás seguro/a?',
+    text: '¿Deseas cerrar sesión?',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: 'Sí, cerrar sesión',
+    cancelButtonText: 'Cancelar',
+    reverseButtons: true
+  }).then((result) => {
+    if (result.isConfirmed) {
+      Swal.fire({
+        title: 'Cerrando sesión...',
+        html: 'Espere un momento',
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
+        }
+      });
+
+      // Limpiar sessionStorage y redirigir
+      setTimeout(() => {
+        sessionStorage.removeItem("id_nutricionista");
+        sessionStorage.removeItem("correo");
+        sessionStorage.removeItem("contrasena");
+        window.location.href = "/accounts/login";
+      }, 3000);
+    }
   });
+});
+
 </script>
 </body>
 </html>

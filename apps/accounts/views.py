@@ -44,10 +44,6 @@ def registro(request):
 
     return render(request, 'accounts/registro.html')
 
-def logout(request):
-    request.session.flush()
-    return redirect('accounts:login')
-
 def perfil(request):
     return render(request, 'accounts/perfil.html')
 
