@@ -96,7 +96,7 @@
                 });
     
                 const data = await response.json();
-    
+
                 if (response.ok) {
                     Swal.fire({
                         icon: 'success',
@@ -104,10 +104,11 @@
                         confirmButtonText: 'Aceptar'
                     });
                     setTimeout(() => {
-                    // // Login correcto, guardar el token o guardar credenciales en sessionStorage (no recomendado para produccion)
+                    // Login correcto, guardar el token o guardar credenciales en sessionStorage (no recomendado para produccion)
+                    sessionStorage.setItem('id_nutricionista', data.id_nutricionista); 
                     sessionStorage.setItem('correo', emailLogin);
                     sessionStorage.setItem('contrasena', contraseñaLogin);
-                    // localStorage.setItem('token', data.token); // falta esto en lugar del sessionStorage
+                    // localStorage.setItem('token', data.token); // falta esto en lugar del
                     window.location.href = '/accounts/perfil'; 
                     }, 2000);
                     

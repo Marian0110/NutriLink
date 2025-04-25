@@ -98,8 +98,9 @@
   document.addEventListener('DOMContentLoaded', async () => {
     const correo = sessionStorage.getItem("correo");
     const contrasena = sessionStorage.getItem("contrasena");
+    const id_nutricionista = sessionStorage.getItem('id_nutricionista');
 
-    if (!correo && !contrasena) {
+    if (!id_nutricionista || !correo || !contrasena) {
       alert("No se encontró la sesión. Inicia sesión nuevamente.");
       window.location.href = '/accounts/login';
       return;
@@ -107,15 +108,11 @@
 
     // Cargar datos del nutricionista usando correo y contraseña
     try {
-      const response = await fetch("https://nutrilinkapi-production.up.railway.app/api_nutrilink/nutricionista/obtener_nutricionista", {
-        method: "POST",
+      const response = await fetch(`https://nutrilinkapi-production.up.railway.app/api_nutrilink/nutricionista/obtener_nutricionista_id/${id_nutricionista}`, {
+        method: "GET",
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({
-          correo: correo,
-          contrasena: contrasena
-        })
       });
 
       if (response.ok) {
@@ -132,7 +129,7 @@
           document.getElementById("apeMater").value = nutricionista.apellido_materno || '';
           document.getElementById("email").value = nutricionista.correo || '';
           document.getElementById("rut").value = nutricionista.rut_nutricionista + '-' + nutricionista.dv || '';
-          document.getElementById("fechaNacimiento").value = nutricionista.fecha_nacimiento.split('T')[0] || '';
+          document.getElementById("fechaNacimiento").value = nutricionista.fecha_nacimiento ? nutricionista.fecha_nacimiento.split('T')[0] : ''; //cambio en formato por API
           document.getElementById("telefono").value = nutricionista.telefono || '';
           document.getElementById("especializacion").value = nutricionista.especializacion || '';
         } else {
