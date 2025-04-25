@@ -1,14 +1,12 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Gestión de Pacientes{% endblock %}
+{% block title %}Pacientes{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
   <div class="row">
-    <!-- Contenido principal -->
     <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
-      <!-- Encabezado -->
       <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
         <h1 class="h3">
           <i class="fas fa-users me-2"></i>Gestión de pacientes
@@ -19,10 +17,9 @@
           </button>
         </div>
       </div>
-      <!-- Card contenedora -->
+      
       <div class="card shadow-lg mt-3" style="border-radius: 15px; border: none;">
         <div class="card-body">
-          <!-- Tabla de pacientes -->
           <div class="table-responsive">
             <table class="table table-hover align-middle">
               <thead class="table-light">
@@ -34,59 +31,28 @@
                   <th scope="col">Operaciones</th>
                 </tr>
               </thead>
-              <tbody>
-                <!-- Estructura paciente ejemplo 1 -->
+              <tbody id="pacientes-table-body">
                 <tr>
-                  <th scope="row">1</th>
-                  <td>Juan Pérez González</td>
-                  <td>juan.perez@example.com</td>
-                  <td><span class="badge bg-statusA">Activo</span></td>
-                  <td>
-                    <button class="btn btn-sm btn-outline-primary me-2 edit-btn"
-                            data-bs-toggle="modal" 
-                            data-bs-target="#patientModal"
-                            data-patient-id="1"
-                            data-patient-data='{
-                              "firstName":"Juan",
-                              "secondName":"",
-                              "lastName":"Pérez",
-                              "mothersMaidenName":"González",
-                              "rut":"12.345.678-9",
-                              "birthDate":"1985-03-15",
-                              "gender":"masculino",
-                              "email":"juan.perez@example.com",
-                              "phone":"+56987654321"
-                            }'>
-                      <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="btn btn-sm btn-outline-danger delete-btn">
-                      <i class="fas fa-trash-alt"></i>
-                    </button>
+                  <td colspan="5" class="text-center">
+                    <div class="spinner-border text-primary" role="status">
+                      <span class="visually-hidden">Cargando...</span>
+                    </div>
                   </td>
                 </tr>
               </tbody>
             </table>
           </div>
-          <!-- Paginacion estatica por el momento-->
-          <nav aria-label="Page navigation">
-            <ul class="pagination justify-content-end mt-4">
-              <li class="page-item disabled">
-                <a class="page-link" href="#" tabindex="-1">Anterior</a>
-              </li>
-              <li class="page-item active"><a class="page-link" href="#">1</a></li>
-              <li class="page-item"><a class="page-link" href="#">2</a></li>
-              <li class="page-item"><a class="page-link" href="#">3</a></li>
-              <li class="page-item">
-                <a class="page-link" href="#">Siguiente</a>
-              </li>
-            </ul>
+          
+          <nav aria-label="Page navigation" id="pagination-container">
+            <ul class="pagination justify-content-end mt-4"></ul>
           </nav>
         </div>
       </div>
     </main>
   </div>
 </div>
-<!-- Modal para agregar/editar paciente -->
+
+<!-- Modal -->
 <div class="modal fade" id="patientModal" tabindex="-1" aria-labelledby="patientModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered modal-lg">
     <div class="modal-content">
@@ -101,14 +67,11 @@
         <form id="paciente-form" method="POST">
           {% csrf_token %}
           <input type="hidden" id="id">
-          <!-- Sección de información personal -->
           <fieldset class="personal-info-section mb-4">
             <legend class="section-title">Información Personal</legend>
             <div class="row g-3">
               <div class="col-md-6">
-                <label class="form-label">
-                  Primer nombre: <span class="text-danger">*</span>
-                </label>
+                <label class="form-label">Primer nombre: <span class="text-danger">*</span></label>
                 <input type="text" class="form-control" id="primer_nombre" name="primer_nombre" required>
               </div>
               <div class="col-md-6">
@@ -117,9 +80,7 @@
               </div>
               
               <div class="col-md-6">
-                <label class="form-label">
-                  Apellido paterno: <span class="text-danger">*</span>
-                </label>
+                <label class="form-label">Apellido paterno: <span class="text-danger">*</span></label>
                 <input type="text" class="form-control" id="apellido_paterno" name="apellido_paterno" required>
               </div>
               <div class="col-md-6">
@@ -128,26 +89,20 @@
               </div>
               
               <div class="col-md-3">
-                <label class="form-label">
-                  R.U.T: <span class="text-danger">*</span>
-                </label>
+                <label class="form-label">R.U.T: <span class="text-danger">*</span></label>
                 <div class="input-group">
                   <input type="text" class="form-control" id="rut_paciente" name="rut_paciente" required>
                   <span class="input-group-text"><i class="fas fa-id-card"></i></span>
                 </div>
               </div>
               <div class="col-md-2">
-                <label class="form-label">
-                  Digito: <span class="text-danger">*</span>
-                </label>
+                <label class="form-label">Digito: <span class="text-danger">*</span></label>
                 <div class="input-group">
                   <input type="text" class="form-control" id="dv" name="dv" placeholder="verificador" required>
                 </div>
               </div>
               <div class="col-md-3">
-                <label class="form-label">
-                  Sexo: <span class="text-danger">*</span>
-                </label>
+                <label class="form-label">Sexo: <span class="text-danger">*</span></label>
                 <select class="form-select" id="sexo" name="sexo" required>
                   <option value="">Seleccionar</option>
                   <option value="M">Masculino</option>
@@ -155,19 +110,16 @@
                 </select>
               </div>
               <div class="col-md-4">
-                <label class="form-label">
-                  Fecha nacimiento: <span class="text-danger">*</span>
-                </label>
+                <label class="form-label">Fecha nacimiento: <span class="text-danger">*</span></label>
                 <div class="input-group">
                   <input type="date" class="form-control" id="fecha_nacimiento" name="fecha_nacimiento" required>
                 </div>
               </div>
             </div>
           </fieldset>
-          <!-- Sección de informacion de contacto -->
+          
           <fieldset class="contact-info-section mb-4">
             <legend class="section-title">Información de Contacto</legend>
-
             <div class="row g-3">
               <div class="col-md-6">
                 <label class="form-label">Teléfono:</label>
@@ -177,9 +129,7 @@
                 </div>
               </div>
               <div class="col-md-6">
-                <label class="form-label">
-                  Correo: <span class="text-danger">*</span>
-                </label>
+                <label class="form-label">Correo: <span class="text-danger">*</span></label>
                 <div class="input-group">
                   <input type="email" class="form-control" id="correo" name="correo" required>
                   <span class="input-group-text"><i class="fas fa-envelope"></i></span>
@@ -187,7 +137,7 @@
               </div>
             </div>
           </fieldset>
-          <!-- Botones de accion -->
+          
           <div class="d-flex justify-content-end gap-2 mt-4">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
               <i class="fas fa-times me-2"></i>Cancelar
@@ -202,26 +152,233 @@
   </div>
 </div>
 
-
-<!-- JavaScript para el sweet alert de eliminacion y el modal dinámico (registro/edicion) por el momento aqui, luego se pasa a archivo en static/js-->
 <script>
-document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', function() {
+  // Elementos del DOM
+  const pacientesTableBody = document.getElementById('pacientes-table-body');
   const form = document.getElementById('paciente-form');
   const patientModal = new bootstrap.Modal(document.getElementById('patientModal'));
-  
-  // configuracion del modal para agregar paciente
-  document.getElementById('addPatientBtn').addEventListener('click', resetModal);
 
-  // funcion para resetear el modal
+  // Variables
+  let currentPage = 1;
+
+  // Inicialización
+  document.getElementById('addPatientBtn').addEventListener('click', prepareAddModal);
+  fetchPacientes();
+
+  // Funciones principales
+  async function fetchPacientes() {
+    const idNutricionista = sessionStorage.getItem('id_nutricionista');
+    
+    if (!idNutricionista) {
+      showError('Debe iniciar sesión como nutricionista');
+      redirectToLogin();
+      return;
+    }
+    
+    try {
+      showLoading();
+      
+      const response = await fetch(
+        `https://nutrilinkapi-production.up.railway.app/api_nutrilink/nutricionista/obtener_pacientes_nutricionista/${idNutricionista}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json"
+          }
+        }
+      );
+      
+      const data = await response.json();
+      
+      if (!response.ok || data.status === 'error') {
+        throw new Error(data.mensaje || 'Error al obtener pacientes');
+      }
+      
+      renderPacientes(data.data || []);
+      
+    } catch (error) {
+      showError(error.message);
+    }
+  }
+
+  function renderPacientes(pacientes) {
+    if (pacientes.length === 0) {
+      pacientesTableBody.innerHTML = `
+        <tr>
+          <td colspan="5" class="text-center">No se encontraron pacientes registrados</td>
+        </tr>
+      `;
+      return;
+    }
+
+    let html = '';
+    pacientes.forEach((paciente, index) => {
+      const fullName = `
+        ${paciente.primer_nombre || ''} 
+        ${paciente.segundo_nombre || ''} 
+        ${paciente.apellido_paterno || ''} 
+        ${paciente.apellido_materno || ''}
+      `.replace(/\s+/g, ' ').trim();
+
+      const patientData = {
+        firstName: paciente.primer_nombre,
+        secondName: paciente.segundo_nombre,
+        lastName: paciente.apellido_paterno,
+        mothersMaidenName: paciente.apellido_materno,
+        rut: `${paciente.rut_paciente}-${paciente.dv}`,
+        birthDate: paciente.fecha_nacimiento,
+        gender: paciente.sexo,
+        email: paciente.correo,
+        phone: paciente.telefono
+      };
+
+      const encodedData = btoa(JSON.stringify(patientData));
+
+      html += `
+        <tr>
+          <th scope="row">${index + 1}</th>
+          <td>${fullName}</td>
+          <td>${paciente.correo || ''}</td>
+          <td><span class="badge bg-statusA">Activo</span></td>
+          <td>
+            <button class="btn btn-sm btn-outline-primary me-2 edit-btn"
+                    data-bs-toggle="modal" 
+                    data-bs-target="#patientModal"
+                    data-patient-id="${paciente.id_paciente}"
+                    data-patient-data="${encodedData}">
+              <i class="fas fa-edit"></i>
+            </button>
+            <button class="btn btn-sm btn-outline-danger delete-btn" data-patient-id="${paciente.id_paciente}">
+              <i class="fas fa-trash-alt"></i>
+            </button>
+          </td>
+        </tr>
+      `;
+    });
+
+    pacientesTableBody.innerHTML = html;
+    setupEventListeners();
+  }
+
+  function setupEventListeners() {
+    // Edición
+    document.querySelectorAll('.edit-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        prepareEditModal(this);
+      });
+    });
+    
+    // Eliminación
+    document.querySelectorAll('.delete-btn').forEach(btn => {
+      btn.addEventListener('click', async function() {
+        const patientId = this.getAttribute('data-patient-id');
+        
+        const { isConfirmed } = await Swal.fire({
+          title: '¿Eliminar paciente?',
+          text: 'Esta acción no se puede deshacer',
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonText: 'Sí, eliminar',
+          cancelButtonText: 'Cancelar'
+        });
+        
+        if (isConfirmed) {
+          try {
+            const response = await fetch(
+              `https://nutrilinkapi-production.up.railway.app/api_nutrilink/paciente/eliminar/${patientId}`, 
+              { method: 'DELETE' }
+            );
+            
+            if (!response.ok) {
+              throw new Error('Error al eliminar paciente');
+            }
+            
+            await Swal.fire('¡Éxito!', 'Paciente eliminado correctamente', 'success');
+            fetchPacientes();
+          } catch (error) {
+            Swal.fire('Error', error.message, 'error');
+          }
+        }
+      });
+    });
+  }
+
+  // Funciones para manejar el modal
+  function prepareAddModal() {
+    resetModal();
+    setModalMode('add');
+  }
+
+  function prepareEditModal(button) {
+    const patientData = JSON.parse(button.getAttribute('data-patient-data'));
+    const patientId = button.getAttribute('data-patient-id');
+    
+    setModalMode('edit');
+    
+    // Llenar formulario
+    document.getElementById('id').value = patientId;
+    document.getElementById('primer_nombre').value = patientData.firstName || '';
+    document.getElementById('segundo_nombre').value = patientData.secondName || '';
+    document.getElementById('apellido_paterno').value = patientData.lastName || '';
+    document.getElementById('apellido_materno').value = patientData.mothersMaidenName || '';
+    
+    // RUT
+    if (patientData.rut) {
+      const [rut, dv] = patientData.rut.split('-');
+      document.getElementById('rut_paciente').value = rut;
+      document.getElementById('dv').value = dv;
+    }
+    
+    document.getElementById('fecha_nacimiento').value = patientData.birthDate || '';
+    document.getElementById('sexo').value = patientData.gender || '';
+    document.getElementById('correo').value = patientData.email || '';
+    document.getElementById('telefono').value = patientData.phone || '';
+  }
+
+  function setModalMode(mode) {
+    if (mode === 'add') {
+      document.getElementById('modalActionText').textContent = 'Registrar';
+      document.getElementById('submitBtnText').textContent = 'Registrar';
+      document.getElementById('modalIcon').className = 'fas fa-user-plus me-2';
+    } else {
+      document.getElementById('modalActionText').textContent = 'Editar';
+      document.getElementById('submitBtnText').textContent = 'Actualizar';
+      document.getElementById('modalIcon').className = 'fas fa-user-edit me-2';
+    }
+  }
+
   function resetModal() {
-    document.getElementById('modalActionText').textContent = 'Registrar';
-    document.getElementById('submitBtnText').textContent = 'Registrar';
-    document.getElementById('modalIcon').className = 'fas fa-user-plus me-2';
     form.reset();
     document.getElementById('id').value = '';
   }
 
-  // validar RUT 
+  // Funciones auxiliares
+  function showLoading() {
+    pacientesTableBody.innerHTML = `
+      <tr>
+        <td colspan="5" class="text-center">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Cargando...</span>
+          </div>
+        </td>
+      </tr>
+    `;
+  }
+
+  function showError(message) {
+    pacientesTableBody.innerHTML = `
+      <tr>
+        <td colspan="5" class="text-center text-danger">${message}</td>
+      </tr>
+    `;
+  }
+
+  function redirectToLogin() {
+    window.location.href = "{% url 'accounts:login' %}";
+  }
+
+  // Validación RUT
   function validarRutChileno(rut, dv) {
     rut = rut.replace(/\./g, '');
     if (rut.length < 7 || rut.length > 8) return false;
@@ -240,11 +397,11 @@ document.addEventListener('DOMContentLoaded', function () {
     return dv === dvFinal;
   }
 
-  // manejador para el submit del formulario
-  form.addEventListener('submit', async function (event) {
+  // Submit del formulario
+  form.addEventListener('submit', async function(event) {
     event.preventDefault();
     
-    // Validar RUT y DV , esto tengo que modificarlo
+    // Validar RUT
     const rut = document.getElementById('rut_paciente').value.trim();
     const dv = document.getElementById('dv').value.trim().toUpperCase();
     
@@ -258,7 +415,7 @@ document.addEventListener('DOMContentLoaded', function () {
       return;
     }
 
-    // Obtencion del ID nutricionista
+    // Obtener ID nutricionista
     const id_nutricionista = sessionStorage.getItem('id_nutricionista');
     if (!id_nutricionista) {
       Swal.fire({
@@ -266,11 +423,11 @@ document.addEventListener('DOMContentLoaded', function () {
         title: 'Error de sesión',
         text: 'Debe iniciar sesión como nutricionista primero',
       });
-      window.location.href = "{% url 'accounts:login' %}";
+      redirectToLogin();
       return;
     }
 
-    // Objeto de datos paciente
+    // Preparar datos
     const pacienteData = {
       rut_paciente: rut,
       dv: dv,
@@ -285,7 +442,7 @@ document.addEventListener('DOMContentLoaded', function () {
       telefono: document.getElementById('telefono').value.trim() || null
     };
 
-    // Algunas validaciones adicionales
+    // Validaciones adicionales
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(pacienteData.correo)) {
       Swal.fire('Error', 'Ingrese un correo electrónico válido', 'error');
       return;
@@ -296,10 +453,11 @@ document.addEventListener('DOMContentLoaded', function () {
       return;
     }
 
+    // Configurar envío
     const submitBtn = document.getElementById('submitBtn');
     const isEditMode = document.getElementById('id').value !== '';
     const endpoint = isEditMode ? 
-      'https://nutrilinkapi-production.up.railway.app/api_nutrilink/paciente/actualizar' : //ejemplo de endpoint, puede que lance error por el momento
+      'https://nutrilinkapi-production.up.railway.app/api_nutrilink/paciente/actualizar' :
       'https://nutrilinkapi-production.up.railway.app/api_nutrilink/paciente/registrar';
 
     submitBtn.disabled = true;
@@ -329,7 +487,8 @@ document.addEventListener('DOMContentLoaded', function () {
       
       patientModal.hide();
       resetModal();
-      location.reload();
+      setModalMode('add');
+      fetchPacientes();
       
     } catch (error) {
       console.error('Error:', error);
@@ -340,138 +499,15 @@ document.addEventListener('DOMContentLoaded', function () {
       });
     } finally {
       submitBtn.disabled = false;
-      submitBtn.innerHTML = `<i class="fas fa-save me-2"></i> ${isEditMode ? 'Actualizar' : 'Registrar'}`;
+      submitBtn.innerHTML = `<i class="fas fa-save me-2"></i>${isEditMode ? 'Actualizar' : 'Registrar'}`;
     }
   });
 
-  // Resetear modal cuando se cierra
-  document.getElementById('patientModal').addEventListener('hidden.bs.modal', resetModal);
-
-  // Manejo para editar paciente
-  document.querySelectorAll('.edit-btn').forEach(btn => {
-    btn.addEventListener('click', function() {
-      const patientData = JSON.parse(this.getAttribute('data-patient-data'));
-      const patientId = this.getAttribute('data-patient-id');
-      
-      // Formatear RUT para mostrarlo sin puntos
-      const rutParts = patientData.rut.split('-');
-      const rutNumber = rutParts[0].replace(/\./g, '');
-      const rutDv = rutParts[1];
-      
-      // Mapear datos a los campos del formulario
-      document.getElementById('id').value = patientId;
-      document.getElementById('primer_nombre').value = patientData.firstName || '';
-      document.getElementById('segundo_nombre').value = patientData.secondName || '';
-      document.getElementById('apellido_paterno').value = patientData.lastName || '';
-      document.getElementById('apellido_materno').value = patientData.mothersMaidenName || '';
-      document.getElementById('rut_paciente').value = rutNumber;
-      document.getElementById('dv').value = rutDv;
-      document.getElementById('fecha_nacimiento').value = patientData.birthDate || '';
-      document.getElementById('sexo').value = patientData.gender === 'masculino' ? 'M' : 'F';
-      document.getElementById('correo').value = patientData.email || '';
-      document.getElementById('telefono').value = patientData.phone || '';
-      
-      // Cambiar texto del modal a edición
-      document.getElementById('modalActionText').textContent = 'Editar';
-      document.getElementById('submitBtnText').textContent = 'Actualizar';
-      document.getElementById('modalIcon').className = 'fas fa-user-edit me-2';
-    });
-  });
-
-  // Manejo de eliminacion
-  document.querySelectorAll('.delete-btn').forEach(btn => {
-    btn.addEventListener('click', async function() {
-      const patientId = this.closest('tr').querySelector('.edit-btn').getAttribute('data-patient-id');
-      
-      const { isConfirmed } = await Swal.fire({
-        title: '¿Eliminar paciente?',
-        text: 'Esta acción no se puede deshacer',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonText: 'Sí, eliminar',
-        cancelButtonText: 'Cancelar'
-      });
-      
-      if (isConfirmed) {
-        try {
-          // aqui va el endpoint para eliminar paciente
-          // await fetch(`/api/pacientes/${patientId}`, { method: 'DELETE' });
-          
-          await Swal.fire(
-            '¡Eliminado!',
-            'El paciente ha sido eliminado',
-            'success'
-          );
-          location.reload();
-        } catch (error) {
-          Swal.fire('Error', 'No se pudo eliminar el paciente', 'error');
-        }
-      }
-    });
+  // Resetear modal al cerrar
+  document.getElementById('patientModal').addEventListener('hidden.bs.modal', function() {
+    resetModal();
+    setModalMode('add');
   });
 });
-
-
-
-// document.addEventListener('DOMContentLoaded', function() {
-//   const patientModal = document.getElementById('patientModal');
-  
-//   // Función para resetear el modal a modo "crear"
-//   function resetModalToCreate() {
-//     document.getElementById('modalActionText').textContent = 'Registrar';
-//     document.getElementById('submitBtnText').textContent = 'Registrar';
-//     document.getElementById('modalIcon').className = 'fas fa-user-plus me-2';
-//     document.getElementById('paciente-form').reset();
-//     document.getElementById('patientId').value = '';
-//   }
-  
-//   // Función para configurar el modal en modo "editar"
-//   function setModalToEdit(patientData) {
-//     document.getElementById('modalActionText').textContent = 'Editar';
-//     document.getElementById('submitBtnText').textContent = 'Actualizar';
-//     document.getElementById('modalIcon').className = 'fas fa-user-edit me-2';
-//     document.getElementById('patientId').value = patientData.patientId || '';
-    
-//     // Llenar formulario con datos ejemplo
-//     document.getElementById('firstName').value = patientData.firstName || '';
-//     document.getElementById('secondName').value = patientData.secondName || '';
-//     document.getElementById('lastName').value = patientData.lastName || '';
-//     document.getElementById('mothersMaidenName').value = patientData.mothersMaidenName || '';
-//     document.getElementById('rut').value = patientData.rut || '';
-//     document.getElementById('birthDate').value = patientData.birthDate || '';
-//     document.getElementById('gender').value = patientData.gender || '';
-//     document.getElementById('email').value = patientData.email || '';
-//     document.getElementById('phone').value = patientData.phone || '';
-//   }
-  
-//   // Botón para agregar nuevo paciente
-//   document.getElementById('addPatientBtn').addEventListener('click', resetModalToCreate);
-  
-//   // Botones de edición
-//   document.querySelectorAll('.edit-btn').forEach(btn => {
-//     btn.addEventListener('click', function() {
-//       const patientData = JSON.parse(this.getAttribute('data-patient-data'));
-//       patientData.patientId = this.getAttribute('data-patient-id');
-//       setModalToEdit(patientData);
-//     });
-//   });
-  
-//   // Resetear modal al cerrar
-//   patientModal.addEventListener('hidden.bs.modal', resetModalToCreate);
-  
-//   // Manejar envio del formulario (solo simulacion)
-//   document.getElementById('paciente-form').addEventListener('submit', function(e) {
-//     e.preventDefault();
-//     const isEdit = document.getElementById('modalActionText').textContent === 'Editar';
-//     const patientName = document.getElementById('firstName').value + ' ' + document.getElementById('lastName').value;
-    
-//     // Simular accion
-//     alert(`Paciente ${patientName} ${isEdit ? 'actualizado' : 'registrado'} correctamente\n\n(Simulación frontend - sin conexión a backend)`);
-    
-//     // Cerrar modal
-//     const modalInstance = bootstrap.Modal.getInstance(patientModal);
-//     modalInstance.hide();
-//   });
-// });
 </script>
 {% endblock %}
