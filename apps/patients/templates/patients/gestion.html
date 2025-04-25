@@ -300,7 +300,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const isEditMode = document.getElementById('id').value !== '';
     const endpoint = isEditMode ? 
       'https://nutrilinkapi-production.up.railway.app/api_nutrilink/paciente/actualizar' : //ejemplo de endpoint, puede que lance error por el momento
-      'https://nutrilinkapi-production.up.railway.app/api_nutrilink/paciente/registrar_con_nutricionista';
+      'https://nutrilinkapi-production.up.railway.app/api_nutrilink/paciente/registrar';
 
     submitBtn.disabled = true;
     submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Procesando...';
