@@ -72,7 +72,7 @@
         {% csrf_token %}
         <div class="form-group mb-3">
           <label for="especializacion">Especialidad:</label>
-          <select id="especializacion" name="especializacion" class="form-control">
+          <select id="especializacion" name="especializacion" class="form-select">
             <option value="">Selecciona una especialidad</option>
             {% for esp in especialidades %}
               <option value="{{ esp.id_especialidad }}">{{ esp.descripcion }}</option>
