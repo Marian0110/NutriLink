@@ -222,6 +222,7 @@ document.addEventListener('DOMContentLoaded', function() {
       `.replace(/\s+/g, ' ').trim();
 
       const patientData = {
+        id: paciente.id_paciente,
         firstName: paciente.primer_nombre,
         secondName: paciente.segundo_nombre,
         lastName: paciente.apellido_paterno,
@@ -238,8 +239,8 @@ document.addEventListener('DOMContentLoaded', function() {
       html += `
         <tr>
           <th scope="row">${index + 1}</th>
-          <td>${fullName}</td>
-          <td>${paciente.correo || ''}</td>
+          <td onclick="location.href='/patients/${paciente.id_paciente}/info-general/'" style="cursor: pointer;">${fullName}</td>
+          <td onclick="location.href='/patients/${paciente.id_paciente}/info-general/'" style="cursor: pointer;">${paciente.correo || ''}</td>
           <td><span class="badge bg-statusA">Activo</span></td>
           <td>
             <button class="btn btn-sm btn-outline-primary me-2 edit-btn"

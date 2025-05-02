@@ -8,6 +8,10 @@
   --white: #ffffff;
   --shadow: #d1d0d057;
 }
+
+.dynamic-content-container {
+  width: 100%;
+}
   .avatar-section {
     display: flex;
     align-items: center;
@@ -65,6 +69,7 @@
   margin-left: 240px;  /* margin del sidebar */
   margin-top: 20px;
   padding: 0 20px;
+  gap: 20px;
 }
 
 .patient-card {
@@ -74,6 +79,7 @@
   border: none;
   margin-bottom: 20px;
   padding: 20px;
+  width: 100%;
 }
 
 .profile-header {
