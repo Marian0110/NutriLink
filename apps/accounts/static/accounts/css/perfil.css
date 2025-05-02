@@ -7,32 +7,45 @@
   --light-text: #747474;
   --white: #ffffff;
   --shadow: #d1d0d057;
+  --bg-color: #f4f6f8;
 }
 
+body {
+  background-color: var(--bg-color);
+  margin: 0;
+  font-family: sans-serif;
+}
+
+/* Contenedor general */
 .cards-wrapper {
+  width: 100%;
+  box-sizing: border-box;
   display: flex;
-  margin-left: 13%;
+  height: calc(100vh - 60px);
+  padding: 1rem;
+  margin-left: 20%;
   gap: 1rem;
 }
 
-.form-section {
-  width: 40%;
-  background-color: var(--white);
-  border-radius: 15px;
-  padding: 0.5rem 1.5rem 1.5rem 1.5rem;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-  max-height: 400px;
-}
-
+/* Card izquierda (Perfil) */
 .form-sectionP {
-  width: 60%;
+  flex: 1;
+  max-width: 400px;
   background-color: var(--white);
   border-radius: 15px;
   padding: 1.5rem;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
   border: 1px solid var(--shadow);
 }
+/* Estilo individual de cada card lateral */
+.card-lateral {
+  background-color: white;
+  border-radius: 15px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  padding: 1.5rem;
+}
 
+/* Formularios */
 .form-group {
   margin-bottom: 20px;
 }

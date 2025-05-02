@@ -3,7 +3,7 @@
 {% block title %}Perfil{% endblock %}
 
 {% block content %}
-<main class="cards-wrapper d-flex p-5">
+<main class="cards-wrapper d-flex p-4">
   <!-- Card1 Perfil -->
   <div class="form-sectionP me-3">
     <div class="profile-picture">
@@ -56,41 +56,58 @@
             <input type="text" id="telefono" name="telefono" class="form-control" placeholder="Número de contacto" />
             <span class="error-message" id="error-telefono"></span>
           </div>
-          <div class="form-group col-md-6 mb-3">
-            <label for="especializacion">Especialización:</label>
-            <input type="text" id="especializacion" name="especializacion" class="form-control" placeholder="Nutricionista Deportivo" />
-            <span class="error-message" id="error-especializacion"></span>
-          </div>
         </div>
         <button class="btn btn-success mt-2 w-100" type="submit">Actualizar</button>
       </form>
     </div>
   </div>
-
-  <!-- Card3 cambio de contraseña -->
-  <div class="form-section">
-    <div class="title mb-3 mt-5">
-      <h5>Cambiar contraseña</h5>
+   <!-- Cards laterales -->
+   <div class="d-flex flex-column flex-shrink-1 w-50 card-box">
+    <!-- Especialización -->
+    <div style="background-color: white; border-radius: 15px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);; padding: 1.5rem;" class="mb-3">
+      <div class="title mb-5">
+        <h5>Especialización</h5>
+      </div>
+      <form id="especializacion-form" method="POST">
+        {% csrf_token %}
+        <div class="form-group mb-3">
+          <label for="especializacion">Especialidad:</label>
+          <select id="especializacion" name="especializacion" class="form-control">
+            <option value="">Selecciona una especialidad</option>
+            {% for esp in especialidades %}
+              <option value="{{ esp.id_especialidad }}">{{ esp.descripcion }}</option>
+            {% endfor %}
+          </select>
+          <span class="error-message" id="error-especializacion"></span>
+        </div>
+        <button class="btn btn-success w-100 mt-3" type="submit">Guardar</button>
+      </form>
     </div>
-    <form id="password-form" method="POST">
-      {% csrf_token %}
-      <div class="form-group mb-3">
-        <label for="passActual">Contraseña actual: *</label>
-        <input type="password" id="passActual" name="passActual" class="form-control" placeholder="********" required />
-        <span class="error-message" id="error-passActual"></span>
+    <!-- Cambiar contraseña -->
+    <div style="background-color: white; border-radius: 15px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);; padding: 1.5rem;" class="mb-3">
+      <div class="title mb-4">
+        <h5>Cambiar contraseña</h5>
       </div>
-      <div class="form-group mb-3">
-        <label for="passNueva">Nueva contraseña:</label>
-        <input type="password" id="passNueva" name="passNueva" class="form-control" placeholder="********" required />
-        <span class="error-message" id="error-passNueva"></span>
-      </div>
-      <div class="form-group mb-3">
-        <label for="confirmarPass">Confirmar contraseña:</label>
-        <input type="password" id="confirmarPass" name="confirmarPass" class="form-control" placeholder="********" required />
-        <span class="error-message" id="error-confirmarPass"></span>
-      </div>
-      <button class="btn btn-success w-100" type="submit">Actualizar contraseña</button>
-    </form>
+      <form id="password-form" method="POST">
+        {% csrf_token %}
+        <div class="form-group mb-3">
+          <label for="passActual">Contraseña actual: *</label>
+          <input type="password" id="passActual" name="passActual" class="form-control" placeholder="********" required />
+          <span class="error-message" id="error-passActual"></span>
+        </div>
+        <div class="form-group mb-3">
+          <label for="passNueva">Nueva contraseña:</label>
+          <input type="password" id="passNueva" name="passNueva" class="form-control" placeholder="********" required />
+          <span class="error-message" id="error-passNueva"></span>
+        </div>
+        <div class="form-group mb-3">
+          <label for="confirmarPass">Confirmar contraseña:</label>
+          <input type="password" id="confirmarPass" name="confirmarPass" class="form-control" placeholder="********" required />
+          <span class="error-message" id="error-confirmarPass"></span>
+        </div>
+          <button class="btn btn-success w-100" type="submit">Actualizar contraseña</button>
+      </form>
+    </div>
   </div>
 </main>
 <!--Script aqui por el momento-->
