@@ -44,8 +44,24 @@ def registro(request):
 
     return render(request, 'accounts/registro.html')
 
+
 def perfil(request):
-    return render(request, 'accounts/perfil.html')
+    url = 'https://nutrilinkapi-production.up.railway.app/api_nutrilink/nutricionista/especialidades'
+    especialidades = []
+
+    try:
+        response = requests.get(url)
+        if response.status_code == 200:
+            data = response.json()
+            especialidades = data
+
+    except requests.exceptions.RequestException as e:
+        print("Error:", e)
+
+    context = {
+        'especialidades': especialidades, 
+    }
+    return render(request, 'accounts/perfil.html', context)
 
 def login(request):
     return render(request, 'accounts/login.html')
