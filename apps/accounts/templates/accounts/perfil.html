@@ -62,7 +62,7 @@
     </div>
   </div>
    <!-- Cards laterales -->
-   <div class="d-flex flex-column flex-shrink-1 w-50 card-box">
+   <div class="d-flex flex-column flex-shrink-1" style="width: 50%;">
     <!-- Especialización -->
     <div style="background-color: white; border-radius: 15px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);; padding: 1.5rem;" class="mb-3">
       <div class="title mb-5">
@@ -123,41 +123,50 @@
       return;
     }
 
-    // Cargar datos del nutricionista usando correo y contraseña
+    // Cargar datos del nutricionista usando id
     try {
-      const response = await fetch(`https://nutrilinkapi-production.up.railway.app/api_nutrilink/nutricionista/obtener_nutricionista_id/${id_nutricionista}`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json"
-        },
-      });
+  const response = await fetch(`https://nutrilinkapi-production.up.railway.app/api_nutrilink/nutricionista/obtener_nutricionista_mas_especialidades/${id_nutricionista}`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json"
+    },
+  });
 
-      if (response.ok) {
-        const data = await response.json();
+  if (response.ok) {
+    const data = await response.json();
 
-        // Verificar si los datos fueron encontrados
-        if (data.length > 0) {
-          const nutricionista = data[0]; // Tomar el primer resultado
-
-          // Llenar los campos del formulario con los datos del nutricionista
-          document.getElementById("pNombre").value = nutricionista.primer_nombre || '';
-          document.getElementById("sNombre").value = nutricionista.segundo_nombre || '';
-          document.getElementById("apePater").value = nutricionista.apellido_paterno || '';
-          document.getElementById("apeMater").value = nutricionista.apellido_materno || '';
-          document.getElementById("email").value = nutricionista.correo || '';
-          document.getElementById("rut").value = nutricionista.rut_nutricionista + '-' + nutricionista.dv || '';
-          document.getElementById("fechaNacimiento").value = nutricionista.fecha_nacimiento ? nutricionista.fecha_nacimiento.split('T')[0] : ''; //cambio en formato por API
-          document.getElementById("telefono").value = nutricionista.telefono || '';
-          document.getElementById("especializacion").value = nutricionista.especializacion || '';
+    // carga de datos , ahora es objeto
+    if (data && data.primer_nombre) {
+      // Llenar los campos del formulario
+      document.getElementById("pNombre").value = data.primer_nombre || '';
+      document.getElementById("sNombre").value = data.segundo_nombre || '';
+      document.getElementById("apePater").value = data.apellido_paterno || '';
+      document.getElementById("apeMater").value = data.apellido_materno || '';
+      document.getElementById("email").value = data.correo || '';
+      document.getElementById("rut").value = data.rut_nutricionista ? `${data.rut_nutricionista}-${data.dv}` : '';
+      document.getElementById("fechaNacimiento").value = data.fecha_nacimiento ? data.fecha_nacimiento.split('T')[0] : '';
+      document.getElementById("telefono").value = data.telefono || '';
+      
+      // Manejo de especialidades (puede ser array o string)
+      if (data.especialidades) {
+        if (Array.isArray(data.especialidades)) {
+          // Si es array, seleccionamos la primera (o manejamos múltiples)
+          document.getElementById("especializacion").value = data.especialidades[0].id_especialidad || 'Selecciona una especialidad';
         } else {
-          alert("No se encontró el nutricionista.");
+          // Si es string o objeto individual
+          document.getElementById("especializacion").value = data.especialidades.id_especialidad || data.especialidades || 'Selecciona una especialidad';
         }
+      }
       } else {
-        throw new Error('Error al obtener los datos del perfil');
+        Swal.fire('Advertencia', data.mensaje || 'Nutricionista no encontrado', 'warning');
+      }
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.mensaje || 'Error al obtener datos del perfil');
       }
     } catch (error) {
       console.error('Error al cargar el perfil:', error);
-      alert('Hubo un error al cargar los datos del perfil. Intenta nuevamente.');
+      Swal.fire('Error', error.message || 'Error al cargar los datos del perfil', 'error');
     }
 
     // ---------- FORMULARIO DE PERFIL (ACTUALIZACIÓN GENERAL) ----------
@@ -237,6 +246,8 @@
         Swal.fire('Error', 'Error de red o del servidor.', 'error');
       }
     });
+    
+        
   });
 </script>
  
