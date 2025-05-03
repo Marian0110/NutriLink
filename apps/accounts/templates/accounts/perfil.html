@@ -28,7 +28,7 @@
           </div>
           <div class="form-group col-md-6 mb-3">
             <label for="apePater">Apellido paterno *</label>
-            <input type="text" id="apePater" name="apePater" class="form-control" placeholder="apellido" disabled />
+            <input type="text" id="apePater" name="apePater" class="form-control" placeholder="apellido" disabled/>
             <span class="error-message" id="error-apePater"></span>
           </div>
           <div class="form-group col-md-6 mb-3">
@@ -38,12 +38,12 @@
           </div>
           <div class="form-group col-md-6 mb-3">
             <label for="email">Correo *</label>
-            <input type="email" id="email" name="email" class="form-control" placeholder="correo" disabled />
+            <input type="email" id="email" name="email" class="form-control" placeholder="correo" disabled/>
             <span class="error-message" id="error-email"></span>
           </div> <!-- Información adicional ahora en la misma card -->
           <div class="form-group col-md-6 mb-3">
             <label for="rut">RUT *</label>
-            <input type="text" id="rut" name="rut" class="form-control" placeholder="Rut" disabled />
+            <input type="text" id="rut" name="rut" class="form-control" placeholder="Rut" disabled/>
             <span class="error-message" id="error-rut"></span>
           </div>
           <div class="form-group col-md-6 mb-3">
@@ -61,24 +61,29 @@
       </form>
     </div>
   </div>
-   <!-- Cards laterales -->
+   <!-- Cards laterales, especializacion -->
    <div class="d-flex flex-column flex-shrink-1" style="width: 50%;">
-    <!-- Especialización -->
     <div style="background-color: white; border-radius: 15px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);; padding: 1.5rem;" class="mb-3">
       <div class="title mb-5">
         <h5>Especialización</h5>
       </div>
       <form id="especializacion-form" method="POST">
         {% csrf_token %}
-        <div class="form-group mb-3">
-          <label for="especializacion">Especialidad:</label>
-          <select id="especializacion" name="especializacion" class="form-select">
-            <option value="">Selecciona una especialidad</option>
-            {% for esp in especialidades %}
-              <option value="{{ esp.id_especialidad }}">{{ esp.descripcion }}</option>
-            {% endfor %}
-          </select>
-          <span class="error-message" id="error-especializacion"></span>
+        <div class="selection-group">
+          <div class="form-group mb-3">
+            <label for="especializacion">Especialidad:</label>
+            <select id="especializacion" name="especializacion" class="form-select">
+              <option value="" selected disabled>Selecciona una especialidad</option>
+              {% for esp in especialidades %}
+                <option value="{{ esp.id_especialidad }}">{{ esp.descripcion }}</option>
+              {% endfor %}
+            </select>
+            <span class="error-message" id="error-especializacion"></span>
+          </div>
+          <div class="selected-items-container" id="especialidades-container"></div>
+          <button type="button" class="btn btn-sm btn-secondary mt-2" onclick="addAnother('especialidades')">
+            + Agregar otra especialidad
+          </button>
         </div>
         <button class="btn btn-success w-100 mt-3" type="submit">Guardar</button>
       </form>
@@ -124,18 +129,18 @@
     }
 
     // Cargar datos del nutricionista usando id
-    try {
-  const response = await fetch(`https://nutrilinkapi-production.up.railway.app/api_nutrilink/nutricionista/obtener_nutricionista_mas_especialidades/${id_nutricionista}`, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json"
-    },
-  });
+  try {
+    const response = await fetch(`https://nutrilinkapi-production.up.railway.app/api_nutrilink/nutricionista/obtener_nutricionista_mas_especialidades/${id_nutricionista}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json"
+      },
+    });
 
   if (response.ok) {
     const data = await response.json();
 
-    // carga de datos , ahora es objeto
+    // carga de datos, ahora es objeto
     if (data && data.primer_nombre) {
       // Llenar los campos del formulario
       document.getElementById("pNombre").value = data.primer_nombre || '';
@@ -147,29 +152,142 @@
       document.getElementById("fechaNacimiento").value = data.fecha_nacimiento ? data.fecha_nacimiento.split('T')[0] : '';
       document.getElementById("telefono").value = data.telefono || '';
       
-      // Manejo de especialidades (puede ser array o string)
+      // Manejo de especialidades
+      const especialidadesContainer = document.getElementById('especialidades-container');
       if (data.especialidades) {
-        if (Array.isArray(data.especialidades)) {
-          // Si es array, seleccionamos la primera (o manejamos múltiples)
-          document.getElementById("especializacion").value = data.especialidades[0].id_especialidad || 'Selecciona una especialidad';
-        } else {
-          // Si es string o objeto individual
-          document.getElementById("especializacion").value = data.especialidades.id_especialidad || data.especialidades || 'Selecciona una especialidad';
-        }
+        // Limpiar contenedor primero
+        especialidadesContainer.innerHTML = '';
+        
+        // Manejar tanto array como objeto individual
+        const especialidades = Array.isArray(data.especialidades) ? 
+          data.especialidades : 
+          [data.especialidades];
+        
+        // Agregar cada especialidad al contenedor
+        especialidades.forEach(esp => {
+          if (esp && esp.id_especialidad) {
+            // Buscar la opcion correspondiente en el select para obtener el texto
+            const select = document.getElementById('especializacion');
+            const option = Array.from(select.options).find(
+              opt => opt.value === esp.id_especialidad.toString()
+            );
+            
+            if (option) {
+              addSelectedItem('especialidades-container', esp.id_especialidad, option.text);
+            } else {
+              // Si no encontramos la opcion, usamos el id como texto
+              addSelectedItem('especialidades-container', esp.id_especialidad, `Especialidad ${esp.id_especialidad}`);
+            }
+          }
+        });
+        
+        // Deshabilitar las opciones ya seleccionadas
+        disableSelectedOptions(document.getElementById('especializacion'));
       }
-      } else {
-        Swal.fire('Advertencia', data.mensaje || 'Nutricionista no encontrado', 'warning');
+    } else {
+      Swal.fire('Advertencia', data.mensaje || 'Nutricionista no encontrado', 'warning');
       }
-      } else {
-        const errorData = await response.json();
-        throw new Error(errorData.mensaje || 'Error al obtener datos del perfil');
-      }
-    } catch (error) {
-      console.error('Error al cargar el perfil:', error);
-      Swal.fire('Error', error.message || 'Error al cargar los datos del perfil', 'error');
+    } else {
+      const errorData = await response.json();
+      throw new Error(errorData.mensaje || 'Error al obtener datos del perfil');
     }
+  } catch (error) {
+    console.error('Error al cargar el perfil:', error);
+    Swal.fire('Error', error.message || 'Error al cargar los datos del perfil', 'error');
+  }
 
-    // ---------- FORMULARIO DE PERFIL (ACTUALIZACIÓN GENERAL) ----------
+  //Manejo de formulario especializacion
+    const especializacionSelect = document.getElementById('especializacion');
+  
+  if (especializacionSelect) {
+    especializacionSelect.addEventListener('change', function() {
+      if (this.value && !this.disabled) {
+        const container = document.getElementById('especialidades-container');
+        const existingValues = Array.from(container.querySelectorAll('input[type="hidden"]')).map(input => input.value);
+        
+        if (!existingValues.includes(this.value)) {
+          addSelectedItem('especialidades-container', this.value, this.options[this.selectedIndex].text);
+          disableSelectedOptions(this);
+        } else {
+          alert('Esta especialidad ya fue seleccionada');
+        }
+        
+        // Reset al valor seleccionar
+        this.selectedIndex = 0;
+      }
+    });
+    
+    // Si hay especialidades pre-seleccionadas al cargar la página
+    const initialEspecialidades = []; // Aquí puedes agregar especialidades iniciales si las hay
+    
+    initialEspecialidades.forEach(esp => {
+      const option = Array.from(especializacionSelect.options).find(opt => opt.value === esp.id);
+      if (option) {
+        addSelectedItem('especialidades-container', esp.id, option.text);
+      }
+    });
+    
+    // Deshabilitar opciones ya seleccionadas
+    disableSelectedOptions(especializacionSelect);
+  }
+});
+
+// Funciones para manejar la selección de especialidades
+function disableSelectedOptions(selectElement) {
+  const container = document.getElementById('especialidades-container');
+  if (!container) return;
+  
+  const selectedValues = Array.from(container.querySelectorAll('input[type="hidden"]')).map(input => input.value);
+  
+  Array.from(selectElement.options).forEach(option => {
+    if (option.value && selectedValues.includes(option.value)) {
+      option.disabled = true;
+    } else if (option.value) {
+      option.disabled = false;
+    }
+  });
+}
+
+function addSelectedItem(containerId, value, text) {
+  const container = document.getElementById(containerId);
+  const itemId = 'item-' + Math.random().toString(36).substr(2, 9);
+  
+  const itemElement = document.createElement('div');
+  itemElement.className = 'selected-item d-inline-flex align-items-center bg-light rounded-pill px-3 py-1 me-2 mb-2';
+  itemElement.id = itemId;
+  itemElement.innerHTML = `
+    ${text}
+    <span class="remove-item ms-2" style="cursor:pointer;" onclick="removeItem('${itemId}', '${containerId}', '${value}')">×</span>
+    <input type="hidden" name="especialidades[]" value="${value}">
+  `;
+  
+  container.appendChild(itemElement);
+}
+
+function removeItem(itemId, containerId, value) {
+  const item = document.getElementById(itemId);
+  if (item) item.remove();
+  
+  // Rehabilitar la opción en el combobox
+  const select = document.getElementById('especializacion');
+  if (select) {
+    Array.from(select.options).forEach(option => {
+      if (option.value === value) {
+        option.disabled = false;
+      }
+    });
+  }
+}
+
+  function addAnother(type) {
+    const select = document.getElementById(type === 'especialidades' ? 'especializacion' : type);
+    if (select) {
+      disableSelectedOptions(select);
+      select.focus();
+    }
+  }
+
+    // ---------- FORMULARIO DE PERFIL (ACTUALIZACION GENERAL) ----------
     const profileForm = document.getElementById("profile-form");
     profileForm.addEventListener("submit", async function (e) {
       e.preventDefault();
@@ -246,9 +364,61 @@
         Swal.fire('Error', 'Error de red o del servidor.', 'error');
       }
     });
+
+    // ---------- FORMULARIO DE ESPECIALIZACIÓN ----------
+    const especializacionForm = document.getElementById("especializacion-form");
+  if (especializacionForm) {
+    especializacionForm.addEventListener("submit", async function (e) {
+      e.preventDefault();
+      
+      const id_nutricionista = sessionStorage.getItem('id_nutricionista');
+      const especialidades = Array.from(document.querySelectorAll('#especialidades-container input[type="hidden"]')).map(input => {
+        // Obtener el texto de la especialidad seleccionada
+        const itemDiv = input.parentElement;
+        const nombreEspecialidad = itemDiv.textContent.trim().replace('×', '').trim();
+        return {
+          id: input.value,
+          nombre: nombreEspecialidad
+        };
+      });
     
-        
+    if (especialidades.length === 0) {
+      Swal.fire('Error', 'Debes seleccionar al menos una especialidad', 'error');
+      return;
+    }
+    
+    try {
+      // Enviar cada especialidad individualmente
+      const results = await Promise.all(especialidades.map(async (especialidad) => {
+        const response = await fetch("https://nutrilinkapi-production.up.railway.app/api_nutrilink/nutricionista/insertar_especialidad", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            id_nutricionista: id_nutricionista,
+            nombre_especialidad: especialidad.nombre
+          })
+        });
+        return response.json();
+      }));
+      
+      // Verificar si todas las inserciones fueron exitosas
+      const allSuccess = results.every(result => result.status === 'ok');
+      
+      if (allSuccess) {
+        Swal.fire('¡Éxito!', 'Especialidades actualizadas correctamente', 'success');
+      } else {
+        const errors = results.filter(result => result.status !== 'ok').map(r => r.mensaje);
+        Swal.fire('Error', `Algunas especialidades no se pudieron guardar: ${errors.join(', ')}`, 'error');
+      }
+    } catch (error) {
+      console.error('Error al guardar especialidades:', error);
+      Swal.fire('Error', 'Error al guardar las especialidades: ' + error.message, 'error');
+    }
   });
+}
+
 </script>
  
 {% endblock %}

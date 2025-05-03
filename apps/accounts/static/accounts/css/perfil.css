@@ -75,3 +75,30 @@ body {
   color: red;
   font-size: 11px;
 }
+
+
+.selected-items-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.selected-item {
+  background-color: #f8f9fa;
+  border-radius: 50rem;
+  padding: 0.375rem 0.75rem;
+  display: inline-flex;
+  align-items: center;
+}
+
+.remove-item {
+  margin-left: 0.5rem;
+  cursor: pointer;
+  font-weight: bold;
+  color: #dc3545;
+}
+
+.remove-item:hover {
+  color: #b02a37;
+}
