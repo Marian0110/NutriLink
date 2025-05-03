@@ -312,7 +312,7 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   function prepareEditModal(button) {
-    const patientData = JSON.parse(button.getAttribute('data-patient-data'));
+    const patientData = JSON.parse(atob(button.getAttribute('data-patient-data')));
     const patientId = button.getAttribute('data-patient-id');
     
     setModalMode('edit');
@@ -430,6 +430,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Preparar datos
     const pacienteData = {
+      id_paciente: document.getElementById('id').value || null,
       rut_paciente: rut,
       dv: dv,
       primer_nombre: document.getElementById('primer_nombre').value.trim(),
@@ -458,7 +459,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const submitBtn = document.getElementById('submitBtn');
     const isEditMode = document.getElementById('id').value !== '';
     const endpoint = isEditMode ? 
-      'https://nutrilinkapi-production.up.railway.app/api_nutrilink/paciente/actualizar' :
+      'https://nutrilinkapi-production.up.railway.app/api_nutrilink/paciente/modificar' :
       'https://nutrilinkapi-production.up.railway.app/api_nutrilink/paciente/registrar';
 
     submitBtn.disabled = true;
@@ -466,7 +467,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     try {
       const response = await fetch(endpoint, {
-        method: 'POST',
+        method: isEditMode ? 'PATCH' : 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json'
