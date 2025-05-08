@@ -50,21 +50,21 @@
                 Credenciales de acceso
                 <span class="tooltip-container">
                   <i class="info-icon">ℹ</i>
-                  <span class="tooltip-text">Estas credenciales serán enviadas al correo</span>
+                  <span class="tooltip-text">Estas credenciales serán enviadas al correo del paciente</span>
                 </span>
               </h1>
-            <span class="subtext" style="text-align: center;">Establezca las credenciales de su paciente para el primer ingreso en la app NutriLink</span>
+            <span class="subtext" style="text-align: center;">Estas son las credenciales de su paciente para el primer ingreso en la app NutriLink</span>
             <form method="post" class="credential-form">
                 {% csrf_token %}
                 <div class="form-group">
                     <label class="form-label">Correo:</label>
-                    <input type="email" class="form-control" name="email" placeholder="correo@ejemplo.com" value="{{ credencial_form.email.value|default:'' }}">
+                    <input type="email" class="form-control" value="{{ credenciales.correo }}" disabled>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Contraseña provisoria:</label>
-                    <input type="password" class="form-control" name="password" placeholder="••••••••">
+                    <input type="text" class="form-control" value="{{ credenciales.contrasena }}" disabled>
                 </div>
-                <button type="button" class="btn-register" name="guardar_credenciales">REGISTRAR</button>
+                <!-- <button type="button" class="btn-actualizar" name="actualizar_credenciales">ACTUALIZAR</button> -->
             </form>
         </div>
     </div>

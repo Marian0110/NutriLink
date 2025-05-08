@@ -9,7 +9,7 @@ def gestion(request):
     print("BASE_DIR:", settings.BASE_DIR)
     return render(request, 'patients/gestion.html')
     
-def get_patient_data(id_paciente):
+def get_paciente_data(id_paciente):
     try: #construir api y hacer peticion
         api_url = f'https://nutrilinkapi-production.up.railway.app/api_nutrilink/paciente/{id_paciente}'
         response = requests.get(api_url, timeout=10)
@@ -42,22 +42,43 @@ def get_patient_data(id_paciente):
         raise Http404(f"Error en los datos: {str(e)}")
 
 def historialClinico(request, id_paciente):
-    paciente = get_patient_data(id_paciente)
+    paciente = get_paciente_data(id_paciente)
     return render(request, 'patients/historial-clinico.html', {
         'paciente': paciente,
         'section': 'historial-clinico'
     })
 
 def metricas(request, id_paciente):
-    paciente = get_patient_data(id_paciente)
+    paciente = get_paciente_data(id_paciente)
     return render(request, 'patients/metricas.html', {
         'paciente': paciente,
         'section': 'metricas'
     })
 
 def infoGeneral(request, id_paciente):
-    paciente = get_patient_data(id_paciente)
+    paciente = get_paciente_data(id_paciente)
+    credenciales = get_credenciales(id_paciente)
+
     return render(request, 'patients/info-general.html', {
         'paciente': paciente,
+        'credenciales': credenciales,
         'section': 'info-general'
     })
+
+def get_credenciales(id_paciente):
+    try:
+        url = f'https://nutrilinkapi-production.up.railway.app/api_nutrilink/paciente/credenciales/{id_paciente}'
+        response = requests.get(url)
+
+        if response.status_code == 200:
+            data = response.json()
+            return {
+                'correo': data.get('correo'),
+                'contrasena': data.get('contrasena')
+            }
+        else:
+            print(f'Error al obtener credenciales: {response.status_code} - {response.text}')
+            return None
+    except requests.RequestException as e:
+        print(f'Excepción al conectar con el endpoint de credenciales: {e}')
+        return None
