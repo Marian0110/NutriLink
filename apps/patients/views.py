@@ -46,27 +46,29 @@ def get_paciente_data(id_paciente):
 def historialClinico(request, id_paciente):
     try:
         paciente = get_paciente_data(id_paciente)
-        # Obtener factores patológicos
         success, factores_patologicos, error = get_factores_patologicos()
         
         if not success:
-            print(f"Error al obtener factores patológicos: {error}")  # Para depuración
+            return render(request, 'patients/historial-clinico.html', {
+                'paciente': paciente,
+                'factores_patologicos': [],
+                'error_factores': error,
+                'section': 'historial-clinico'
+            })
         
         return render(request, 'patients/historial-clinico.html', {
             'paciente': paciente,
-            'factores_patologicos': factores_patologicos if success else [],
+            'factores_patologicos': factores_patologicos,
             'section': 'historial-clinico'
         })
         
     except Exception as e:
+        print(f"Error en historialClinico: {str(e)}")
         raise Http404(f"Error al cargar historial clínico: {str(e)}")
 
 def metricas(request, id_paciente):
     paciente = get_paciente_data(id_paciente)
     historial = get_historial_antropometrico(id_paciente)
-    
-    # Depuración - imprimir en consola del servidor
-    print("Datos de antropometría recibidos:", historial)
     
     return render(request, 'patients/metricas.html', {
         'paciente': paciente,
@@ -105,30 +107,30 @@ def get_credenciales(id_paciente):
     
 def get_factores_patologicos():
     """
-    Returns:
+    Returns requeridos:
         tuple: (success: bool, data: list, error: str)
     """
-    url = 'https://nutrilinkapi-production.up.railway.app/api_nutrilink/obtener_factor_patologico'
+    url = 'http://nutrilinkapi-production.up.railway.app/api_nutrilink/requerimientos/obtener_factor_patologico'
     timeout = 10
     
     try:
         response = requests.get(url, timeout=timeout)
+        response.raise_for_status()  # excepcion para codigos 4xx/5xx
         
-        # Verificar si la respuesta fue exitosa
-        if response.status_code == 200:
-            data = response.json()
-            # Asegurarnos de que la estructura de datos es correcta
-            if isinstance(data, dict) and 'data' in data and 'rows' in data['data']:
-                return True, data['data']['rows'], None
-            return False, [], "Estructura de respuesta inválida"
-        else:
-            error_msg = response.json().get('mensaje', 'Error desconocido')
-            return False, [], f"Error en la API: {error_msg}"
+        data = response.json()
+        
+        # Verificar estructura de respuesta
+        if isinstance(data, dict) and data.get('status') == 'success':
+            if isinstance(data.get('data'), list):
+                return True, data['data'], None
+            return False, [], "Estructura de datos inesperada"
+            
+        return False, [], "Respuesta no exitosa o formato incorrecto"
             
     except RequestException as e:
         return False, [], f"Error de conexión: {str(e)}"
     except ValueError as e:
-        return False, [], f"Error procesando respuesta: {str(e)}"
+        return False, [], f"Error procesando JSON: {str(e)}"
     except Exception as e:
         return False, [], f"Error inesperado: {str(e)}"
 

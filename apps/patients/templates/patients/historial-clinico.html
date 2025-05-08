@@ -40,75 +40,32 @@
               </select>
             </div>
           </div>
-          <!-- Columna derecha: Factores patologicos ejemplo estructura -->
-  
-          <!-- <h2 class="section-title h5 mb-3">Factores patológicos</h2>
-          {% for factor in factores %}
-            <div class="form-check mb-2">
-              <input class="form-check-input" type="checkbox" id="factor{{ forloop.counter }}" name="factores" value="{{ factor.id}}" />
-              <label class="form-check-label" for="factor{{ forloop.counter }}">{{ factor.descripcion }}</label>
-            </div>
-          {% endfor %} -->
-  
           <div class="col-md-4 factors">
-              <h2 class="section-title h5">Factores patológicos</h2>
-              <div class="form-check mb-2">
-                <input class="form-check-input" type="checkbox" id="factor1" checked />
-                <label class="form-check-label" for="factor1">Desnutrido sin estrés</label>
-              </div>
-              <div class="form-check mb-2">
-                <input class="form-check-input" type="checkbox" id="factor2" />
-                <label class="form-check-label" for="factor2">Cirugía no complicada</label>
-              </div>
-              <div class="form-check mb-2">
-                <input class="form-check-input" type="checkbox" id="factor3" />
-                <label class="form-check-label" for="factor3">Infección o trauma moderado</label>
-              </div>
-              <div class="form-check mb-2">
-                <input class="form-check-input" type="checkbox" id="factor4" />
-                <label class="form-check-label" for="factor4">Sepsis, gran quemado</label>
-              </div>
-              <div class="form-check mb-2">
-                <input class="form-check-input" type="checkbox" id="factor5"  />
-                <label class="form-check-label" for="factor5">Corticoterapia</label>
-              </div>
-              <div class="form-check mb-2">
-                <input class="form-check-input" type="checkbox" id="factor6"  />
-                <label class="form-check-label" for="factor6">Alcoholismo</label>
-              </div>
-              <div class="form-check mb-2">
-                <input class="form-check-input" type="checkbox" id="factor7"  />
-                <label class="form-check-label" for="factor7">Cáncer</label>
-              </div>
-              <div class="form-check mb-2">
-                <input class="form-check-input" type="checkbox" id="factor8"  />
-                <label class="form-check-label" for="factor8">Traumatismo craneal</label>
-              </div>
-              <div class="form-check mb-2">
-                <input class="form-check-input" type="checkbox" id="factor9"  />
-                <label class="form-check-label" for="factor9">Fractura de huesos largos</label>
-              </div>
-              <div class="form-check mb-2">
-                <input class="form-check-input" type="checkbox" id="factor10"  />
-                <label class="form-check-label" for="factor10">Inanición leve</label>
-              </div>
-              <div class="form-check mb-2">
-                <input class="form-check-input" type="checkbox" id="factor11"  />
-                <label class="form-check-label" for="factor11">Politraumatismo</label>
-              </div>
-              <div class="form-check mb-2">
-                <input class="form-check-input" type="checkbox" id="factor12"  />
-                <label class="form-check-label" for="factor12">Peritonitis</label>
-              </div>
-              <div class="form-check mb-2">
-                <input class="form-check-input" type="checkbox" id="factor13"  />
-                <label class="form-check-label" for="factor13">Infección grave</label>
-              </div>
-              <div class="form-check mb-2">
-                <input class="form-check-input" type="checkbox" id="factor14"  />
-                <label class="form-check-label" for="factor14">Recuperación postoperatoria no complicada</label>
-              </div>
-          </div>   
+            <h2 class="section-title h5">Factores patológicos</h2>
+            
+            {% if error_factores %}
+            <div class="alert alert-danger">
+                Error al cargar factores: {{ error_factores }}
+            </div>
+            {% endif %}
+            
+            {% for factor in factores_patologicos %}
+            <div class="form-check mb-2">
+                <input class="form-check-input" type="radio" 
+                       name="factor_patologico" 
+                       id="factor{{ factor.id_factor_patologico }}"
+                       value="{{ factor.id_factor_patologico }}"
+                       {% if forloop.first %}checked{% endif %}>
+                <label class="form-check-label" for="factor{{ factor.id_factor_patologico }}">
+                    {{ factor.descripcion }} ({{ factor.valor_factor }})
+                </label>
+            </div>
+            {% empty %}
+            <div class="alert alert-warning">
+                No se encontraron factores patológicos disponibles
+            </div>
+            {% endfor %}
+          </div>
           <div class="d-flex justify-content-center">
               <button type="button" class="btn btn-save">GUARDAR</button>  <!-- Falta el sweet alert -->
           </div>
