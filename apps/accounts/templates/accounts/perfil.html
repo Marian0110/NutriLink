@@ -73,7 +73,7 @@
           <div class="form-group mb-3">
             <label for="especializacion">Especialidad:</label>
             <select id="especializacion" name="especializacion" class="form-select">
-              <option value="" selected disabled>Selecciona una especialidad</option>
+              <option value="" selected disabled>Selecciona tus especialidades</option>
               {% for esp in especialidades %}
                 <option value="{{ esp.id_especialidad }}">{{ esp.descripcion }}</option>
               {% endfor %}
