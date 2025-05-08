@@ -331,7 +331,7 @@ document.addEventListener('DOMContentLoaded', function() {
       document.getElementById('dv').value = dv;
     }
     
-    document.getElementById('fecha_nacimiento').value = patientData.birthDate || '';
+    document.getElementById('fecha_nacimiento').value = patientData.birthDate ? patientData.birthDate.split('T')[0] : '';
     document.getElementById('sexo').value = patientData.gender || '';
     document.getElementById('correo').value = patientData.email || '';
     document.getElementById('telefono').value = patientData.phone || '';
