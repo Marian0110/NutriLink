@@ -3,6 +3,8 @@ import requests
 from django.conf import settings
 from django.http import Http404
 from datetime import datetime
+from django.core.cache import cache
+from requests.exceptions import RequestException
 
 # Create your views here.
 def gestion(request):
@@ -42,11 +44,22 @@ def get_paciente_data(id_paciente):
         raise Http404(f"Error en los datos: {str(e)}")
 
 def historialClinico(request, id_paciente):
-    paciente = get_paciente_data(id_paciente)
-    return render(request, 'patients/historial-clinico.html', {
-        'paciente': paciente,
-        'section': 'historial-clinico'
-    })
+    try:
+        paciente = get_paciente_data(id_paciente)
+        # Obtener factores patológicos
+        success, factores_patologicos, error = get_factores_patologicos()
+        
+        if not success:
+            print(f"Error al obtener factores patológicos: {error}")  # Para depuración
+        
+        return render(request, 'patients/historial-clinico.html', {
+            'paciente': paciente,
+            'factores_patologicos': factores_patologicos if success else [],
+            'section': 'historial-clinico'
+        })
+        
+    except Exception as e:
+        raise Http404(f"Error al cargar historial clínico: {str(e)}")
 
 def metricas(request, id_paciente):
     paciente = get_paciente_data(id_paciente)
@@ -82,3 +95,34 @@ def get_credenciales(id_paciente):
     except requests.RequestException as e:
         print(f'Excepción al conectar con el endpoint de credenciales: {e}')
         return None
+    
+def get_factores_patologicos():
+    """
+    Obtiene todos los factores patológicos desde la API Node.js
+    
+    Returns:
+        tuple: (success: bool, data: list, error: str)
+    """
+    url = 'https://nutrilinkapi-production.up.railway.app/api_nutrilink/obtener_factor_patologico'
+    timeout = 10
+    
+    try:
+        response = requests.get(url, timeout=timeout)
+        
+        # Verificar si la respuesta fue exitosa
+        if response.status_code == 200:
+            data = response.json()
+            # Asegurarnos de que la estructura de datos es correcta
+            if isinstance(data, dict) and 'data' in data and 'rows' in data['data']:
+                return True, data['data']['rows'], None
+            return False, [], "Estructura de respuesta inválida"
+        else:
+            error_msg = response.json().get('mensaje', 'Error desconocido')
+            return False, [], f"Error en la API: {error_msg}"
+            
+    except RequestException as e:
+        return False, [], f"Error de conexión: {str(e)}"
+    except ValueError as e:
+        return False, [], f"Error procesando respuesta: {str(e)}"
+    except Exception as e:
+        return False, [], f"Error inesperado: {str(e)}"
