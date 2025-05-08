@@ -32,13 +32,16 @@
             </div>
             <div>
               <label class="clinical-label d-block">Actividad física:</label>
-              <select class="form-select form-control-custom">
-                <option selected>Sedentaria</option>
-                <option>Ligera</option>
-                <option>Moderada</option>
-                <option>Intensa</option>
+              <select class="form-select form-control-custom" name="actividad_fisica">
+                  {% for nivel in niveles_actividad %}
+                      <option value="{{ nivel.id_actividad_fisica }}" data-valor="{{ nivel.valor_naf }}">
+                          {{ nivel.descripcion }}
+                      </option>
+                  {% empty %}
+                      <option value="">No se pudieron cargar los niveles</option>
+                  {% endfor %}
               </select>
-            </div>
+          </div>
           </div>
           <div class="col-md-4 factors">
             <h2 class="section-title h5">Factores patológicos</h2>

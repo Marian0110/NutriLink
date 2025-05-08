@@ -47,18 +47,21 @@ def historialClinico(request, id_paciente):
     try:
         paciente = get_paciente_data(id_paciente)
         success, factores_patologicos, error = get_factores_patologicos()
+        niveles_actividad = get_niveles_actividad_fisica()
         
         if not success:
             return render(request, 'patients/historial-clinico.html', {
                 'paciente': paciente,
                 'factores_patologicos': [],
                 'error_factores': error,
+                'niveles_actividad': niveles_actividad,
                 'section': 'historial-clinico'
             })
         
         return render(request, 'patients/historial-clinico.html', {
             'paciente': paciente,
             'factores_patologicos': factores_patologicos,
+            'niveles_actividad': niveles_actividad,
             'section': 'historial-clinico'
         })
         
@@ -156,4 +159,19 @@ def get_historial_antropometrico(id_paciente):
             return []
     except requests.RequestException as e:
         print(f'Excepción al conectar con el endpoint de antropometría: {e}')
+        return []
+
+def get_niveles_actividad_fisica():
+    """
+    Obtiene los niveles de actividad física desde la API Node.js
+    Devuelve directamente la lista de niveles o lista vacía si hay error
+    """
+    url = 'https://nutrilinkapi-production.up.railway.app/api_nutrilink/paciente/niveles_actividad_fisica'
+    
+    try:
+        response = requests.get(url, timeout=10)
+        response.raise_for_status()
+        return response.json()  # devuelve directamente un array
+    except Exception as e:
+        print(f"Error obteniendo niveles actividad: {str(e)}")
         return []
