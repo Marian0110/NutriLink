@@ -13,7 +13,7 @@ def gestion(request):
     
 def get_paciente_data(id_paciente):
     try: #construir api y hacer peticion
-        api_url = f'https://nutrilinkapi-production.up.railway.app/api_nutrilink/paciente/{id_paciente}'
+        api_url = f'https://nutrilinkapi-production.up.railway.app/api_nutrilink/paciente/perfil/{id_paciente}'
         response = requests.get(api_url, timeout=10)
         
         #verificar si la respuesta fue exitosa
@@ -63,10 +63,17 @@ def historialClinico(request, id_paciente):
 
 def metricas(request, id_paciente):
     paciente = get_paciente_data(id_paciente)
+    historial = get_historial_antropometrico(id_paciente)
+    
+    # Depuración - imprimir en consola del servidor
+    print("Datos de antropometría recibidos:", historial)
+    
     return render(request, 'patients/metricas.html', {
         'paciente': paciente,
+        'historial_antropometrico': historial,
         'section': 'metricas'
     })
+
 
 def infoGeneral(request, id_paciente):
     paciente = get_paciente_data(id_paciente)
@@ -98,8 +105,6 @@ def get_credenciales(id_paciente):
     
 def get_factores_patologicos():
     """
-    Obtiene todos los factores patológicos desde la API Node.js
-    
     Returns:
         tuple: (success: bool, data: list, error: str)
     """
@@ -126,3 +131,27 @@ def get_factores_patologicos():
         return False, [], f"Error procesando respuesta: {str(e)}"
     except Exception as e:
         return False, [], f"Error inesperado: {str(e)}"
+
+def get_historial_antropometrico(id_paciente):
+    try:
+        url = f'https://nutrilinkapi-production.up.railway.app/api_nutrilink/paciente/obtener_antropometria/{id_paciente}'
+        response = requests.get(url)
+
+        if response.status_code == 200:
+            data = response.json()
+            registros = data.get('datos', [])
+            
+            # Formato de fecha
+            for registro in registros:
+                if 'fecha' in registro and registro['fecha']:
+                    registro['fecha'] = registro['fecha'].split('T')[0]
+            
+            return registros
+        elif response.status_code == 404:
+            return []
+        else:
+            print(f'Error al obtener antropometría: {response.status_code} - {response.text}')
+            return []
+    except requests.RequestException as e:
+        print(f'Excepción al conectar con el endpoint de antropometría: {e}')
+        return []

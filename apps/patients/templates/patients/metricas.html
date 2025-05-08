@@ -101,7 +101,7 @@
           <label for="filtro_fecha" class="form-label">Selecciona una fecha</label>
           <input type="date" id="filtro_fecha" class="form-control" style="max-width: 250px;">
         </div> -->
-  
+
         <!-- Tabla de resultados -->
         <div class="table-responsive">
           <table class="table table-striped table-bordered mt-3" id="tabla_mediciones">
@@ -116,20 +116,36 @@
                 <th>Subescapular (mm)</th>
                 <th>Suprailiaco (mm)</th>
                 <th>Bicipital (mm)</th>
-                <th>Fecha</th>
               </tr>
             </thead>
             <tbody id="tabla_body">
-              <!-- Aqui se insertaran los datos -->
+              {% if historial_antropometrico %}
+                {% for registro in historial_antropometrico %}
+                  <tr>
+                    <td>{{ registro.fecha }}</td>
+                    <td>{{ registro.peso_kg|floatformat:"-2"|default:"-" }}</td>
+                    <td>{{ registro.talla_cm|floatformat:"-2"|default:"-" }}</td>
+                    <td>{{ registro.circunferencia_cintura_cm|floatformat:"-2"|default:"-" }}</td>
+                    <td>{{ registro.perimetro_braquial_mm|floatformat:"-2"|default:"-" }}</td>
+                    <td>{{ registro.pliegue_tricipital_mm|floatformat:"-2"|default:"-" }}</td>
+                    <td>{{ registro.pliegue_subescapular_mm|floatformat:"-2"|default:"-" }}</td>
+                    <td>{{ registro.pliegue_suprailiaco_mm|floatformat:"-2"|default:"-" }}</td>
+                    <td>{{ registro.pliegue_bicipital_mm|floatformat:"-2"|default:"-" }}</td>
+                  </tr>
+                {% endfor %}
+              {% else %}
+                <tr>
+                  <td colspan="9" class="text-center text-muted">
+                    No se encontraron registros antropométricos
+                  </td>
+                </tr>
+              {% endif %}
             </tbody>
           </table>
         </div>
       </div>
     </div>
   </div>
-  
-
-
 <!-- Script aqui por el momento -->
 <script>
 
@@ -236,61 +252,10 @@ document.querySelector('.btn-save').addEventListener('click', function(e) {
     });
 });
 
-
-
-
-//ejemplo
-const datosSimulados = [
-    {
-      fecha: "2025-04-13",
-      peso: 70,
-      talla: 172,
-      cintura: 85,
-      braquial: 28,
-      tricipital: 10,
-      subescapular: 12,
-      suprailiaco: 14,
-      bicipital: 11
-    },
-    {
-      fecha: "2025-04-10",
-      peso: 69.5,
-      talla: 172,
-      cintura: 84,
-      braquial: 27,
-      tricipital: 11,
-      subescapular: 13,
-      suprailiaco: 13,
-      bicipital: 10
-    }
-  ];
-
-  document.getElementById('filtro_fecha').addEventListener('change', function () {
-    const fechaSeleccionada = this.value;
-    const resultado = datosSimulados.filter(d => d.fecha === fechaSeleccionada);
-    const tbody = document.getElementById('tabla_body');
-    tbody.innerHTML = ''; // limpiar tabla
-
-    if (resultado.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="9" class="text-center text-muted">No se encontraron datos para la fecha seleccionada.</td></tr>`;
-    } else {
-      resultado.forEach(dato => {
-        tbody.innerHTML += `
-          <tr>
-            <td>${dato.peso}</td>
-            <td>${dato.talla}</td>
-            <td>${dato.cintura}</td>
-            <td>${dato.braquial}</td>
-            <td>${dato.tricipital}</td>
-            <td>${dato.subescapular}</td>
-            <td>${dato.suprailiaco}</td>
-            <td>${dato.bicipital}</td>
-            <td>${dato.fecha}</td>
-          </tr>
-        `;
-      });
-    }
-  });
+// Función para formatear fecha
+function formatearFecha(fechaStr) {
+    const opciones = { year: 'numeric', month: 'short', day: 'numeric' };
+    return new Date(fechaStr).toLocaleDateString('es-ES', opciones);
+}
 </script>
-
 {% endblock %}
