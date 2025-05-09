@@ -88,7 +88,7 @@
         </div>
         <div class="modal-body">
           <form id="alimentoForm{{ forloop.counter }}">
-            <input type="hidden" id="alimentoId" value="{{ alimento.id }}">
+            <input type="hidden" id="alimentoId" value="{{ alimento.id }}" >
             
             <!-- Sección de información básica -->
             <fieldset class="info-basica-section mb-4">
@@ -97,21 +97,21 @@
               <div class="row g-3">
                 <div class="col-md-6">
                   <label class="form-label">Nombre:</label>
-                  <input type="text" class="form-control colorBg " value="{{ alimento.nombre_alimento }}" readonly>
+                  <input type="text" class="form-control colorBg " value="{{ alimento.nombre_alimento }}" disabled>
                 </div>
                 <div class="col-md-6">
                   <label class="form-label">Origen:</label>
-                  <input type="text" class="form-control" value="{{ alimento.origen|default:'USDA' }}" readonly>
+                  <input type="text" class="form-control" value="{{ alimento.origen|default:'USDA' }}" disabled>
                 </div>
                 
                 <div class="col-md-6">
                   <label class="form-label">Categoría:</label>
-                  <input type="text" class="form-control" value="{{ alimento.nombre_grupo_alimenticio|default:'' }}" readonly>
+                  <input type="text" class="form-control" value="{{ alimento.nombre_grupo_alimenticio|default:'' }}" disabled>
                 </div>
                 <div class="col-md-6">
                   <label class="form-label">Cantidad (porción):</label>
                   <div class="input-group">
-                    <input type="text" class="form-control" value="{{ alimento.masa|default:'' }}" readonly>
+                    <input type="text" class="form-control" value="{{ alimento.masa|default:'' }}" disabled>
                     <span class="input-group-text">gr/ml</span>
                   </div>
                 </div>
@@ -125,19 +125,19 @@
               <div class="row g-3">
                 <div class="col-md-3">
                   <label class="form-label">Lípidos (g):</label>
-                  <input type="text" class="form-control" value="{{ alimento.lipidos_gr }}" readonly>
+                  <input type="text" class="form-control" value="{{ alimento.lipidos_gr }}" disabled>
                 </div>
                 <div class="col-md-3">
                   <label class="form-label">Proteínas (g):</label>
-                  <input type="text" class="form-control" value="{{ alimento.proteinas_gr }}" readonly>
+                  <input type="text" class="form-control" value="{{ alimento.proteinas_gr }}" disabled>
                 </div>
                 <div class="col-md-3">
                   <label class="form-label">Carbohidratos (g):</label>
-                  <input type="text" class="form-control" value="{{ alimento.carbohidratos_gr }}" readonly>
+                  <input type="text" class="form-control" value="{{ alimento.carbohidratos_gr }}" disabled>
                 </div>
                 <div class="col-md-3">
                   <label class="form-label">Calorías (kcal):</label>
-                  <input type="text" class="form-control" value="{{ alimento.kcal }}" readonly>
+                  <input type="text" class="form-control" value="{{ alimento.kcal }}" disabled>
                 </div>
               </div>
             </fieldset>
@@ -149,39 +149,39 @@
               <div class="row g-3">
                 <div class="col-md-4">
                   <label class="form-label">Omega 3 (gr):</label>
-                  <input type="text" class="form-control" value="{{ alimento.n3_gr|default:'0' }}" readonly>
+                  <input type="text" class="form-control" value="{{ alimento.n3_gr|default:'0' }}" disabled>
                 </div>
                 <div class="col-md-4">
                   <label class="form-label">Vitamina A (mcg):</label>
-                  <input type="text" class="form-control" value="{{ alimento.vit_a_mcg|default:'0' }}" readonly>
+                  <input type="text" class="form-control" value="{{ alimento.vit_a_mcg|default:'0' }}" disabled>
                 </div>
                 <div class="col-md-4">
                   <label class="form-label">Vitamina B12 (mcg):</label>
-                  <input type="text" class="form-control" value="{{ alimento.vit_b12_mcg|default:'0' }}" readonly>
+                  <input type="text" class="form-control" value="{{ alimento.vit_b12_mcg|default:'0' }}" disabled>
                 </div>
                 <div class="col-md-4">
                   <label class="form-label">Calcio (mg):</label>
-                  <input type="text" class="form-control" value="{{ alimento.calcio_mg|default:'0' }}" readonly>
+                  <input type="text" class="form-control" value="{{ alimento.calcio_mg|default:'0' }}" disabled>
                 </div>
                 <div class="col-md-4">
                   <label class="form-label">Hierro (mg):</label>
-                  <input type="text" class="form-control" value="{{ alimento.hierro_mg|default:'0' }}" readonly>
+                  <input type="text" class="form-control" value="{{ alimento.hierro_mg|default:'0' }}" disabled>
                 </div>
                 <div class="col-md-4">
                   <label class="form-label">Selenio (mcg):</label>
-                  <input type="text" class="form-control" value="{{ alimento.selenio_mcg|default:'0' }}" readonly>
+                  <input type="text" class="form-control" value="{{ alimento.selenio_mcg|default:'0' }}" disabled>
                 </div>
                 <div class="col-md-4">
                   <label class="form-label">Zinc (mg):</label>
-                  <input type="text" class="form-control" value="{{ alimento.zinc_mg|default:'0' }}" readonly>
+                  <input type="text" class="form-control" value="{{ alimento.zinc_mg|default:'0' }}" disabled>
                 </div>
                 <div class="col-md-4">
                   <label class="form-label">Potasio (mg):</label>
-                  <input type="text" class="form-control" value="{{ alimento.potasio_mg|default:'0' }}" readonly>
+                  <input type="text" class="form-control" value="{{ alimento.potasio_mg|default:'0' }}" disabled>
                 </div>
                 <div class="col-md-4">
                   <label class="form-label">Sodio (mg):</label>
-                  <input type="text" class="form-control" value="{{ alimento.sodio_mg|default:'0' }}" readonly>
+                  <input type="text" class="form-control" value="{{ alimento.sodio_mg|default:'0' }}" disabled>
                 </div>
               </div>
             </fieldset>
@@ -282,7 +282,7 @@
               
               <div class="col-md-6">
                 <label class="form-label">Origen:</label>
-                <input type="text" class="form-control" name="origen" value="Personalizado" readonly>
+                <input type="text" class="form-control" name="origen" value="Personalizado" disabled>
               </div>
               
               <div class="col-md-6">
