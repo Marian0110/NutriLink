@@ -3,8 +3,11 @@ import requests
 from django.conf import settings
 from django.http import Http404
 from datetime import datetime
-from django.core.cache import cache
+from django.core.cache import cache #futuro: para almacenar peticiones en cache por un tiempo def
 from requests.exceptions import RequestException
+from django.core.mail import send_mail # Para enviar emails
+from django.contrib import messages  # Para mostrar alertas en el template
+from django.http import JsonResponse
 
 # Create your views here.
 def gestion(request):
@@ -175,3 +178,66 @@ def get_niveles_actividad_fisica():
     except Exception as e:
         print(f"Error obteniendo niveles actividad: {str(e)}")
         return []
+
+#---------------------------- ENVIO DE CREDENCIALES PACIENTE ----------------------------
+def enviar_credenciales(request, id_paciente):
+    """
+    Envio de las credenciales al paciente por correo electronico
+    """
+    paciente = get_paciente_data(id_paciente)
+    credenciales = get_credenciales(id_paciente)
+
+    if not credenciales:
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'success': False, 'message': 'No se pudieron obtener las credenciales.'})
+        messages.error(request, 'No se pudieron obtener las credenciales.')
+        return render(request, 'patients/info-general.html', {
+            'paciente': paciente,
+            'credenciales': None,
+            'section': 'info-general'
+        })
+
+    try:
+        mensaje = f"""
+Hola {paciente['nombre_completo']} 👋,
+
+Has sido registrado por tu nutricionista en la app NutriLink.
+
+Estas son tus credenciales de acceso:
+
+📧 Correo: {credenciales['correo']}
+🔐 Contraseña: {credenciales['contrasena']} (temporal)
+
+Puedes cambiar tu contraseña una vez que ingreses.
+
+📲 Descarga la app aquí:
+https://nuestrositio.com/nutrilink.apk
+
+¡Nos vemos dentro!
+Equipo NutriLink
+        """
+
+        send_mail(
+            subject='Tus credenciales para NutriLink',
+            message=mensaje,
+            from_email=None,
+            recipient_list=[credenciales['correo']],
+            fail_silently=False,
+        )
+        
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'success': True, 'message': 'Correo enviado correctamente.'})
+        messages.success(request, 'Correo enviado correctamente.')
+    except Exception as e:
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'success': False, 'message': f'Ocurrió un error al enviar el correo: {e}'})
+        messages.error(request, f'Ocurrió un error al enviar el correo: {e}')
+
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return JsonResponse({'success': True, 'message': 'Correo enviado correctamente.'})
+    
+    return render(request, 'patients/info-general.html', {
+        'paciente': paciente,
+        'credenciales': credenciales,
+        'section': 'info-general'
+    })
