@@ -32,19 +32,19 @@
   }
 
 .card-body {
-    padding: 10px;
+  padding: 10px;
 }
 
 .input-group-text {
-    min-width: 50px;
+  min-width: 50px;
 }
 
 .form-control {
-    height: 38px;
+  height: 38px;
 }
 
 .mb-3 {
-    margin-bottom: 10px; 
+  margin-bottom: 10px; 
 }
 
 .btn-save {
@@ -58,8 +58,70 @@
     width: 20%;
   }
   
-  .btn-save:hover {
-    background-color: var(--save);
-    color: white;
-  }
+.btn-save:hover {
+  background-color: var(--save);
+  color: white;
+}
   
+/*Card de Diagnosticos*/
+.diagnosticos-container {
+  background-color: white;
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+}
+.fecha-card {
+  border-left: 4px solid #0d6efd;
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background-color: #f8f9fa;
+  border-radius: 0.25rem;
+  position: relative;
+  overflow: visible;
+  width: 60%;
+}
+.fecha-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 1rem;
+}
+.emoji-tag {
+  background-color: #0d6efd;
+  border-radius: 4px;
+  padding: 3px 8px;
+  font-size: 1.2rem;
+  margin-left: -7px;
+  box-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+}
+.diagnostico-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #eee;
+  gap: 1rem;
+}
+.diagnostico-row:last-child {
+  border-bottom: none;
+}
+.diagnostico-nombre {
+  flex: 1;
+}
+.diagnostico-valor {
+  font-weight: 600;
+  color: #0d6efd;
+  min-width: 80px;
+  text-align: right;
+}
+.diagnostico-comentario {
+  font-size: 0.85rem;
+  color: #6c757d;
+  min-width: 200px;
+  text-align: left;
+}
