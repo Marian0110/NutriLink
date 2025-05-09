@@ -54,7 +54,7 @@
                 </span>
               </h1>
             <span class="subtext" style="text-align: center;">Estas son las credenciales de su paciente para el primer ingreso en la app NutriLink</span>
-            <form method="post" class="credential-form">
+            <form method="post" class="credential-form" action="{% url 'patients:enviar_credenciales' paciente.id_paciente %}"> <!--disparar vista enviar_credenciales-->
                 {% csrf_token %}
                 <div class="form-group">
                     <label class="form-label">Correo:</label>
@@ -64,7 +64,9 @@
                     <label class="form-label">Contraseña provisoria:</label>
                     <input type="text" class="form-control" value="{{ credenciales.contrasena }}" disabled>
                 </div>
-                <!-- <button type="button" class="btn-actualizar" name="actualizar_credenciales">ACTUALIZAR</button> -->
+                <button type="button" class="btn-enviar" name="enviar_credenciales" style="background-color: green; color: white; border: none; padding: 10px 20px; border-radius: 5px; font-size: 16px; cursor: pointer; transition: background-color 0.3s ease;">
+                    ENVIAR
+                </button>                
             </form>
         </div>
     </div>
@@ -92,5 +94,63 @@
       }
     });
   });
+
+  // Botón de enviar credenciales
+  const sendCredsBtn = document.querySelector('.btn-enviar');
+    if (sendCredsBtn) {
+        sendCredsBtn.addEventListener('click', function(e) {
+            e.preventDefault(); // Prevenir el envío normal del formulario
+            
+            Swal.fire({
+                title: '¿Enviar credenciales?',
+                text: 'Se enviarán las credenciales de acceso al paciente por correo electrónico',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Sí, enviar',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Enviar el formulario mediante AJAX o redirección
+                    fetch(e.target.closest('form').action, {
+                        method: 'POST',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'X-CSRFToken': '{{ csrf_token }}'
+                        },
+                        body: new FormData(e.target.closest('form'))
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            Swal.fire({
+                                title: '¡Correo enviado!',
+                                text: data.message,
+                                icon: 'success',
+                                timer: 3000,
+                                showConfirmButton: false
+                            });
+                        } else {
+                            Swal.fire({
+                                title: 'Error',
+                                text: data.message,
+                                icon: 'error',
+                                timer: 3000,
+                                showConfirmButton: false
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        Swal.fire({
+                            title: 'Error',
+                            text: 'Ocurrió un problema al enviar las credenciales',
+                            icon: 'error',
+                            timer: 3000,
+                            showConfirmButton: false
+                        });
+                    });
+                }
+            });
+        });
+    }
 </script>
 {% endblock %}
