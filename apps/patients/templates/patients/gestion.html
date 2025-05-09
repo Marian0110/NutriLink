@@ -8,10 +8,11 @@
   <div class="row">
     <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
       <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-        <h1 class="h3">
+        <h1 class="h3 mb-0">
           <i class="fas fa-users me-2"></i>Gestión de pacientes
         </h1>
-        <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="d-flex align-items-center">
+          <span id="patientCounter" class="text-muted me-3">Total: 0</span>
           <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#patientModal" id="addPatientBtn">
             <i class="fas fa-user-plus me-2"></i>Agregar
           </button>
@@ -124,7 +125,7 @@
               <div class="col-md-6">
                 <label class="form-label">Teléfono:</label>
                 <div class="input-group">
-                  <input type="tel" class="form-control" id="telefono" name="telefono" placeholder="Ej: 922456789" maxlength="9">
+                  <input type="tel" class="form-control" id="telefono" name="telefono" placeholder="Ej:944556688" maxlength="9">
                   <span class="input-group-text"><i class="fas fa-phone"></i></span>
                 </div>
               </div>
@@ -172,6 +173,13 @@
     if (pacientesTableBody) {
       fetchPacientes();
     }
+
+    function updatePatientCounter(count) {
+      const counter = document.getElementById('patientCounter');
+      if (counter) {
+        counter.textContent = `Total: ${count}`;
+      }
+    }
   
     // Funcion principal cargar lista de pacientes
     async function fetchPacientes() {
@@ -201,11 +209,12 @@
         if (!response.ok || data.status === 'error') {
           throw new Error(data.mensaje || 'Error al obtener pacientes');
         }
-        
+        updatePatientCounter(data.data?.length || 0);
         renderPacientes(data.data || []);
         
       } catch (error) {
         showError(error.message);
+        updatePatientCounter(0);
       }
     }
   
@@ -544,6 +553,7 @@
           if (patientModal) {
             patientModal.hide();
           }
+          updatePatientCounter(document.querySelectorAll('#pacientes-table-body tr').length);
           resetModal();
           setModalMode('add');
           fetchPacientes();
