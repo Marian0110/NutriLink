@@ -17,7 +17,6 @@
     padding: 25px;
     width: 100%;
     margin: 0 auto;
-    margin-top: 2%;
   }
 
 .historial-card {
@@ -64,11 +63,14 @@
 }
   
 /*Card de Diagnosticos*/
-.diagnosticos-container {
-  background-color: white;
-  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
-  border-radius: 0.5rem;
-  padding: 1.5rem;
+.diagnosticos-card {
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  padding: 25px;
+  width: 100%;
+  margin: 0 auto;
+  margin-top: 2%;
 }
 .fecha-card {
   border-left: 4px solid #0d6efd;
@@ -78,7 +80,7 @@
   border-radius: 0.25rem;
   position: relative;
   overflow: visible;
-  width: 60%;
+
 }
 .fecha-header {
   display: flex;
