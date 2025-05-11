@@ -81,6 +81,14 @@ def metricas(request, id_paciente):
         'historial_antropometrico': historial,
         'section': 'metricas'
     })
+    
+def minuta(request, id_paciente):
+    paciente = get_paciente_data(id_paciente)
+    
+    return render(request, 'patients/minuta.html', {
+        'paciente': paciente,
+        'section': 'minuta'
+    })
 
 
 def infoGeneral(request, id_paciente):

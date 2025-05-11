@@ -1,0 +1,226 @@
+{% extends 'basePerfil.html' %}
+{% load static %}
+{% block title %}Minuta{% endblock %}
+
+{% block perfilcontent %}
+<div class="minuta-creation-content patient-content"> 
+    <h2>Porciones por tiempo de comida</h2>
+
+    <div id="meal-times-container">
+        <!-- Las entradas de tiempo de comida se agregarán aquí dinámicamente -->
+    </div>
+
+    <button id="add-meal-time-btn">Agregar tiempo de comida</button>
+</div>
+
+<script>
+    const ALL_MEAL_TIMES = [
+        "Desayuno",
+        "Almuerzo",
+        "Once",
+        "Cena",
+        "Colación AM",
+        "Colación PM",
+        "Colación Nocturna"
+    ];
+    let foodGroupsData = [];
+    let mealTimeEntryCounter = 0;
+
+    async function fetchFoodGroups() {
+        try {
+            const response = await fetch('https://nutrilinkapi-production.up.railway.app/api_nutrilink/alimento/grupos_alimenticios');
+            if (!response.ok) {
+                throw new Error(`Error HTTP: ${response.status}`);
+            }
+            foodGroupsData = await response.json();
+            addMealTimeEntry();
+        } catch (error) {
+            console.error("Error al obtener grupos alimenticios:", error);
+            const container = document.getElementById('meal-times-container');
+            container.innerHTML = '<p style="color: red;">Error al cargar los grupos de alimentos. Por favor, intente recargar la página.</p>';
+            document.getElementById('add-meal-time-btn').disabled = true;
+        }
+    }
+
+    function getSelectedMealTimes() {
+        const selected = [];
+        document.querySelectorAll('.meal-time-select').forEach(select => {
+            if (select.value) {
+                selected.push(select.value);
+            }
+        });
+        return selected;
+    }
+
+    function getAvailableMealTimes() {
+        const selectedTimes = getSelectedMealTimes();
+        return ALL_MEAL_TIMES.filter(time => !selectedTimes.includes(time));
+    }
+
+    function updateAddButtonState() {
+        const addButton = document.getElementById('add-meal-time-btn');
+        const availableTimes = getAvailableMealTimes();
+        addButton.disabled = availableTimes.length === 0;
+    }
+    
+    function updateAllSelects() {
+        const allSelects = document.querySelectorAll('.meal-time-select');
+        allSelects.forEach(currentSelect => {
+            const currentValue = currentSelect.value; 
+            const otherSelectedTimes = [];
+            allSelects.forEach(s => {
+                if (s !== currentSelect && s.value) {
+                    otherSelectedTimes.push(s.value);
+                }
+            });
+            
+            const availableForThisSelect = ALL_MEAL_TIMES.filter(time => !otherSelectedTimes.includes(time));
+            
+            currentSelect.innerHTML = ''; 
+            
+            // Asegurar que la opción seleccionada actualmente (si existe) esté presente
+            if (currentValue) {
+                const currentOption = document.createElement('option');
+                currentOption.value = currentValue;
+                currentOption.textContent = currentValue;
+                currentSelect.appendChild(currentOption);
+                currentOption.selected = true;
+            } else {
+                // Si no hay valor actual, agregar el placeholder
+                const placeholder = document.createElement('option');
+                placeholder.value = "";
+                placeholder.textContent = "-- Seleccione --";
+                currentSelect.insertBefore(placeholder, currentSelect.firstChild);
+                placeholder.selected = true;
+            }
+
+            availableForThisSelect.forEach(time => {
+                if (time !== currentValue) { 
+                    const option = document.createElement('option');
+                    option.value = time;
+                    option.textContent = time;
+                    currentSelect.appendChild(option);
+                }
+            });
+
+            if (!currentSelect.value && availableForThisSelect.length === 0 && !currentValue) {
+                const noOptions = document.createElement('option');
+                noOptions.value = "";
+                noOptions.textContent = "No hay más opciones";
+                noOptions.disabled = true;
+                // Remover placeholder si existe y no hay opciones
+                if(currentSelect.options[0] && currentSelect.options[0].value === ""){
+                    currentSelect.remove(0);
+                }
+                currentSelect.appendChild(noOptions);
+                noOptions.selected = true;
+            }
+        });
+        updateAddButtonState();
+    }
+
+
+    function addMealTimeEntry() {
+        if (foodGroupsData.length === 0) {
+            console.warn("No se han cargado los grupos alimenticios. No se puede agregar tiempo de comida.");
+            return;
+        }
+
+        const availableTimesInitial = getAvailableMealTimes();
+        // Si no es la primera entrada Y no hay tiempos disponibles, no agregar.
+        if (mealTimeEntryCounter > 0 && availableTimesInitial.length === 0) { 
+            alert("Todos los tiempos de comida ya han sido seleccionados.");
+            return;
+        }
+
+        const entryId = `meal-entry-${mealTimeEntryCounter}`;
+        const container = document.getElementById('meal-times-container');
+        const entryDiv = document.createElement('div');
+        entryDiv.classList.add('meal-time-entry'); 
+        entryDiv.id = entryId;
+
+        // --- Combobox de Tiempo de Comida ---
+        const selectorDiv = document.createElement('div');
+        selectorDiv.classList.add('meal-time-selector'); 
+        
+        const selectLabel = document.createElement('label');
+        selectLabel.setAttribute('for', `meal-time-select-${mealTimeEntryCounter}`);
+        selectLabel.textContent = `Tiempo de Comida #${mealTimeEntryCounter + 1}:`;
+        
+        const selectElement = document.createElement('select');
+        selectElement.id = `meal-time-select-${mealTimeEntryCounter}`;
+        selectElement.name = `minuta[${mealTimeEntryCounter}][tiempo_comida]`; 
+        selectElement.classList.add('meal-time-select'); 
+
+        const placeholderOption = document.createElement('option');
+        placeholderOption.value = "";
+        placeholderOption.textContent = "-- Seleccione Tiempo --";
+        selectElement.appendChild(placeholderOption);
+
+        // Para el primer dropdown, todas las opciones están disponibles inicialmente.
+        // Para los siguientes, getAvailableMealTimes() ya filtra.
+        const optionsForThisSelect = mealTimeEntryCounter === 0 ? ALL_MEAL_TIMES : availableTimesInitial;
+
+        optionsForThisSelect.forEach(time => {
+            const option = document.createElement('option');
+            option.value = time;
+            option.textContent = time;
+            selectElement.appendChild(option);
+        });
+
+        selectElement.addEventListener('change', () => {
+            updateAllSelects(); 
+        });
+
+        selectorDiv.appendChild(selectLabel);
+        selectorDiv.appendChild(selectElement);
+        entryDiv.appendChild(selectorDiv);
+
+        // --- Tabla de Porciones de Grupos Alimenticios ---
+        const tableDiv = document.createElement('div');
+        tableDiv.classList.add('food-portions-table'); 
+        
+        const table = document.createElement('table');
+        const thead = document.createElement('thead');
+        const tbody = document.createElement('tbody');
+
+        const headerRow = document.createElement('tr');
+        foodGroupsData.forEach(group => {
+            const th = document.createElement('th');
+            th.textContent = group.descripcion;
+            headerRow.appendChild(th);
+        });
+        thead.appendChild(headerRow);
+
+        const inputRow = document.createElement('tr');
+        foodGroupsData.forEach(group => {
+            const td = document.createElement('td');
+            const input = document.createElement('input');
+            input.type = 'number';
+            input.min = '0';
+            input.step = '0.1'; 
+            input.placeholder = '0';
+            input.name = `minuta[${mealTimeEntryCounter}][porciones][${group.descripcion.replace(/\s+/g, '_')}]`; 
+            td.appendChild(input);
+            inputRow.appendChild(td);
+        });
+        tbody.appendChild(inputRow);
+
+        table.appendChild(thead);
+        table.appendChild(tbody);
+        tableDiv.appendChild(table);
+        entryDiv.appendChild(tableDiv);
+
+        container.appendChild(entryDiv);
+        mealTimeEntryCounter++;
+        updateAllSelects(); // Actualizar todos los selects y el botón
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        fetchFoodGroups(); 
+        
+        const addButton = document.getElementById('add-meal-time-btn');
+        addButton.addEventListener('click', addMealTimeEntry);
+    });
+</script>
+{% endblock %}

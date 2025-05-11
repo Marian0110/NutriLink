@@ -7,6 +7,9 @@
   --light-text: #747474;
   --white: #ffffff;
   --shadow: #d1d0d057;
+  --border-color: #e0e0e0; 
+  --input-background: var(--white);
+  --input-border: #ced4da;
 }
 
 .dynamic-content-container {
@@ -131,4 +134,146 @@
   text-decoration: none;
   transition: all 0.3s;
   border-bottom: 3px solid transparent;
+}
+
+.minuta-creation-content h1 {
+  color: var(--primary-color);
+  margin-bottom: 0.5em;
+  font-size: 1.8rem; /* Un poco más grande para título principal de la sección */
+}
+
+.minuta-creation-content h2 {
+  color: var(--secondary-color);
+  margin-bottom: 1.5em;
+  font-size: 1.3rem;
+  font-weight: 500;
+}
+
+/* Contenedor para cada entrada de tiempo de comida (combobox + tabla) */
+.meal-time-entry {
+  display: flex;
+  align-items: flex-start; /* Alinea los items al inicio verticalmente */
+  margin-bottom: 25px;
+  padding: 20px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px; /* Similar a patient-card */
+  background-color: var(--white);
+  box-shadow: 0 2px 8px var(--shadow);
+}
+
+/* Contenedor del selector de tiempo de comida (label + select) */
+.meal-time-selector {
+  margin-right: 25px;
+  min-width: 230px; /* Ancho mínimo para el combobox y label */
+  flex-shrink: 0; /* Evita que se encoja si la tabla es muy ancha */
+}
+
+.meal-time-selector label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: var(--text-color);
+  font-size: 0.95rem;
+}
+
+/* Estilo para los combobox (select) */
+.meal-time-select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--input-border);
+  border-radius: 5px;
+  background-color: var(--input-background);
+  color: var(--text-color);
+  font-size: 0.9rem;
+  box-sizing: border-box; /* Asegura que padding no aumente el ancho total */
+  appearance: none; /* Quita estilos por defecto del navegador si quieres personalización total */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%23333' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3E%3C/svg%3E"); /* Flecha dropdown simple */
+  background-repeat: no-repeat;
+  background-position: right 0.7em top 50%;
+  background-size: 0.9em auto;
+}
+.meal-time-select:focus {
+  border-color: var(--primary-color);
+  outline: 0;
+  box-shadow: 0 0 0 0.2rem rgba(23, 59, 76, 0.25); /* Sombra de foco similar a Bootstrap */
+}
+
+
+/* Contenedor de la tabla de porciones */
+.food-portions-table {
+  flex-grow: 1; /* Permite que la tabla ocupe el espacio restante */
+  overflow-x: auto; /* Permite scroll horizontal si la tabla es muy ancha */
+}
+
+.food-portions-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.food-portions-table th,
+.food-portions-table td {
+  border: 1px solid var(--border-color);
+  padding: 10px;
+  text-align: center;
+  font-size: 0.85rem; /* Ligeramente más pequeño para caber más columnas */
+  vertical-align: middle;
+}
+
+.food-portions-table th {
+  background-color: #f8f9fa; 
+  color: var(--secondary-color);
+  font-weight: 600;
+  /* white-space: nowrap; /* Evita que los nombres largos de grupos se partan mucho */
+  /* hyphens: auto; */
+  /* word-break: break-word; */
+}
+
+/* Estilo para los inputs numéricos dentro de la tabla */
+.food-portions-table input[type="number"] {
+  width: 25px;
+  padding: 8px;
+  box-sizing: border-box;
+  border: 1px solid var(--input-border);
+  border-radius: 4px;
+  text-align: center;
+  font-size: 0.9rem;
+  -moz-appearance: textfield; /* Oculta spinners en Firefox */
+}
+.food-portions-table input[type="number"]::-webkit-outer-spin-button,
+.food-portions-table input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none; /* Oculta spinners en Chrome, Safari, Edge, Opera */
+  margin: 0;
+}
+.food-portions-table input[type="number"]:focus {
+  border-color: var(--primary-color);
+  outline: 0;
+  box-shadow: 0 0 0 0.15rem rgba(23, 59, 76, 0.2);
+}
+
+
+/* Botón "Agregar tiempo de comida" */
+#add-meal-time-btn {
+  margin-top: 15px; /* Espacio arriba del botón si hay varias entradas */
+  margin-bottom: 20px;
+  padding: 12px 20px;
+  background-color: var(--primary-color); /* Usar primary color para acción principal */
+  color: var(--white);
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 0.95rem;
+  transition: background-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+#add-meal-time-btn:hover {
+  background-color: var(--secondary-color); /* Un tono más claro o secundario al hacer hover */
+  box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+}
+
+#add-meal-time-btn:disabled {
+  background-color: #adb5bd; /* Un gris para estado deshabilitado */
+  color: #6c757d;
+  cursor: not-allowed;
+  box-shadow: none;
 }
