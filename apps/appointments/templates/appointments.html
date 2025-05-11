@@ -1,8 +1,5 @@
 {% extends 'base.html' %}
 {% load static %}
-{% block scripts %}
-<script src="{% static 'appointments/appointments.js' %}"></script>
-{% endblock %}
 
 {% block title %}Agenda{% endblock %}
 
@@ -18,17 +15,24 @@
                     </h1>
                 </div>
 
-                <div class="card shadow-lg mt-3" style="border-radius: 15px; border: none; height: auto !important; min-height: unset;">
+                <div class="card shadow-lg mt-3"
+                    style="border-radius: 15px; border: none; height: auto !important; min-height: unset;">
                     <div class="card-body">
                         <!-- Calendario -->
                         <div class="mb-4">
                             <label for="fecha" class="form-label">Selecciona una fecha:</label>
-                            <input type="date" id="fecha" class="form-control w-100 w-md-50" />
+                            <input type="date" id="fecha" class="form-control w-100 w-md-50" min="" />
                         </div>
 
                         <!-- Bloques horarios -->
                         <div id="bloques-horarios" class="row row-cols-2 row-cols-sm-3 row-cols-md-4 g-3 mb-4">
                             <!-- Se generan dinámicamente -->
+                        </div>
+
+                        <div class="alert alert-warning mt-2" role="alert" id="mensaje-reservadas" style="display: none;">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            Las horas en <strong>amarillo</strong> ya han sido reservadas. Si las desmarcas, las citas de los pacientes se
+                            cancelarán y serán notificados oportunamente.
                         </div>
 
                         <!-- Botón guardar -->
@@ -43,4 +47,9 @@
         </main>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<!--<script src="{% static 'appointments/appointments.js' %}" defer></script>-->
+<script src="{% static 'appointments/appointments.js' %}"></script>
 {% endblock %}
