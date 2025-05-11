@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'apps.appointments',
     'apps',
 ]
 
@@ -72,6 +73,7 @@ TEMPLATES = [
             BASE_DIR / 'apps' / 'accounts' / 'templates',
             BASE_DIR / 'apps' / 'patients' / 'templates',
             BASE_DIR / 'apps' / 'foods' / 'templates', # Aqui se ponen las rutas personalizadas
+            BASE_DIR / 'apps' / 'appointments' / 'templates'
         ],
         'APP_DIRS': True,
         'OPTIONS': {

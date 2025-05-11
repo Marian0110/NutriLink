@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block scripts %}
+<script src="{% static 'appointments/appointments.js' %}"></script>
+{% endblock %}
+
+{% block title %}Agenda{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+            <div style="max-width: 1100px; margin-left: 20px;">
+                <div
+                    class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h3 mb-0">
+                        <i class="fas fa-calendar-check me-2"></i>Gestión de agenda
+                    </h1>
+                </div>
+
+                <div class="card shadow-lg mt-3" style="border-radius: 15px; border: none; height: auto !important; min-height: unset;">
+                    <div class="card-body">
+                        <!-- Calendario -->
+                        <div class="mb-4">
+                            <label for="fecha" class="form-label">Selecciona una fecha:</label>
+                            <input type="date" id="fecha" class="form-control w-100 w-md-50" />
+                        </div>
+
+                        <!-- Bloques horarios -->
+                        <div id="bloques-horarios" class="row row-cols-2 row-cols-sm-3 row-cols-md-4 g-3 mb-4">
+                            <!-- Se generan dinámicamente -->
+                        </div>
+
+                        <!-- Botón guardar -->
+                        <div class="d-flex justify-content-end">
+                            <button id="guardarDisponibilidad" class="btn btn-success px-4 rounded-pill">
+                                Guardar disponibilidad
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+{% endblock %}
