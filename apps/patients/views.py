@@ -90,6 +90,13 @@ def minuta(request, id_paciente):
         'section': 'minuta'
     })
 
+def registroDietario(request, id_paciente):
+    paciente = get_paciente_data(id_paciente)
+    
+    return render(request, 'patients/registro-dietario.html', {
+        'paciente': paciente,
+        'section': 'registro-dietario'
+    })
 
 def infoGeneral(request, id_paciente):
     paciente = get_paciente_data(id_paciente)
