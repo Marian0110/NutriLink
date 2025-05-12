@@ -69,6 +69,100 @@ async function cargarHorasDesdeBD(fecha, id_nutricionista) {
     }
 }
 
+async function cargarResumenAgenda(id_nutricionista) {
+    const contenedor = document.getElementById('resumen-agenda');
+    contenedor.innerHTML = '<p class="text-muted">Cargando resumen...</p>';
+
+    try {
+        const response = await fetch(`https://nutrilinkapi-production.up.railway.app/api_nutrilink/agenda/disponibilidad_nutricionista/${id_nutricionista}`);
+        const result = await response.json();
+
+        if (!response.ok || result.status !== 'ok') {
+            throw new Error(result.mensaje || 'No se pudo cargar el resumen de la agenda.');
+        }
+
+        const disponibilidades = result.disponibilidades || [];
+
+        if (disponibilidades.length === 0) {
+            contenedor.innerHTML = '<p class="text-muted">No hay horarios disponibles ni reservados.</p>';
+            return;
+        }
+
+        // Obtener la fecha de hoy a las 00:00
+        const hoy = new Date();
+        hoy.setHours(0, 0, 0, 0);
+
+        const porMes = {};
+        for (const d of disponibilidades) {
+            const [anio, mes, dia] = d.fecha.split('-');
+            const fechaObj = new Date(parseInt(anio), parseInt(mes) - 1, parseInt(dia));
+            fechaObj.setHours(0, 0, 0, 0); // Asegura comparación sólo por fecha
+
+            if (fechaObj < hoy) continue; // 🔴 Omitir fechas pasadas
+
+            const diaClave = `${anio}-${mes}-${dia}`;
+            const mesNombre = fechaObj.toLocaleString('es-ES', { month: 'long' });
+            const mesClave = `${mesNombre.charAt(0).toUpperCase() + mesNombre.slice(1)} de ${anio}`;
+
+            if (!porMes[mesClave]) porMes[mesClave] = {};
+            if (!porMes[mesClave][diaClave]) porMes[mesClave][diaClave] = [];
+
+            porMes[mesClave][diaClave].push({
+                hora: d.hora.slice(0, 5),
+                estado: d.estado === 'Reservada' ? 'R' : 'D'
+            });
+        }
+
+        // Renderizar por mes > día
+        contenedor.innerHTML = '';
+        Object.entries(porMes).forEach(([mesTitulo, dias]) => {
+            const contMes = document.createElement('div');
+            contMes.className = 'mb-4';
+
+            const tituloMes = document.createElement('h5');
+            tituloMes.className = 'fw-bold text-primary mb-3';
+            tituloMes.innerHTML = `<i class="far fa-calendar-alt me-2"></i>${mesTitulo}`;
+            contMes.appendChild(tituloMes);
+
+            Object.entries(dias).forEach(([diaISO, horas]) => {
+                const [anio, mes, dia] = diaISO.split('-');
+                const fechaObj = new Date(parseInt(anio), parseInt(mes) - 1, parseInt(dia));
+                const fechaFormateada = fechaObj.toLocaleDateString('es-ES', {
+                    weekday: 'long',
+                    day: 'numeric',
+                });
+
+                const fechaContainer = document.createElement('div');
+                fechaContainer.className = 'mb-2';
+
+                const fechaTitulo = document.createElement('h6');
+                fechaTitulo.innerHTML = `<i class="far fa-clock me-1"></i>${fechaFormateada.charAt(0).toUpperCase() + fechaFormateada.slice(1)}`;
+                fechaContainer.appendChild(fechaTitulo);
+
+                const bloqueHoras = document.createElement('div');
+                bloqueHoras.className = 'd-flex flex-wrap gap-2';
+
+                horas.sort((a, b) => a.hora.localeCompare(b.hora)).forEach(h => {
+                    const badge = document.createElement('span');
+                    badge.className = `badge rounded-pill px-3 py-2 ${h.estado === 'D' ? 'bg-success' : 'bg-warning text-dark'}`;
+                    badge.textContent = `${h.hora} [${h.estado}]`;
+                    bloqueHoras.appendChild(badge);
+                });
+
+                fechaContainer.appendChild(bloqueHoras);
+                contMes.appendChild(fechaContainer);
+            });
+
+            contenedor.appendChild(contMes);
+        });
+
+    } catch (error) {
+        console.error('Error al cargar resumen de agenda:', error);
+        contenedor.innerHTML = '<p class="text-danger">Error al cargar el resumen de la agenda.</p>';
+    }
+}
+
+// DOM
 document.addEventListener('DOMContentLoaded', function () {
     console.log('✅ DOMContentLoaded se ejecutó');
 
@@ -83,6 +177,7 @@ document.addEventListener('DOMContentLoaded', function () {
         inputFecha.addEventListener('change', () => {
             const fechaSeleccionada = inputFecha.value;
             const id_nutricionista = sessionStorage.getItem('id_nutricionista');
+            console.log('📦 ID del nutricionista desde sessionStorage:', id_nutricionista);
 
             // Validar que no se seleccione una fecha pasada
             if (fechaSeleccionada < hoy) {
@@ -166,5 +261,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 Swal.fire('Error', error.message, 'error');
             }
         });
+    }
+
+    const id_nutricionista = sessionStorage.getItem('id_nutricionista');
+    console.log('📦 ID del nutricionista desde sessionStorage:', id_nutricionista);
+    if (id_nutricionista) {
+        cargarResumenAgenda(parseInt(id_nutricionista));
     }
 });
