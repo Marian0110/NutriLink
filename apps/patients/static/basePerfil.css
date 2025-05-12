@@ -230,7 +230,7 @@
 
 /* Estilo para los inputs numéricos dentro de la tabla */
 .food-portions-table input[type="number"] {
-  width: 25px;
+  width: 40px;
   padding: 8px;
   box-sizing: border-box;
   border: 1px solid var(--input-border);

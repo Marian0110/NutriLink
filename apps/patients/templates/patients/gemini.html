@@ -1,9 +1,65 @@
+{% extends 'basePerfil.html' %}
+{% load static %}
+{% block title %}Minuta - Indicaciones Paciente{% endblock %}
+
+{% block perfilcontent %}
+<div class="minuta-creation-content patient-content">
+    <h1>Indicaciones para el paciente</h1>
+
+    <div id="adecuacion-minuta-section" style="margin-bottom: 25px;">
+        <h3>Resumen de Adecuación Nutricional Actual</h3>
+        <table id="tabla-adecuacion" class="adecuacion-table">
+            <thead>
+                <tr>
+                    <th>Componente</th>
+                    <th>Porcentaje de Adecuación</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Calórico</td>
+                    <td id="adecuacion-calorico">- %</td>
+                </tr>
+                <tr>
+                    <td>Proteínas</td>
+                    <td id="adecuacion-proteinas">- %</td>
+                </tr>
+                <tr>
+                    <td>Carbohidratos</td>
+                    <td id="adecuacion-carbohidratos">- %</td>
+                </tr>
+                <tr>
+                    <td>Lípidos</td>
+                    <td id="adecuacion-lipidos">- %</td>
+                </tr>
+            </tbody>
+        </table>
+        <div id="adecuacion-status" style="font-style: italic; margin-top: 8px; font-size: 0.9em;">Cargando datos de adecuación...</div>
+    </div>
+
+    <h2>Porciones por tiempo de comida</h2>
+
+    <script type="text/javascript">
+        const PACIENTE_ID_FROM_DJANGO = {{ paciente.id_paciente|default:"null" }};
+    </script>
+
+    <div id="meal-times-container">
+        <!-- Las entradas de tiempo de comida se agregarán aquí dinámicamente -->
+    </div>
+
+    <div style="margin-top: 25px; margin-bottom: 15px;">
+        <button id="add-meal-time-btn" class="button-secondary" style="display: none;">Agregar Tiempo de Comida</button>
+    </div>
+    <div id="general-status" style="min-height: 20px; font-weight: bold;"></div> 
+</div>
+
+<script>
 document.addEventListener('DOMContentLoaded', () => {
-    const PACIENTE_ID = typeof PACIENTE_ID_FROM_DJANGO !== 'undefined' ? PACiente_id_from_django : null;
+    const PACIENTE_ID = typeof PACIENTE_ID_FROM_DJANGO !== 'undefined' ? PACIENTE_ID_FROM_DJANGO : null;
 
     const mealTimesContainer = document.getElementById('meal-times-container');
     const addMealTimeBtn = document.getElementById('add-meal-time-btn');
-    const generalStatusDiv = document.getElementById('general-status'); // Cambiado de saveStatusDiv
+    const generalStatusDiv = document.getElementById('general-status'); 
 
     const adecuacionCaloricoEl = document.getElementById('adecuacion-calorico');
     const adecuacionProteinasEl = document.getElementById('adecuacion-proteinas');
@@ -16,7 +72,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let mealTimeEntryCounter = 0;
 
     if (PACIENTE_ID === null) {
-        console.error("PACIENTE_ID no está definido...");
+        console.error("PACIENTE_ID no está definido o es null.");
         if(generalStatusDiv) generalStatusDiv.textContent = "Error crítico: No se pudo identificar al paciente.";
         if(adecuacionStatusEl) {
             adecuacionStatusEl.textContent = "No se puede cargar la adecuación sin ID de paciente.";
@@ -27,13 +83,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function fetchAdecuacionData() {
-        // ... (sin cambios respecto a la versión anterior)
         if (!PACIENTE_ID) {
             return { data: null, status: 'error', message: "ID de paciente no disponible." };
         }
-        adecuacionStatusEl.textContent = "Actualizando datos de adecuación...";
-        adecuacionStatusEl.className = 'loading';
-        adecuacionStatusEl.style.display = 'block';
+        if(adecuacionStatusEl) { // Comprobar si el elemento existe
+            adecuacionStatusEl.textContent = "Actualizando datos de adecuación...";
+            adecuacionStatusEl.className = 'loading';
+            adecuacionStatusEl.style.display = 'block';
+        }
 
         try {
             const response = await fetch(`http://nutrilinkapi-production.up.railway.app/api_nutrilink/minuta/obtener_adecuacion_minuta?pacienteId=${PACIENTE_ID}`);
@@ -60,18 +117,19 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function displayAdecuacionData(apiResponse) {
-        // ... (sin cambios respecto a la versión anterior)
         if(adecuacionCaloricoEl) adecuacionCaloricoEl.textContent = '- %';
         if(adecuacionProteinasEl) adecuacionProteinasEl.textContent = '- %';
         if(adecuacionCarbohidratosEl) adecuacionCarbohidratosEl.textContent = '- %';
         if(adecuacionLipidosEl) adecuacionLipidosEl.textContent = '- %';
 
+        if (!adecuacionStatusEl) return; // Salir si el elemento de estado no existe
+
         if (apiResponse.status === 'success' && apiResponse.data) {
             const data = apiResponse.data;
-            adecuacionCaloricoEl.textContent = `${parseFloat(data.porc_adecuacion_calorico).toFixed(2)} %`;
-            adecuacionProteinasEl.textContent = `${parseFloat(data.porc_adec_proteinas).toFixed(2)} %`;
-            adecuacionCarbohidratosEl.textContent = `${parseFloat(data.porc_adec_carbohidratos).toFixed(2)} %`;
-            adecuacionLipidosEl.textContent = `${parseFloat(data.porc_adec_lipidos).toFixed(2)} %`;
+            if(adecuacionCaloricoEl) adecuacionCaloricoEl.textContent = `${parseFloat(data.porc_adecuacion_calorico).toFixed(2)} %`;
+            if(adecuacionProteinasEl) adecuacionProteinasEl.textContent = `${parseFloat(data.porc_adec_proteinas).toFixed(2)} %`;
+            if(adecuacionCarbohidratosEl) adecuacionCarbohidratosEl.textContent = `${parseFloat(data.porc_adec_carbohidratos).toFixed(2)} %`;
+            if(adecuacionLipidosEl) adecuacionLipidosEl.textContent = `${parseFloat(data.porc_adec_lipidos).toFixed(2)} %`;
             
             adecuacionStatusEl.textContent = "Datos de adecuación actualizados."; 
             adecuacionStatusEl.className = 'success';
@@ -92,7 +150,7 @@ document.addEventListener('DOMContentLoaded', () => {
         displayAdecuacionData(adecuacionApiResponse);
     }
 
-    async function fetchApiData(url, type) { // Para tiempos de comida y grupos
+    async function fetchApiData(url, type) {
         try {
             const response = await fetch(url);
             if (!response.ok) {
@@ -110,7 +168,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function updateAddMealButtonState() { // Simplificado, ya no hay botón de guardado general
+    function updateAddMealButtonState() {
+        if (!addMealTimeBtn) return; // Salir si el botón no existe
         const availableTimes = getAvailableMealTimes();
         if (availableTimes.length > 0) {
             addMealTimeBtn.style.display = 'inline-block';
@@ -123,9 +182,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function getSelectedMealTimeIds() {
         const selected = [];
-        mealTimesContainer.querySelectorAll('.meal-time-select').forEach(select => {
-            if (select.value) selected.push(parseInt(select.value));
-        });
+        if(mealTimesContainer) {
+            mealTimesContainer.querySelectorAll('.meal-time-select').forEach(select => {
+                if (select.value) selected.push(parseInt(select.value));
+            });
+        }
         return selected;
     }
 
@@ -135,7 +196,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     function populateSelectWithOptions(selectElement, availableTimes, currentValue) {
-        // ... (sin cambios)
         selectElement.innerHTML = ''; 
         const placeholder = document.createElement('option');
         placeholder.value = "";
@@ -171,20 +231,23 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function updateAllSelects() {
-        const allSelects = mealTimesContainer.querySelectorAll('.meal-time-select');
-        const selectedIdsOverall = getSelectedMealTimeIds();
-        allSelects.forEach(currentSelect => {
-            const currentValueForThisSelect = currentSelect.value ? parseInt(currentSelect.value) : null;
-            const availableForThisSelect = ALL_MEAL_TIMES_DATA.filter(time => {
-                return time.id_tiempo_comida === currentValueForThisSelect || !selectedIdsOverall.includes(time.id_tiempo_comida);
+        if(mealTimesContainer) {
+            const allSelects = mealTimesContainer.querySelectorAll('.meal-time-select');
+            const selectedIdsOverall = getSelectedMealTimeIds();
+            allSelects.forEach(currentSelect => {
+                const currentValueForThisSelect = currentSelect.value ? parseInt(currentSelect.value) : null;
+                const availableForThisSelect = ALL_MEAL_TIMES_DATA.filter(time => {
+                    return time.id_tiempo_comida === currentValueForThisSelect || !selectedIdsOverall.includes(time.id_tiempo_comida);
+                });
+                populateSelectWithOptions(currentSelect, availableForThisSelect, currentValueForThisSelect);
             });
-            populateSelectWithOptions(currentSelect, availableForThisSelect, currentValueForThisSelect);
-        });
-        updateAddMealButtonState(); // Solo actualiza el botón "Agregar"
+        }
+        updateAddMealButtonState(); 
     }
 
-    // --- CREACIÓN DE ENTRADA DE TIEMPO DE COMIDA (MODIFICADO) ---
     function addMealTimeEntry() {
+        if (!mealTimesContainer || !addMealTimeBtn) return; // Salir si elementos clave no existen
+
         if (foodGroupsData.length === 0 || ALL_MEAL_TIMES_DATA.length === 0) {
             if(generalStatusDiv) {
                 generalStatusDiv.textContent = "Datos base no cargados.";
@@ -196,9 +259,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const entryDiv = document.createElement('div');
         entryDiv.classList.add('meal-time-entry');
         entryDiv.id = `meal-entry-${entryIdSuffix}`;
-        entryDiv.dataset.entryId = entryIdSuffix; // Para identificar la entrada
+        entryDiv.dataset.entryId = entryIdSuffix;
 
-        // ... (código de creación de select y tabla, igual que antes) ...
         const selectorDiv = document.createElement('div');
         selectorDiv.classList.add('meal-time-selector');
         
@@ -263,14 +325,13 @@ document.addEventListener('DOMContentLoaded', () => {
         tableDiv.appendChild(table);
         entryDiv.appendChild(tableDiv);
 
-        // --- NUEVO: Botón de Guardar individual y estado ---
         const actionsDiv = document.createElement('div');
         actionsDiv.classList.add('meal-entry-actions');
 
         const saveButton = document.createElement('button');
         saveButton.textContent = 'Guardar Tiempo de Comida';
         saveButton.classList.add('save-single-meal-btn');
-        saveButton.type = 'button'; // Evitar submit de formulario si estuviera dentro de uno
+        saveButton.type = 'button';
         saveButton.addEventListener('click', () => handleSaveSingleMealEntry(entryDiv, saveButton, statusDiv));
         
         const statusDiv = document.createElement('div');
@@ -278,8 +339,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         actionsDiv.appendChild(saveButton);
         actionsDiv.appendChild(statusDiv);
-        entryDiv.appendChild(actionsDiv); // Añadir al final de la entrada
-        // --- FIN NUEVO ---
+        entryDiv.appendChild(actionsDiv);
         
         mealTimesContainer.appendChild(entryDiv);
         
@@ -288,7 +348,6 @@ document.addEventListener('DOMContentLoaded', () => {
         updateAllSelects(); 
     }
 
-    // --- GUARDADO DE UNA SOLA ENTRADA DE TIEMPO DE COMIDA (NUEVA FUNCIÓN) ---
     async function handleSaveSingleMealEntry(entryElement, saveBtn, statusEl) {
         saveBtn.disabled = true;
         statusEl.textContent = 'Guardando...';
@@ -316,14 +375,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const porcionesInputs = entryElement.querySelectorAll('.food-portions-table input[type="number"]');
         porcionesInputs.forEach(input => {
             const numeroPorciones = parseFloat(input.value);
-            // Guardar incluso si es 0 para "borrar" porciones previas para este tiempo de comida y grupo.
-            // La API de guardar_detalle_minuta debe manejar esto (ej. UPDATE o DELETE si es 0).
-            // Si la API solo acepta > 0, entonces la condición sería: if (!isNaN(numeroPorciones) && numeroPorciones > 0)
-            if (!isNaN(numeroPorciones)) { // Guardar 0 o más
+            if (!isNaN(numeroPorciones)) { 
                 const grupoAlimenticioId = input.dataset.grupoId;
                 const payload = {
                     pacienteId: PACIENTE_ID,
-                    numeroPorcionesGrupo: numeroPorciones, // Puede ser 0
+                    numeroPorcionesGrupo: numeroPorciones, 
                     grupoAlimenticioId: parseInt(grupoAlimenticioId),
                     tiempoComidaId: parseInt(tiempoComidaId),
                     horaTiempoComida: horaTiempoComida 
@@ -344,23 +400,11 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // Si no hay porciones (ni siquiera 0s) para enviar, pero el tiempo y hora son válidos,
-        // podría ser un "guardado vacío" si la API lo permite, o un no-op.
-        // Por ahora, si no hay promesas, asumimos que no hay nada que enviar activamente.
-        // if (detallePromises.length === 0) {
-        //     statusEl.textContent = 'No hay porciones para guardar.';
-        //     statusEl.className = 'single-save-status warning';
-        //     saveBtn.disabled = false;
-        //     return;
-        // }
-
         try {
             if (detallePromises.length > 0) {
                 await Promise.all(detallePromises);
             }
-            // Si no hubo detalles, pero el tiempo y hora son válidos, aún así procedemos a actualizar adecuación.
-            // Esto es útil si el usuario borró todas las porciones de un tiempo de comida existente.
-
+            
             statusEl.textContent = 'Porciones guardadas. Actualizando adecuación...';
             statusEl.className = 'single-save-status info';
 
@@ -381,7 +425,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             statusEl.textContent = 'Guardado exitosamente.';
             statusEl.className = 'single-save-status success';
-            setTimeout(() => { // Limpiar mensaje después de un tiempo
+            setTimeout(() => { 
                  if (statusEl.className === 'single-save-status success') statusEl.textContent = '';
             }, 3000);
 
@@ -391,13 +435,11 @@ document.addEventListener('DOMContentLoaded', () => {
             statusEl.className = 'single-save-status error';
         } finally {
             saveBtn.disabled = false;
-            // No se llama a updateButtonStates(true) aquí, la lógica del botón "Agregar" es independiente.
-            updateAddMealButtonState(); // Asegurar que el estado del botón agregar es correcto
+            updateAddMealButtonState(); 
         }
     }
     
     function getCookie(name) {
-        // ... (sin cambios)
         let cookieValue = null;
         if (document.cookie && document.cookie !== '') {
             const cookies = document.cookie.split(';');
@@ -413,15 +455,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function initializePage() {
-        addMealTimeBtn.style.display = 'none'; 
-        addMealTimeBtn.disabled = true;
+        if(addMealTimeBtn) { // Comprobar si el botón existe
+            addMealTimeBtn.style.display = 'none'; 
+            addMealTimeBtn.disabled = true;
+        }
 
         if(generalStatusDiv) {
             generalStatusDiv.textContent = "Cargando datos...";
             generalStatusDiv.className = 'info';
         }
 
-        loadAndDisplayAdecuacion(); 
+        await loadAndDisplayAdecuacion(); 
 
         try {
             const [mealTimes, foodGroups] = await Promise.all([
@@ -433,13 +477,16 @@ document.addEventListener('DOMContentLoaded', () => {
             foodGroupsData = foodGroups;     
 
             if (ALL_MEAL_TIMES_DATA.length > 0 && foodGroupsData.length > 0) {
-                if (adecuacionStatusEl && generalStatusDiv && adecuacionStatusEl.className !== 'error' && adecuacionStatusEl.className !== 'info') {
-                    generalStatusDiv.textContent = "Datos de minuta cargados."; // O dejar vacío
+                if (adecuacionStatusEl && generalStatusDiv && adecuacionStatusEl.className === 'success') {
+                    generalStatusDiv.textContent = "Datos de minuta cargados."; 
                     generalStatusDiv.className = 'success';
+                    setTimeout(() => { if(generalStatusDiv && generalStatusDiv.className === 'success') generalStatusDiv.style.display = 'none'; }, 2000);
                 } else if (generalStatusDiv && generalStatusDiv.className === 'info') { 
-                    generalStatusDiv.textContent = ""; 
+                     generalStatusDiv.textContent = "Listo."; 
+                     generalStatusDiv.className = 'success'; 
+                     setTimeout(() => { if(generalStatusDiv && generalStatusDiv.className === 'success') generalStatusDiv.style.display = 'none'; }, 2000);
                 }
-                updateAddMealButtonState(); // Actualiza solo el botón "Agregar"
+                updateAddMealButtonState(); 
             } else {
                  if(generalStatusDiv) {
                     generalStatusDiv.textContent = "No se pudieron cargar todos los datos de minuta.";
@@ -447,12 +494,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
         } catch (error) {
-            // Error ya manejado
+            console.error("Error en initializePage al cargar datos de minuta:", error);
         }
     }
     
     if(addMealTimeBtn) addMealTimeBtn.addEventListener('click', addMealTimeEntry);
-    // El listener para los botones de guardado individual se añade dinámicamente.
 
     initializePage();
 });
