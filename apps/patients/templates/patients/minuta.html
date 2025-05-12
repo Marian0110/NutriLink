@@ -1,0 +1,503 @@
+{% extends 'basePerfil.html' %}
+{% load static %}
+{% block title %}Minuta{% endblock %}
+
+{% block perfilcontent %}
+<div class="minuta-creation-content patient-content"> 
+  <div id="adecuacion-minuta-section" style="margin-bottom: 25px;">
+    <h3>Resumen de Adecuación de Minuta Actual</h3>
+    <table id="tabla-adecuacion" class="adecuacion-table">
+        <thead>
+            <tr>
+                <th>Componente</th>
+                <th>Porcentaje de Adecuación</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Calórico</td>
+                <td id="adecuacion-calorico">- %</td>
+            </tr>
+            <tr>
+                <td>Proteínas</td>
+                <td id="adecuacion-proteinas">- %</td>
+            </tr>
+            <tr>
+                <td>Carbohidratos</td>
+                <td id="adecuacion-carbohidratos">- %</td>
+            </tr>
+            <tr>
+                <td>Lípidos</td>
+                <td id="adecuacion-lipidos">- %</td>
+            </tr>
+        </tbody>
+    </table>
+    <div id="adecuacion-status" style="font-style: italic; margin-top: 8px; font-size: 0.9em;">Cargando datos de adecuación...</div>
+</div>
+    <h2>Porciones por tiempo de comida</h2>
+
+    <script type="text/javascript">
+      const PACIENTE_ID_FROM_DJANGO = JSON.parse('{{ paciente.id_paciente|escapejs }}');
+    </script>    
+
+    <div id="meal-times-container">
+        <!-- Las entradas de tiempo de comida se agregarán aquí dinámicamente -->
+    </div>
+
+    <div style="margin-top: 25px; margin-bottom: 15px;">
+      <button id="add-meal-time-btn" class="button-secondary" style="display: none;">Agregar Tiempo de Comida</button>
+    </div>
+    <div id="general-status" style="min-height: 20px; font-weight: bold;"></div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+      const PACIENTE_ID = typeof PACIENTE_ID_FROM_DJANGO !== 'undefined' ? PACIENTE_ID_FROM_DJANGO : null;
+  
+      const mealTimesContainer = document.getElementById('meal-times-container');
+      const addMealTimeBtn = document.getElementById('add-meal-time-btn');
+      const generalStatusDiv = document.getElementById('general-status'); 
+  
+      const adecuacionCaloricoEl = document.getElementById('adecuacion-calorico');
+      const adecuacionProteinasEl = document.getElementById('adecuacion-proteinas');
+      const adecuacionCarbohidratosEl = document.getElementById('adecuacion-carbohidratos');
+      const adecuacionLipidosEl = document.getElementById('adecuacion-lipidos');
+      const adecuacionStatusEl = document.getElementById('adecuacion-status');
+  
+      let ALL_MEAL_TIMES_DATA = []; 
+      let foodGroupsData = [];      
+      let mealTimeEntryCounter = 0;
+  
+      if (PACIENTE_ID === null) {
+          console.error("PACIENTE_ID no está definido o es null.");
+          if(generalStatusDiv) generalStatusDiv.textContent = "Error crítico: No se pudo identificar al paciente.";
+          if(adecuacionStatusEl) {
+              adecuacionStatusEl.textContent = "No se puede cargar la adecuación sin ID de paciente.";
+              adecuacionStatusEl.className = 'error';
+          }
+          if(addMealTimeBtn) addMealTimeBtn.disabled = true;
+          return; 
+      }
+  
+      async function fetchAdecuacionData() {
+          if (!PACIENTE_ID) {
+              return { data: null, status: 'error', message: "ID de paciente no disponible." };
+          }
+          if(adecuacionStatusEl) { // Comprobar si el elemento existe
+              adecuacionStatusEl.textContent = "Actualizando datos de adecuación...";
+              adecuacionStatusEl.className = 'loading';
+              adecuacionStatusEl.style.display = 'block';
+          }
+  
+          try {
+              const response = await fetch(`http://nutrilinkapi-production.up.railway.app/api_nutrilink/minuta/obtener_adecuacion_minuta?pacienteId=${PACIENTE_ID}`);
+              const result = await response.json();
+  
+              if (!response.ok) {
+                  if (result && result.status === "not_found") {
+                      return { data: null, status: 'not_found', message: result.mensaje };
+                  }
+                  throw new Error(result.mensaje || result.detail || `Error HTTP ${response.status}`);
+              }
+              
+              if (result.status === "success" && result.data) {
+                  return { data: result.data, status: 'success' };
+              } else if (result.status === "not_found") { 
+                  return { data: null, status: 'not_found', message: result.mensaje };
+              } else {
+                  throw new Error(result.mensaje || "Formato de respuesta inesperado para adecuación.");
+              }
+          } catch (error) {
+              console.error("Error al obtener datos de adecuación:", error);
+              return { data: null, status: 'error', message: error.message };
+          }
+      }
+  
+      function displayAdecuacionData(apiResponse) {
+          if(adecuacionCaloricoEl) adecuacionCaloricoEl.textContent = '- %';
+          if(adecuacionProteinasEl) adecuacionProteinasEl.textContent = '- %';
+          if(adecuacionCarbohidratosEl) adecuacionCarbohidratosEl.textContent = '- %';
+          if(adecuacionLipidosEl) adecuacionLipidosEl.textContent = '- %';
+  
+          if (!adecuacionStatusEl) return; // Salir si el elemento de estado no existe
+  
+          if (apiResponse.status === 'success' && apiResponse.data) {
+              const data = apiResponse.data;
+              if(adecuacionCaloricoEl) adecuacionCaloricoEl.textContent = `${parseFloat(data.porc_adecuacion_calorico).toFixed(2)} %`;
+              if(adecuacionProteinasEl) adecuacionProteinasEl.textContent = `${parseFloat(data.porc_adec_proteinas).toFixed(2)} %`;
+              if(adecuacionCarbohidratosEl) adecuacionCarbohidratosEl.textContent = `${parseFloat(data.porc_adec_carbohidratos).toFixed(2)} %`;
+              if(adecuacionLipidosEl) adecuacionLipidosEl.textContent = `${parseFloat(data.porc_adec_lipidos).toFixed(2)} %`;
+              
+              adecuacionStatusEl.textContent = "Datos de adecuación actualizados."; 
+              adecuacionStatusEl.className = 'success';
+              adecuacionStatusEl.style.display = 'none'; 
+          } else if (apiResponse.status === 'not_found') {
+              adecuacionStatusEl.textContent = apiResponse.message || "Aún no hay porcentajes de adecuación. ¡Aparecerán una vez que agregues el primer tiempo de comida!";
+              adecuacionStatusEl.className = 'info'; 
+              adecuacionStatusEl.style.display = 'block';
+          } else { 
+              adecuacionStatusEl.textContent = `Error al cargar adecuación: ${apiResponse.message || 'Desconocido.'}`;
+              adecuacionStatusEl.className = 'error';
+              adecuacionStatusEl.style.display = 'block';
+          }
+      }
+      
+      async function loadAndDisplayAdecuacion() {
+          const adecuacionApiResponse = await fetchAdecuacionData();
+          displayAdecuacionData(adecuacionApiResponse);
+      }
+  
+      async function fetchApiData(url, type) {
+          try {
+              const response = await fetch(url);
+              if (!response.ok) {
+                   const errorData = await response.text();
+                  throw new Error(`Error HTTP ${response.status} al obtener ${type}: ${errorData}`);
+              }
+              return await response.json();
+          } catch (error) {
+              console.error(`Error en fetchApiData para ${type}:`, error);
+              if(generalStatusDiv) {
+                  generalStatusDiv.textContent = `Error al cargar ${type}. ${error.message}`;
+                  generalStatusDiv.className = 'error';
+              }
+              throw error; 
+          }
+      }
+  
+      function updateAddMealButtonState() {
+          if (!addMealTimeBtn) return; // Salir si el botón no existe
+          const availableTimes = getAvailableMealTimes();
+          if (availableTimes.length > 0) {
+              addMealTimeBtn.style.display = 'inline-block';
+              addMealTimeBtn.disabled = false;
+          } else {
+              addMealTimeBtn.style.display = 'none';
+              addMealTimeBtn.disabled = true;
+          }
+      }
+  
+      function getSelectedMealTimeIds() {
+          const selected = [];
+          if(mealTimesContainer) {
+              mealTimesContainer.querySelectorAll('.meal-time-select').forEach(select => {
+                  if (select.value) selected.push(parseInt(select.value));
+              });
+          }
+          return selected;
+      }
+  
+      function getAvailableMealTimes() {
+          const selectedIds = getSelectedMealTimeIds();
+          return ALL_MEAL_TIMES_DATA.filter(time => !selectedIds.includes(time.id_tiempo_comida));
+      }
+      
+      function populateSelectWithOptions(selectElement, availableTimes, currentValue) {
+          selectElement.innerHTML = ''; 
+          const placeholder = document.createElement('option');
+          placeholder.value = "";
+          placeholder.textContent = "-- Seleccione Tiempo --";
+          selectElement.appendChild(placeholder);
+  
+          if (currentValue) {
+              const currentOptionData = ALL_MEAL_TIMES_DATA.find(t => t.id_tiempo_comida === currentValue);
+              if (currentOptionData) {
+                  const opt = document.createElement('option');
+                  opt.value = currentOptionData.id_tiempo_comida;
+                  opt.textContent = currentOptionData.descripcion;
+                  selectElement.appendChild(opt);
+                  opt.selected = true; 
+              } else {
+                   placeholder.selected = true;
+              }
+          } else {
+              placeholder.selected = true;
+          }
+  
+          availableTimes.forEach(time => {
+              if (time.id_tiempo_comida !== currentValue) {
+                  const option = document.createElement('option');
+                  option.value = time.id_tiempo_comida;
+                  option.textContent = time.descripcion;
+                  selectElement.appendChild(option);
+              }
+          });
+          if (!selectElement.value && selectElement.options.length > 0) {
+              placeholder.selected = true;
+          }
+      }
+  
+      function updateAllSelects() {
+          if(mealTimesContainer) {
+              const allSelects = mealTimesContainer.querySelectorAll('.meal-time-select');
+              const selectedIdsOverall = getSelectedMealTimeIds();
+              allSelects.forEach(currentSelect => {
+                  const currentValueForThisSelect = currentSelect.value ? parseInt(currentSelect.value) : null;
+                  const availableForThisSelect = ALL_MEAL_TIMES_DATA.filter(time => {
+                      return time.id_tiempo_comida === currentValueForThisSelect || !selectedIdsOverall.includes(time.id_tiempo_comida);
+                  });
+                  populateSelectWithOptions(currentSelect, availableForThisSelect, currentValueForThisSelect);
+              });
+          }
+          updateAddMealButtonState(); 
+      }
+  
+      function addMealTimeEntry() {
+          if (!mealTimesContainer || !addMealTimeBtn) return; // Salir si elementos clave no existen
+  
+          if (foodGroupsData.length === 0 || ALL_MEAL_TIMES_DATA.length === 0) {
+              if(generalStatusDiv) {
+                  generalStatusDiv.textContent = "Datos base no cargados.";
+                  generalStatusDiv.className = 'warning';
+              }
+              return;
+          }
+          const entryIdSuffix = mealTimeEntryCounter;
+          const entryDiv = document.createElement('div');
+          entryDiv.classList.add('meal-time-entry');
+          entryDiv.id = `meal-entry-${entryIdSuffix}`;
+          entryDiv.dataset.entryId = entryIdSuffix;
+  
+          const selectorDiv = document.createElement('div');
+          selectorDiv.classList.add('meal-time-selector');
+          
+          const selectLabel = document.createElement('label');
+          selectLabel.htmlFor = `meal-time-select-${entryIdSuffix}`;
+          selectLabel.textContent = `Tiempo de Comida #${mealTimeEntryCounter + 1}:`;
+          const selectElement = document.createElement('select');
+          selectElement.id = `meal-time-select-${entryIdSuffix}`;
+          selectElement.name = `minuta[${entryIdSuffix}][id_tiempo_comida]`;
+          selectElement.classList.add('meal-time-select');
+          selectElement.required = true;
+          selectorDiv.appendChild(selectLabel);
+          selectorDiv.appendChild(selectElement);
+  
+          const timeInputDiv = document.createElement('div');
+          timeInputDiv.classList.add('time-input-container');
+          const timeLabel = document.createElement('label');
+          timeLabel.htmlFor = `meal-hour-input-${entryIdSuffix}`;
+          timeLabel.textContent = 'Hora:';
+          const timeInput = document.createElement('input');
+          timeInput.type = 'time';
+          timeInput.id = `meal-hour-input-${entryIdSuffix}`;
+          timeInput.name = `minuta[${entryIdSuffix}][hora]`;
+          timeInput.classList.add('meal-hour-input'); 
+          timeInput.required = true;
+          timeInputDiv.appendChild(timeLabel);
+          timeInputDiv.appendChild(timeInput);
+          selectorDiv.appendChild(timeInputDiv); 
+  
+          entryDiv.appendChild(selectorDiv);
+  
+          const tableDiv = document.createElement('div');
+          tableDiv.classList.add('food-portions-table');
+          const table = document.createElement('table');
+          const thead = document.createElement('thead');
+          const headerRow = document.createElement('tr');
+          foodGroupsData.forEach(group => {
+              const th = document.createElement('th');
+              th.textContent = group.descripcion;
+              th.dataset.grupoId = group.id_grupo_alimenticio; 
+              headerRow.appendChild(th);
+          });
+          thead.appendChild(headerRow);
+          table.appendChild(thead);
+  
+          const tbody = document.createElement('tbody');
+          const inputRow = document.createElement('tr');
+          foodGroupsData.forEach(group => {
+              const td = document.createElement('td');
+              const input = document.createElement('input');
+              input.type = 'number';
+              input.min = '0';
+              input.step = '0.1'; 
+              input.placeholder = '0';
+              input.name = `minuta[${entryIdSuffix}][porciones][${group.id_grupo_alimenticio}]`;
+              input.dataset.grupoId = group.id_grupo_alimenticio; 
+              td.appendChild(input);
+              inputRow.appendChild(td);
+          });
+          tbody.appendChild(inputRow);
+          table.appendChild(tbody);
+          tableDiv.appendChild(table);
+          entryDiv.appendChild(tableDiv);
+  
+          const actionsDiv = document.createElement('div');
+          actionsDiv.classList.add('meal-entry-actions');
+  
+          const saveButton = document.createElement('button');
+          saveButton.textContent = 'Guardar Tiempo de Comida';
+          saveButton.classList.add('save-single-meal-btn');
+          saveButton.type = 'button';
+          saveButton.addEventListener('click', () => handleSaveSingleMealEntry(entryDiv, saveButton, statusDiv));
+          
+          const statusDiv = document.createElement('div');
+          statusDiv.classList.add('single-save-status');
+  
+          actionsDiv.appendChild(saveButton);
+          actionsDiv.appendChild(statusDiv);
+          entryDiv.appendChild(actionsDiv);
+          
+          mealTimesContainer.appendChild(entryDiv);
+          
+          selectElement.addEventListener('change', updateAllSelects);
+          mealTimeEntryCounter++;
+          updateAllSelects(); 
+      }
+  
+      async function handleSaveSingleMealEntry(entryElement, saveBtn, statusEl) {
+          saveBtn.disabled = true;
+          statusEl.textContent = 'Guardando...';
+          statusEl.className = 'single-save-status info';
+  
+          const tiempoComidaSelect = entryElement.querySelector('.meal-time-select');
+          const horaTiempoComidaInput = entryElement.querySelector('.meal-hour-input');
+          const tiempoComidaId = tiempoComidaSelect.value;
+          const horaTiempoComida = horaTiempoComidaInput.value;
+          let hasValidationError = false;
+  
+          if (!tiempoComidaId) { tiempoComidaSelect.style.borderColor = 'red'; hasValidationError = true; } 
+          else { tiempoComidaSelect.style.borderColor = ''; }
+          if (!horaTiempoComida) { horaTiempoComidaInput.style.borderColor = 'red'; hasValidationError = true; } 
+          else { horaTiempoComidaInput.style.borderColor = ''; }
+  
+          if (hasValidationError) {
+              statusEl.textContent = 'Complete tiempo y hora.';
+              statusEl.className = 'single-save-status error';
+              saveBtn.disabled = false;
+              return;
+          }
+  
+          const detallePromises = [];
+          const porcionesInputs = entryElement.querySelectorAll('.food-portions-table input[type="number"]');
+          porcionesInputs.forEach(input => {
+              const numeroPorciones = parseFloat(input.value);
+              if (!isNaN(numeroPorciones)) { 
+                  const grupoAlimenticioId = input.dataset.grupoId;
+                  const payload = {
+                      pacienteId: PACIENTE_ID,
+                      numeroPorcionesGrupo: numeroPorciones, 
+                      grupoAlimenticioId: parseInt(grupoAlimenticioId),
+                      tiempoComidaId: parseInt(tiempoComidaId),
+                      horaTiempoComida: horaTiempoComida 
+                  };
+                  const csrfToken = document.querySelector('input[name="csrfmiddlewaretoken"]')?.value || getCookie('csrftoken');
+                  detallePromises.push(
+                      fetch('https://nutrilinkapi-production.up.railway.app/api_nutrilink/minuta/guardar_detalle_minuta', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                          body: JSON.stringify(payload)
+                      }).then(response => {
+                          if (!response.ok) {
+                               return response.json().then(err => { throw new Error(`Error detalle ${response.status}: ${err.detail || JSON.stringify(err)}`); });
+                          }
+                          return response.json();
+                      })
+                  );
+              }
+          });
+  
+          try {
+              if (detallePromises.length > 0) {
+                  await Promise.all(detallePromises);
+              }
+              
+              statusEl.textContent = 'Porciones guardadas. Actualizando adecuación...';
+              statusEl.className = 'single-save-status info';
+  
+              const csrfToken = document.querySelector('input[name="csrfmiddlewaretoken"]')?.value || getCookie('csrftoken');
+              const adecuacionPayload = { pacienteId: PACIENTE_ID };
+              const adecuacionResponse = await fetch('https://nutrilinkapi-production.up.railway.app/api_nutrilink/minuta/guardar_adecuacion_minuta', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                  body: JSON.stringify(adecuacionPayload)
+              });
+  
+              if (!adecuacionResponse.ok) {
+                  const errAdecuacion = await adecuacionResponse.json().catch(() => ({detail: "Error al procesar respuesta de guardar adecuación."}));
+                  throw new Error(`Error al guardar adecuación ${adecuacionResponse.status}: ${errAdecuacion.detail || errAdecuacion.mensaje || JSON.stringify(errAdecuacion)}`);
+              }
+  
+              await loadAndDisplayAdecuacion(); 
+              
+              statusEl.textContent = 'Guardado exitosamente.';
+              statusEl.className = 'single-save-status success';
+              setTimeout(() => { 
+                   if (statusEl.className === 'single-save-status success') statusEl.textContent = '';
+              }, 3000);
+  
+          } catch (error) {
+              console.error("Error en guardado individual:", error);
+              statusEl.textContent = `Error: ${error.message}`;
+              statusEl.className = 'single-save-status error';
+          } finally {
+              saveBtn.disabled = false;
+              updateAddMealButtonState(); 
+          }
+      }
+      
+      function getCookie(name) {
+          let cookieValue = null;
+          if (document.cookie && document.cookie !== '') {
+              const cookies = document.cookie.split(';');
+              for (let i = 0; i < cookies.length; i++) {
+                  const cookie = cookies[i].trim();
+                  if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                      cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                      break;
+                  }
+              }
+          }
+          return cookieValue;
+      }
+  
+      async function initializePage() {
+          if(addMealTimeBtn) { // Comprobar si el botón existe
+              addMealTimeBtn.style.display = 'none'; 
+              addMealTimeBtn.disabled = true;
+          }
+  
+          if(generalStatusDiv) {
+              generalStatusDiv.textContent = "Cargando datos...";
+              generalStatusDiv.className = 'info';
+          }
+  
+          await loadAndDisplayAdecuacion(); 
+  
+          try {
+              const [mealTimes, foodGroups] = await Promise.all([
+                  fetchApiData('https://nutrilinkapi-production.up.railway.app/api_nutrilink/minuta/obtener_tiempos_comida_con_id', 'tiempos de comida'),
+                  fetchApiData('https://nutrilinkapi-production.up.railway.app/api_nutrilink/alimento/obtener_grupos_alimenticios_con_id', 'grupos alimenticios')
+              ]);
+              
+              ALL_MEAL_TIMES_DATA = mealTimes; 
+              foodGroupsData = foodGroups;     
+  
+              if (ALL_MEAL_TIMES_DATA.length > 0 && foodGroupsData.length > 0) {
+                  if (adecuacionStatusEl && generalStatusDiv && adecuacionStatusEl.className === 'success') {
+                      generalStatusDiv.textContent = "Datos de minuta cargados."; 
+                      generalStatusDiv.className = 'success';
+                      setTimeout(() => { if(generalStatusDiv && generalStatusDiv.className === 'success') generalStatusDiv.style.display = 'none'; }, 2000);
+                  } else if (generalStatusDiv && generalStatusDiv.className === 'info') { 
+                       generalStatusDiv.textContent = "Listo."; 
+                       generalStatusDiv.className = 'success'; 
+                       setTimeout(() => { if(generalStatusDiv && generalStatusDiv.className === 'success') generalStatusDiv.style.display = 'none'; }, 2000);
+                  }
+                  updateAddMealButtonState(); 
+              } else {
+                   if(generalStatusDiv) {
+                      generalStatusDiv.textContent = "No se pudieron cargar todos los datos de minuta.";
+                      generalStatusDiv.className = 'error';
+                  }
+              }
+          } catch (error) {
+              console.error("Error en initializePage al cargar datos de minuta:", error);
+          }
+      }
+      
+      if(addMealTimeBtn) addMealTimeBtn.addEventListener('click', addMealTimeEntry);
+  
+      initializePage();
+  });
+  </script>
+  {% endblock %}

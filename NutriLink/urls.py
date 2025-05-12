@@ -23,6 +23,7 @@ urlpatterns = [
     path('accounts/', include('apps.accounts.urls')),
     path('patients/', include('apps.patients.urls')),
     path('foods/', include('apps.foods.urls')),
+    path('appointments/', include('apps.appointments.urls')),
     path('', lambda request: redirect('patients:gestion')), # Levantamiento inicial para tests
 
 ]
