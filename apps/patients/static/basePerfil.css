@@ -277,3 +277,156 @@
   cursor: not-allowed;
   box-shadow: none;
 }
+
+/* Contenedor y Label para el input de Hora */
+.time-input-container {
+  margin-top: 12px; /* Espacio debajo del select de tiempo de comida */
+  margin-bottom: 5px;
+}
+.time-input-container label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 500;
+  color: var(--text-color);
+  font-size: 0.9rem;
+}
+/* Input de Hora */
+.meal-hour-input { /* Clase que le daremos al input de hora */
+  width: 100%; /* O un ancho más específico si lo deseas, ej: 150px */
+  padding: 9px 12px;
+  border: 1px solid var(--input-border);
+  border-radius: 5px;
+  background-color: var(--input-background);
+  color: var(--text-color);
+  font-size: 0.9rem;
+  box-sizing: border-box;
+}
+.meal-hour-input:focus {
+    border-color: var(--primary-color);
+    outline: 0;
+    box-shadow: 0 0 0 0.2rem rgba(23, 59, 76, 0.25);
+}
+
+/* Estilos para botones (si no tienes ya .button-primary, .button-secondary) */
+/* Adaptar si ya existen estas clases en tu CSS */
+.button-primary {
+    padding: 10px 18px; /* Ajustado para consistencia */
+    background-color: var(--primary-color);
+    color: var(--white);
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 0.95rem;
+    transition: background-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+.button-primary:hover:not(:disabled) {
+    background-color: var(--secondary-color);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+}
+.button-primary:disabled {
+    background-color: #adb5bd;
+    color: #6c757d;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+.button-secondary {
+    padding: 10px 18px;
+    background-color: #6c757d; /* Un gris para secundario */
+    color: var(--white);
+    border: 1px solid #6c757d;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 0.95rem; /* Consistencia con primario */
+    transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out;
+}
+.button-secondary:hover:not(:disabled) {
+    background-color: #5a6268;
+    border-color: #545b62;
+}
+.button-secondary:disabled {
+    background-color: #ccc;
+    border-color: #ccc;
+    color: #6c757d;
+    cursor: not-allowed;
+}
+
+/* Para el mensaje de estado */
+#save-status.success { color: green; }
+#save-status.error { color: red; }
+#save-status.info { color: var(--secondary-color); } /* Azul oscuro para info */
+#save-status.warning { color: orange; }
+
+#adecuacion-minuta-section h3 {
+  color: var(--primary-color);
+  margin-bottom: 10px;
+  font-size: 1.2rem;
+}
+
+.adecuacion-table {
+  width: 100%;
+  max-width: 500px; /* O el ancho que prefieras */
+  border-collapse: collapse;
+  margin-bottom: 10px;
+  font-size: 0.95rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.adecuacion-table th,
+.adecuacion-table td {
+  border: 1px solid var(--border-color, #e0e0e0);
+  padding: 10px 12px;
+  text-align: left;
+}
+
+.adecuacion-table th {
+  background-color: #f8f9fa;
+  color: var(--secondary-color, #3f5c69);
+  font-weight: 600;
+}
+
+.adecuacion-table td:last-child {
+  text-align: right;
+  font-weight: 500;
+}
+
+#adecuacion-status.error { color: red; }
+#adecuacion-status.success { color: green; display: none; } /* Ocultar si es exitoso y los datos están en la tabla */
+#adecuacion-status.loading { color: var(--secondary-color); }
+
+/* Estilos para el botón de Guardar individual dentro de la entrada */
+.save-single-meal-btn {
+  display: block; /* O inline-block si quieres que esté al lado de algo */
+  margin-top: 15px;
+  padding: 8px 15px;
+  background-color: var(--primary-color);
+  color: var(--white);
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+.save-single-meal-btn:hover:not(:disabled) {
+  background-color: var(--secondary-color);
+}
+.save-single-meal-btn:disabled {
+  background-color: #adb5bd;
+  cursor: not-allowed;
+}
+
+/* Contenedor para el botón y el estado de guardado de la entrada */
+.meal-entry-actions {
+  margin-top: 10px; /* Espacio entre la tabla de porciones y las acciones */
+  /* Podrías usar flex si quieres alinear el botón y el mensaje de estado horizontalmente */
+}
+.single-save-status {
+  font-size: 0.85em;
+  font-style: italic;
+  min-height: 1.2em; /* Para evitar saltos de layout */
+  margin-top: 5px;
+}
+.single-save-status.success { color: green; }
+.single-save-status.error { color: red; }
+.single-save-status.info { color: var(--secondary-color); }
