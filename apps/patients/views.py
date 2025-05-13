@@ -76,9 +76,18 @@ def metricas(request, id_paciente):
     paciente = get_paciente_data(id_paciente)
     historial = get_historial_antropometrico(id_paciente)
     
+    # Obtener fecha del request
+    fecha_seleccionada = request.GET.get('fecha')
+    diagnosticos = None
+    
+    if fecha_seleccionada:
+        diagnosticos = get_diagnosticos_antropometricos(id_paciente, fecha_seleccionada)
+    
     return render(request, 'patients/metricas.html', {
         'paciente': paciente,
         'historial_antropometrico': historial,
+        'diagnosticos_data': diagnosticos,
+        'fecha_seleccionada': fecha_seleccionada,
         'section': 'metricas'
     })
     
@@ -193,7 +202,31 @@ def get_niveles_actividad_fisica():
     except Exception as e:
         print(f"Error obteniendo niveles actividad: {str(e)}")
         return []
-
+    
+def get_diagnosticos_antropometricos(id_paciente, fecha):
+    """
+    Obtiene los diagnósticos antropométricos desde la API Node.js
+    Args:
+        id_paciente: ID del paciente
+        fecha: Fecha en formato YYYY-MM-DD
+    Returns:
+        dict: Datos de diagnósticos o None si hay error
+    """
+    try:
+        api_url = f'https://nutrilinkapi-production.up.railway.app/api_nutrilink/antropometria/obtener_calculos_y_diagnosticos_antropometria?pacienteId={id_paciente}&fecha={fecha}'
+        response = requests.get(api_url, timeout=10)
+        
+        if response.status_code == 200:
+            data = response.json()
+            if data.get('status') == 'success':
+                return data['data']
+        elif response.status_code == 404:
+            return {}
+        return None
+    except requests.RequestException as e:
+        print(f"Error al obtener diagnósticos antropométricos: {str(e)}")
+        return None
+    
 #---------------------------- ENVIO DE CREDENCIALES PACIENTE ----------------------------
 def enviar_credenciales(request, id_paciente):
     """

@@ -145,53 +145,113 @@
       </div>
     </div>
   </div>
-  <!-- Card de Diagnosticos -->
-  <div class="diagnosticos-card w-100 mt-4">
-    <h2 class="mb-4">Diagnósticos</h2>
-      
-    <!-- Card por fecha -->
-    <div class="fecha-card">
-      <div class="fecha-header">
-        <div class="emoji-tag">📋</div>
-        <h5 class="text-muted mb-0">dd/mm/yyyy</h5>
-      </div>
-      <!-- Filas de diagnostico por calculo -->
-      <div class="diagnostico-row">
-        <span class="diagnostico-nombre">Índice masa corporal (IMC)</span>
-        <span class="diagnostico-valor">19.5</span>
-        <span class="diagnostico-comentario">Normopeso</span>
-      </div>
-
-      <div class="diagnostico-row">
-        <span class="diagnostico-nombre">Índice cintura-talla (ICT)</span>
-        <span class="diagnostico-valor">0.57</span>
-        <span class="diagnostico-comentario">Distribución de grasa no central</span>
-      </div>
-
-      <div class="diagnostico-row">
-        <span class="diagnostico-nombre">Perimetro muscular braquial (PMB)</span>
-        <span class="diagnostico-valor">3700 mm²</span>
-        <span class="diagnostico-comentario">Masa muscular promedio</span>
-      </div>
-
-      <div class="diagnostico-row">
-        <span class="diagnostico-nombre">Area muscular braquial (AMB)</span>
-        <span class="diagnostico-valor">300 mm²</span>
-        <span class="diagnostico-comentario">Masa muscular promedio</span>
-      </div>
-          
-      <div class="diagnostico-row">
-        <span class="diagnostico-nombre">Área grasa braquial (AGB)</span>
-        <span class="diagnostico-valor">3300 mm²</span>
-        <span class="diagnostico-comentario">Reservas de grasa promedio</span>
-      </div>
-        
-      <div class="diagnostico-row">
-        <span class="diagnostico-nombre">Grasa corporal (%)</span>
-        <span class="diagnostico-valor">21.3%</span>
-        <span class="diagnostico-comentario"></span>
+  <div class="container-a">
+    <!-- Formulario de búsqueda -->
+    <div class="metrica-card w-100 mb-4">
+      <div class="card-body">
+        <h3 class="card-title mb-3">Buscar Diagnósticos por Fecha</h3>
+        <form method="get" action="" id="form-diagnosticos">
+          {% csrf_token %}
+          <div class="row align-items-end">
+            <!-- Fecha -->
+            <div class="col-md-8 mb-3">
+              <label for="id_fecha" class="form-label">Seleccionar fecha de medición</label>
+              <input type="date" class="form-control" id="id_fecha" name="fecha" value="{{ fecha_seleccionada }}" required>
+            </div>
+            <!-- Botón -->
+            <div class="col-md-4 mb-3">
+              <button type="submit" class="btn btn-save w-100">
+                <i class="fas fa-search me-2"></i> Buscar
+              </button>
+            </div>
+          </div>
+        </form>
       </div>
     </div>
+  
+    <!-- Card de Diagnosticos -->
+    {% if fecha_seleccionada %}
+    <div class="diagnosticos-card w-100 mt-1">
+      <div class="card-body">
+        <h2 class="mb-4">Diagnósticos</h2>
+        
+        <div id="diagnosticos-container">
+          {% if diagnosticos_data %}
+            <div class="fecha-card">
+              <div class="fecha-header">
+                <div class="emoji-tag">📋</div>
+                <h5 class="text-muted mb-0">{{ diagnosticos_data.fecha|date:"d/m/Y" }}</h5>
+              </div>
+              
+              {% if diagnosticos_data.imc %}
+              <div class="diagnostico-row">
+                <span class="diagnostico-nombre">Índice masa corporal (IMC)</span>
+                <span class="diagnostico-valor">{{ diagnosticos_data.imc.calculado|floatformat:2 }}</span>
+                <span class="diagnostico-comentario">{{ diagnosticos_data.imc.diagnostico}}</span>
+              </div>
+              {% endif %}
+              
+              {% if diagnosticos_data.indice_cintura_talla %}
+              <div class="diagnostico-row">
+                <span class="diagnostico-nombre">Índice cintura-talla (ICT)</span>
+                <span class="diagnostico-valor">{{ diagnosticos_data.indice_cintura_talla.calculado|floatformat:2 }}</span>
+                <span class="diagnostico-comentario">{{ diagnosticos_data.indice_cintura_talla.diagnostico }}</span>
+              </div>
+              {% endif %}
+              
+              {% if diagnosticos_data.perimetro_muscular_braquial %}
+              <div class="diagnostico-row">
+                <span class="diagnostico-nombre">Perímetro muscular braquial (PMB)</span>
+                <span class="diagnostico-valor">{{ diagnosticos_data.perimetro_muscular_braquial.calculado|floatformat:2 }} mm²</span>
+                <span class="diagnostico-comentario">
+                  {% if diagnosticos_data.perimetro_muscular_braquial.diagnostico %}
+                    {{ diagnosticos_data.perimetro_muscular_braquial.diagnostico }}
+                  {% else %}
+                    -
+                  {% endif %}
+                </span>
+              </div>
+              {% endif %}
+              
+              {% if diagnosticos_data.area_muscular_braquial %}
+              <div class="diagnostico-row">
+                <span class="diagnostico-nombre">Área muscular braquial (AMB)</span>
+                <span class="diagnostico-valor">{{ diagnosticos_data.area_muscular_braquial.calculado|floatformat:2 }} mm²</span>
+                <span class="diagnostico-comentario">{{ diagnosticos_data.area_muscular_braquial.diagnostico }}</span>
+              </div>
+              {% endif %}
+              
+              {% if diagnosticos_data.area_grasa_braquial %}
+              <div class="diagnostico-row">
+                <span class="diagnostico-nombre">Área grasa braquial (AGB)</span>
+                <span class="diagnostico-valor">{{ diagnosticos_data.area_grasa_braquial.calculado|floatformat:2 }} mm²</span>
+                <span class="diagnostico-comentario">{{ diagnosticos_data.area_grasa_braquial.diagnostico }}</span>
+              </div>
+              {% endif %}
+              
+              {% if diagnosticos_data.porc_grasa %}
+              <div class="diagnostico-row">
+                <span class="diagnostico-nombre">Grasa corporal (%)</span>
+                <span class="diagnostico-valor">{{ diagnosticos_data.porc_grasa.calculado|floatformat:2 }}%</span>
+                <span class="diagnostico-comentario">
+                  {% if diagnosticos_data.porc_grasa.diagnostico %}
+                    {{ diagnosticos_data.porc_grasa.diagnostico }}
+                  {% else %}
+                    -
+                  {% endif %}
+                </span>
+              </div>
+              {% endif %}
+            </div>
+          {% else %}
+            <div class="text-center text-muted py-4">
+              No se encontraron diagnósticos para la fecha seleccionada.
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% endif %}
   </div>
 </div>
 
@@ -234,10 +294,11 @@ function validarFormulario() {
 // Func para enviar datos a la API
 async function enviarDatosAntropometricos() {
     const pacienteId = JSON.parse("{{ paciente.id_paciente|escapejs }}");
+    const fecha = document.getElementById('id_fecha').value;
 
     const formData = {
         pacienteId: pacienteId,
-        fecha: document.getElementById('id_fecha').value,
+        fecha: fecha,
         pesoKg: document.getElementById('id_peso').value,
         tallaCm: document.getElementById('id_talla').value,
         circCinturaCm: document.getElementById('id_cintura').value,
@@ -268,7 +329,8 @@ async function enviarDatosAntropometricos() {
                 timer: 2000,
                 showConfirmButton: false
             }).then(() => {
-                location.reload();
+                // Recargar la pagina con la fecha como parámetro
+                window.location.href = `?fecha=${encodeURIComponent(fecha)}`;
             });
         } else {
             throw new Error(data.mensaje || 'Error al guardar los datos');
