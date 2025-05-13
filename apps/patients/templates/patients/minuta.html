@@ -46,8 +46,23 @@
 
     <div style="margin-top: 25px; margin-bottom: 15px;">
       <button id="add-meal-time-btn" class="button-secondary" style="display: none;">Agregar Tiempo de Comida</button>
+      <button id="generate-minuta-btn" class="button-primary" style="margin-left: 10px;">Generar Minuta</button>
     </div>
     <div id="general-status" style="min-height: 20px; font-weight: bold;"></div>
+    <div id="minuta-modal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <span class="close-modal-btn">×</span>
+            <h2>Minuta Generada</h2>
+            <h2>Escoja 1 de las opciones por cada grupo de alimentos</h2>
+            <div id="minuta-modal-body">
+                <!-- El contenido de la minuta se insertará aquí -->
+            </div>
+            <div class="modal-footer">
+                <button id="save-generated-minuta-btn" class="button-primary">Guardar Cambios de Minuta</button>
+                 <button id="copy-minuta-btn" class="button-secondary">Copiar Minuta</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -57,6 +72,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const mealTimesContainer = document.getElementById('meal-times-container');
     const addMealTimeBtn = document.getElementById('add-meal-time-btn');
     const generalStatusDiv = document.getElementById('general-status'); 
+    const generateMinutaBtn = document.getElementById('generate-minuta-btn');
+    const minutaModal = document.getElementById('minuta-modal');
+    const closeModalBtn = document.querySelector('.close-modal-btn');
+    const minutaModalBody = document.getElementById('minuta-modal-body');
+    const saveGeneratedMinutaBtn = document.getElementById('save-generated-minuta-btn');
+    const copyMinutaBtn = document.getElementById('copy-minuta-btn');
 
     const adecuacionCaloricoEl = document.getElementById('adecuacion-calorico');
     const adecuacionProteinasEl = document.getElementById('adecuacion-proteinas');
@@ -67,6 +88,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let ALL_MEAL_TIMES_DATA = []; 
     let foodGroupsData = [];      
     let mealTimeEntryCounter = 0; 
+    let currentGeneratedMinutaData = null;
 
     if (PACIENTE_ID === null) {
         console.error("PACIENTE_ID no está definido o es null.");
@@ -76,7 +98,209 @@ document.addEventListener('DOMContentLoaded', () => {
             adecuacionStatusEl.className = 'error';
         }
         if(addMealTimeBtn) addMealTimeBtn.disabled = true;
+        if(generateMinutaBtn) generateMinutaBtn.disabled = true; 
         return; 
+    }
+    // --- FUNCIONES PARA MODAL DE MINUTA GENERADA ---
+    async function openGenerateMinutaModal() {
+        if (!PACIENTE_ID) {
+            alert("No se puede generar la minuta sin un ID de paciente.");
+            return;
+        }
+        minutaModalBody.innerHTML = '<p>Cargando minuta...</p>';
+        minutaModal.style.display = 'block';
+
+        try {
+            const response = await fetch(`https://nutrilinkapi-production.up.railway.app/api_nutrilink/minuta/obtener_minuta?pacienteId=${PACIENTE_ID}`);
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.mensaje || `Error HTTP ${response.status}`);
+            }
+
+            if (result.status === 'success' && result.data) {
+                currentGeneratedMinutaData = result.data; // Guardar los datos
+                renderGeneratedMinuta(result.data);
+            } else {
+                throw new Error(result.mensaje || "No se pudo obtener la minuta generada.");
+            }
+        } catch (error) {
+            console.error("Error al obtener minuta generada:", error);
+            minutaModalBody.innerHTML = `<p style="color:red;">Error al cargar la minuta: ${error.message}</p>`;
+        }
+    }
+
+    function renderGeneratedMinuta(data) {
+        minutaModalBody.innerHTML = ''; // Limpiar contenido anterior
+
+        if (!data.tiempos_de_comida || data.tiempos_de_comida.length === 0) {
+            minutaModalBody.innerHTML = '<p>No hay tiempos de comida definidos en la minuta generada.</p>';
+            return;
+        }
+
+        data.tiempos_de_comida.forEach(tiempo => {
+            const tiempoDiv = document.createElement('div');
+            tiempoDiv.classList.add('minuta-tiempo-comida');
+            
+            const tiempoHeader = document.createElement('h4');
+            tiempoHeader.textContent = `${tiempo.tiempo_comida}`;
+            tiempoDiv.appendChild(tiempoHeader);
+
+            if (tiempo.hora_sugerida) {
+                const horaP = document.createElement('p');
+                horaP.classList.add('hora-sugerida');
+                horaP.textContent = `Hora Sugerida: ${tiempo.hora_sugerida}`;
+                tiempoDiv.appendChild(horaP);
+            }
+
+            if (tiempo.grupos && tiempo.grupos.length > 0) {
+                tiempo.grupos.forEach(grupo => {
+                    const grupoDiv = document.createElement('div');
+                    grupoDiv.classList.add('minuta-grupo-alimento');
+                    
+                    const grupoHeader = document.createElement('h5');
+                    grupoHeader.textContent = grupo.grupo_descripcion;
+                    grupoDiv.appendChild(grupoHeader);
+
+                    const opcionesTextarea = document.createElement('textarea');
+                    opcionesTextarea.rows = grupo.opciones.length + 1 > 3 ? grupo.opciones.length + 1 : 4; // Ajustar altura
+                    opcionesTextarea.dataset.tiempoId = tiempo.id_tiempo_comida; // Podría ser útil
+                    opcionesTextarea.dataset.grupoDesc = grupo.grupo_descripcion; // Útil para guardar
+
+                    let opcionesTexto = '';
+                    grupo.opciones.forEach(opcion => {
+                        // Formatear como " - cantidad medida de alimento"
+                        opcionesTexto += `- ${opcion.cantidad} ${opcion.medida} de ${opcion.alimento}\n`;
+                    });
+                    opcionesTextarea.value = opcionesTexto.trim();
+                    
+                    grupoDiv.appendChild(opcionesTextarea);
+                    tiempoDiv.appendChild(grupoDiv);
+                });
+            }
+            minutaModalBody.appendChild(tiempoDiv);
+        });
+    }
+
+    function closeMinutaModal() {
+        minutaModal.style.display = 'none';
+        minutaModalBody.innerHTML = ''; // Limpiar al cerrar
+        currentGeneratedMinutaData = null; // Limpiar datos guardados
+    }
+
+    async function handleSaveChangesGeneratedMinuta() {
+        if (!currentGeneratedMinutaData) {
+            alert("No hay datos de minuta para guardar.");
+            return;
+        }
+        saveGeneratedMinutaBtn.disabled = true;
+        saveGeneratedMinutaBtn.textContent = 'Guardando...';
+
+        const textareas = minutaModalBody.querySelectorAll('textarea');
+        // Aquí necesitas decidir cómo vas a enviar estos datos editados.
+        // El formato de tu API `obtener_minuta` es para mostrar.
+        // Para guardar, probablemente necesites enviar datos estructurados similares
+        // a como guardas las porciones, o un nuevo endpoint que acepte este formato de "minuta textual".
+
+        // EJEMPLO MUY SIMPLIFICADO: Solo loguear los cambios.
+        // DEBERÁS ADAPTAR ESTO PARA LLAMAR A TU API DE GUARDADO.
+        let minutaModificada = {
+            pacienteId: PACIENTE_ID,
+            id_minuta: currentGeneratedMinutaData.id_minuta, // Si se mantiene el ID de minuta
+            tiempos_de_comida: []
+        };
+
+        const tiemposOriginales = currentGeneratedMinutaData.tiempos_de_comida;
+        
+        tiemposOriginales.forEach(tiempoOriginal => {
+            let tiempoModificado = {
+                tiempo_comida: tiempoOriginal.tiempo_comida,
+                hora_sugerida: tiempoOriginal.hora_sugerida, // Asumimos que la hora no se edita en este modal
+                grupos: []
+            };
+            
+            tiempoOriginal.grupos.forEach(grupoOriginal => {
+                // Encontrar el textarea correspondiente (esto es un poco frágil, mejor usar IDs si es posible)
+                const textarea = Array.from(textareas).find(ta => 
+                    ta.dataset.grupoDesc === grupoOriginal.grupo_descripcion && 
+                    ta.parentElement.parentElement.querySelector('h4').textContent === tiempoOriginal.tiempo_comida
+                );
+
+                if (textarea) {
+                    // Aquí necesitarías parsear el textarea de nuevo a una estructura de "opciones"
+                    // Esto es la parte más compleja si permites edición libre.
+                    // Por ahora, solo guardamos el texto como un bloque.
+                    // Para un guardado real, necesitarías un parser o enviar el texto crudo.
+                    tiempoModificado.grupos.push({
+                        id_tiempo_comida: grupoOriginal.id_tiempo_comida, // Es el id del tiempo, no del grupo
+                        grupo_descripcion: grupoOriginal.grupo_descripcion,
+                        opciones_texto_editado: textarea.value // Solo como ejemplo
+                    });
+                }
+            });
+            minutaModificada.tiempos_de_comida.push(tiempoModificado);
+        });
+
+        console.log("Datos de minuta modificados (para enviar a API):", minutaModificada);
+        alert("La funcionalidad de guardar los cambios de la minuta generada aún no está implementada.\nRevisa la consola para ver los datos que se enviarían.");
+
+        // Simular un guardado
+        // try {
+        //     // const response = await fetch('URL_PARA_GUARDAR_MINUTA_EDITADA', {
+        //     //     method: 'POST',
+        //     //     headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+        //     //     body: JSON.stringify(minutaModificada)
+        //     // });
+        //     // if (!response.ok) throw new Error("Error al guardar minuta editada");
+        //     // alert("Minuta guardada exitosamente (simulado)");
+        //     // closeMinutaModal();
+        // } catch (error) {
+        //     console.error("Error guardando minuta editada:", error);
+        //     alert("Error al guardar la minuta editada: " + error.message);
+        // } finally {
+            saveGeneratedMinutaBtn.disabled = false;
+            saveGeneratedMinutaBtn.textContent = 'Guardar Cambios de Minuta';
+        // }
+    }
+
+    function copyMinutaToClipboard() {
+        if (!minutaModalBody) return;
+        let textToCopy = "";
+        const tiempoComidaDivs = minutaModalBody.querySelectorAll('.minuta-tiempo-comida');
+        
+        tiempoComidaDivs.forEach(tiempoDiv => {
+            const header = tiempoDiv.querySelector('h4');
+            const hora = tiempoDiv.querySelector('.hora-sugerida');
+            if (header) textToCopy += header.textContent + "\n";
+            if (hora) textToCopy += hora.textContent + "\n";
+
+            const grupoDivs = tiempoDiv.querySelectorAll('.minuta-grupo-alimento');
+            grupoDivs.forEach(grupoDiv => {
+                const grupoHeader = grupoDiv.querySelector('h5');
+                const textarea = grupoDiv.querySelector('textarea');
+                if (grupoHeader) textToCopy += "  " + grupoHeader.textContent + ":\n";
+                if (textarea) {
+                    // Añadir cada línea del textarea con un poco más de indentación
+                    textarea.value.split('\n').forEach(line => {
+                        textToCopy += "    " + line + "\n";
+                    });
+                }
+            });
+            textToCopy += "\n"; // Espacio entre tiempos de comida
+        });
+
+        if (textToCopy) {
+            navigator.clipboard.writeText(textToCopy.trim())
+                .then(() => {
+                    alert('Minuta copiada al portapapeles!');
+                })
+                .catch(err => {
+                    console.error('Error al copiar la minuta: ', err);
+                    alert('Error al copiar la minuta. Revisa la consola.');
+                });
+        } else {
+            alert('No hay contenido en la minuta para copiar.');
+        }
     }
 
     // --- FUNCIONES PARA ADECUACIÓN ---
@@ -702,6 +926,9 @@ document.addEventListener('DOMContentLoaded', () => {
             addMealTimeBtn.style.display = 'none'; 
             addMealTimeBtn.disabled = true;
         }
+        if(generateMinutaBtn && PACIENTE_ID === null) { 
+             generateMinutaBtn.disabled = true;
+        }
 
         if(generalStatusDiv) {
             generalStatusDiv.textContent = "Cargando datos...";
@@ -763,6 +990,18 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // --- Event Listeners ---
     if(addMealTimeBtn) addMealTimeBtn.addEventListener('click', addMealTimeEntry);
+    if(generateMinutaBtn) generateMinutaBtn.addEventListener('click', openGenerateMinutaModal); // NUEVO
+    if(closeModalBtn) closeModalBtn.addEventListener('click', closeMinutaModal); // NUEVO
+    if(saveGeneratedMinutaBtn) saveGeneratedMinutaBtn.addEventListener('click', handleSaveChangesGeneratedMinuta); // NUEVO
+    if(copyMinutaBtn) copyMinutaBtn.addEventListener('click', copyMinutaToClipboard); // NUEVO
+
+
+    // Cerrar modal si se hace clic fuera del contenido
+    window.addEventListener('click', (event) => {
+        if (event.target == minutaModal) {
+            closeMinutaModal();
+        }
+    });
 
     initializePage(); 
 });
