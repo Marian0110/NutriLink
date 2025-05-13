@@ -284,7 +284,7 @@ document.querySelector('.btn-save').addEventListener('click', function (e) {
               timer: 2000,
               showConfirmButton: false
           }).then(() => {
-              resetearFormularioEmbarazo();
+             window.location.reload();
           });
       } else {
         Swal.fire({
@@ -302,23 +302,6 @@ document.querySelector('.btn-save').addEventListener('click', function (e) {
       });
     }
   }
-
-  // Resetear formulario de embarazo
-  function resetearFormularioEmbarazo() {
-    const form = document.getElementById('embarazoForm');
-
-    document.querySelector('input[name="condicion_embarazo"][value="N"]').checked = true;
-    const inputSemanas = document.getElementById('inputSemanas');
-    inputSemanas.value = '';
-    inputSemanas.setAttribute('readonly', true);
-    
-    document.getElementById('trimestreCalculado').textContent = 'N/A';
-    document.getElementById('energiaExtra').textContent = '0 kcal';
-    
-    // También puedes recargar la página si prefieres obtener los datos más recientes del servidor
-    // window.location.reload();
-}
-
   // script de condicion de embarazo
   const radios = document.querySelectorAll('input[name="condicion_embarazo"]');
   const inputSemanas = document.getElementById('inputSemanas');
