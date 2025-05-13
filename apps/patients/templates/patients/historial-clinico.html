@@ -69,36 +69,53 @@
       
       <!-- Columna derecha: Condición de embarazo -->
       <div class="col-md-5">
-        <form method="#" action="#">
+        <form id="embarazoForm" method="PATCH">
           {% csrf_token %}
+          <input type="hidden" name="id_paciente" value="{{ paciente.id_paciente }}">
           <div class="pregnancy-card" style="margin-top: 0%;">
             <div class="card-header d-flex justify-content-between align-items-center">
               <h1 class="card-title mb-0">¿Condición de embarazo?</h1>
               <div class="radio-group">
                 <label class="radio-option">
-                  <input type="radio" name="condicion" value="si" checked>
+                  <input type="radio" name="condicion_embarazo" value="S" {% if paciente.condicion_embarazo == 'S' %}checked{% endif %}>
                   SI
                 </label>
                 <label class="radio-option">
-                  <input type="radio" name="condicion" value="no">
+                  <input type="radio" name="condicion_embarazo" value="N" {% if paciente.condicion_embarazo != 'S' %}checked{% endif %}>
                   NO
                 </label>
               </div>
             </div>
             <div class="form-group">
               <label class="form-label">Semanas de gestación:</label>
-              <input type="number" name="semanas" id="inputSemanas" class="form-control" placeholder="Ingresar valor">
+              <input type="number" name="semana_gestacion" id="inputSemanas" class="form-control" 
+                    placeholder="Ingresar valor" value="{{ paciente.semana_gestacion|default_if_none:'' }}"
+                    {% if paciente.condicion_embarazo != 'S' %}readonly{% endif %}>
             </div>
             <div class="form-group">
               <label class="form-label">Trimestre calculado:</label>
-              <div class="readonly-field p-2 bg-light rounded">1er trimestre</div>
+              <div class="readonly-field p-2 bg-light rounded" id="trimestreCalculado">
+                {% if paciente.condicion_embarazo == 'S' and paciente.semana_gestacion %}
+                  {% if paciente.semana_gestacion <= 12 %}1er trimestre
+                  {% elif paciente.semana_gestacion <= 28 %}2do trimestre
+                  {% else %}3er trimestre
+                  {% endif %}
+                {% else %}N/A{% endif %}
+              </div>
             </div>
             <div class="form-group">
               <label class="form-label">Energía extra:</label>
-              <div class="readonly-field p-2 bg-light rounded">300 <span class="unit">kcal</span></div>
+              <div class="readonly-field p-2 bg-light rounded" id="energiaExtra">
+                {% if paciente.condicion_embarazo == 'S' and paciente.semana_gestacion %}
+                  {% if paciente.semana_gestacion <= 12 %}0 kcal
+                  {% elif paciente.semana_gestacion <= 28 %}340 kcal
+                  {% else %}452 kcal
+                  {% endif %}
+                {% else %}0 kcal{% endif %}
+              </div>
             </div>
             <div class="divider"></div>
-            <button type="button" class="btn btn-save2 w-100">REGISTRAR</button>
+            <button type="submit" class="btn btn-save2 w-100">ACTUALIZAR</button>
           </div>
         </form>
       </div>
@@ -200,23 +217,17 @@ document.querySelector('.btn-save').addEventListener('click', function (e) {
 
   // SweetAlert: success para el boton REGISTRAR (Condicion de embarazo)
   document.querySelector('.btn-save2').addEventListener('click', function (e) {
+    e.preventDefault();
     Swal.fire({
-      title: '¿Confirmar registro?',
-      text: 'Se guardará la condición de embarazo.',
+      title: '¿Confirmar actualización?',
+      text: 'Se actualizará la condición de embarazo.',
       icon: 'question',
       showCancelButton: true,
-      confirmButtonText: 'Sí, registrar',
+      confirmButtonText: 'Sí, actualizar',
       cancelButtonText: 'Cancelar'
     }).then((result) => {
       if (result.isConfirmed) {
-        Swal.fire({
-          title: 'Registrado correctamente',
-          icon: 'success',
-          timer: 2000,
-          showConfirmButton: false
-        });
-
-        // e.target.closest('form').submit();
+        actualizarCondicionEmbarazo();
       }
     });
   });
@@ -244,20 +255,112 @@ document.querySelector('.btn-save').addEventListener('click', function (e) {
     });
   });
 
+  // Funcion para actualizar la condicion de embarazo
+  async function actualizarCondicionEmbarazo() {
+    const form = document.getElementById('embarazoForm');
+    const formData = new FormData(form);
+    const data = {
+      id_paciente: formData.get('id_paciente'),
+      condicion_embarazo: formData.get('condicion_embarazo'),
+      semana_gestacion: formData.get('semana_gestacion')
+    };
+
+    try {
+      const response = await fetch('https://nutrilinkapi-production.up.railway.app/api_nutrilink/paciente/actualizar_condicion_embarazo', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+        },
+        body: JSON.stringify(data)
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+          Swal.fire({
+              title: 'Actualizado correctamente',
+              icon: 'success',
+              timer: 2000,
+              showConfirmButton: false
+          }).then(() => {
+              resetearFormularioEmbarazo();
+          });
+      } else {
+        Swal.fire({
+          title: 'Error',
+          text: result.mensaje || 'Error al actualizar la condición de embarazo',
+          icon: 'error'
+        });
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      Swal.fire({
+        title: 'Error',
+        text: 'Error de conexión al servidor',
+        icon: 'error'
+      });
+    }
+  }
+
+  // Resetear formulario de embarazo
+  function resetearFormularioEmbarazo() {
+    const form = document.getElementById('embarazoForm');
+
+    document.querySelector('input[name="condicion_embarazo"][value="N"]').checked = true;
+    const inputSemanas = document.getElementById('inputSemanas');
+    inputSemanas.value = '';
+    inputSemanas.setAttribute('readonly', true);
+    
+    document.getElementById('trimestreCalculado').textContent = 'N/A';
+    document.getElementById('energiaExtra').textContent = '0 kcal';
+    
+    // También puedes recargar la página si prefieres obtener los datos más recientes del servidor
+    // window.location.reload();
+}
+
   // script de condicion de embarazo
-  const radios = document.querySelectorAll('input[name="condicion"]');
+  const radios = document.querySelectorAll('input[name="condicion_embarazo"]');
   const inputSemanas = document.getElementById('inputSemanas');
+
+  function calcularDatosEmbarazo() {
+    const semanas = parseInt(inputSemanas.value) || 0;
+    const trimestreField = document.getElementById('trimestreCalculado');
+    const energiaField = document.getElementById('energiaExtra');
+    
+    if (semanas <= 0) {
+      trimestreField.textContent = 'N/A';
+      energiaField.textContent = '0 kcal';
+      return;
+    }
+    
+    if (semanas <= 12) {
+      trimestreField.textContent = '1er trimestre';
+      energiaField.textContent = '0 kcal';
+    } else if (semanas <= 28) {
+      trimestreField.textContent = '2do trimestre';
+      energiaField.textContent = '340 kcal';
+    } else {
+      trimestreField.textContent = '3er trimestre';
+      energiaField.textContent = '452 kcal';
+    }
+  }
 
   // Funcion para actualizar el readonly
   function actualizarInput() {
-    const valorSeleccionado = document.querySelector('input[name="condicion"]:checked').value;
-    if (valorSeleccionado === "si") {
+    const valorSeleccionado = document.querySelector('input[name="condicion_embarazo"]:checked').value;
+    if (valorSeleccionado === "S") {
       inputSemanas.removeAttribute('readonly');
+      inputSemanas.focus();
     } else {
       inputSemanas.setAttribute('readonly', true);
-      inputSemanas.value = ""; // opcional: limpia el valor si no aplica
+      inputSemanas.value = "";
+      calcularDatosEmbarazo(); // Actualizar campos calculados
     }
   }
+
+  // evento para calcular al cambiar semanas
+  inputSemanas.addEventListener('input', calcularDatosEmbarazo);
 
   // inicializa el estado al cargar
   actualizarInput();
@@ -268,73 +371,71 @@ document.querySelector('.btn-save').addEventListener('click', function (e) {
   });
 
   // script de informacion nutricional manejo de comboboxes
-  // Agrega el evento de cambio a todos los selects
   document.querySelectorAll('.form-select').forEach(select => {
-            select.addEventListener('change', function () {
-                if (this.value && !this.disabled) {
-                    const containerId = this.closest('.selection-group').querySelector('.selected-items-container').id;
-                    const container = document.getElementById(containerId);
-    
-                    const existingValues = Array.from(container.querySelectorAll('input[type="hidden"]')).map(input => input.value);
-    
-                    if (!existingValues.includes(this.value)) {
-                        addSelectedItem(containerId, this.value);
-                        disableSelectedOptions(this);
-                    } else {
-                        alert('Esta opción ya fue seleccionada');
-                    }
-    
-                    // Reset al valor seleccionar x
-                    this.selectedIndex = 0;
-                }
-            });
-        });
-    
-        function disableSelectedOptions(selectElement) {
-            const containerId = selectElement.closest('.selection-group').querySelector('.selected-items-container').id;
-            const selectedValues = Array.from(document.getElementById(containerId).querySelectorAll('input[type="hidden"]')).map(input => input.value);
-    
-            Array.from(selectElement.options).forEach(option => {
-                if (selectedValues.includes(option.value)) {
-                    option.disabled = true;
-                }
-            });
-        }
-    
-        function addSelectedItem(containerId, value) {
-            const container = document.getElementById(containerId);
-            const itemId = 'item-' + Math.random().toString(36).substr(2, 9);
-    
-            const itemElement = document.createElement('div');
-            itemElement.className = 'selected-item';
-            itemElement.id = itemId;
-            itemElement.innerHTML = `
-                ${value}
-                <span class="remove-item" onclick="removeItem('${itemId}', '${containerId}', '${value}')">×</span>
-                <input type="hidden" name="${containerId.replace('-container', '')}[]" value="${value}">
-            `;
-    
-            container.appendChild(itemElement);
-        }
-    
-        function removeItem(itemId, containerId, value) {
-            document.getElementById(itemId).remove();
-    
-            // Rehabilitar la opción en el combobox
-            const select = document.getElementById(containerId).closest('.selection-group').querySelector('.form-select');
-            Array.from(select.options).forEach(option => {
-                if (option.value === value) {
-                    option.disabled = false;
-                }
-            });
-        }
-    
-        // El actual select se mantenga actualizado
-        function addAnother(type) {
-            const select = document.getElementById(`${type}-container`).closest('.selection-group').querySelector('.form-select');
-            disableSelectedOptions(select); // refrescamos los disabled
-            select.focus();
-        }
-</script>
+    select.addEventListener('change', function () {
+      if (this.value && !this.disabled) {
+        const containerId = this.closest('.selection-group').querySelector('.selected-items-container').id;
+        const container = document.getElementById(containerId);
 
+        const existingValues = Array.from(container.querySelectorAll('input[type="hidden"]')).map(input => input.value);
+
+        if (!existingValues.includes(this.value)) {
+          addSelectedItem(containerId, this.value);
+          disableSelectedOptions(this);
+        } else {
+          alert('Esta opción ya fue seleccionada');
+        }
+
+        // Reset al valor seleccionar x
+        this.selectedIndex = 0;
+      }
+    });
+  });
+
+  function disableSelectedOptions(selectElement) {
+    const containerId = selectElement.closest('.selection-group').querySelector('.selected-items-container').id;
+    const selectedValues = Array.from(document.getElementById(containerId).querySelectorAll('input[type="hidden"]')).map(input => input.value);
+
+    Array.from(selectElement.options).forEach(option => {
+      if (selectedValues.includes(option.value)) {
+        option.disabled = true;
+      }
+    });
+  }
+
+  function addSelectedItem(containerId, value) {
+    const container = document.getElementById(containerId);
+    const itemId = 'item-' + Math.random().toString(36).substr(2, 9);
+
+    const itemElement = document.createElement('div');
+    itemElement.className = 'selected-item';
+    itemElement.id = itemId;
+    itemElement.innerHTML = `
+      ${value}
+      <span class="remove-item" onclick="removeItem('${itemId}', '${containerId}', '${value}')">×</span>
+      <input type="hidden" name="${containerId.replace('-container', '')}[]" value="${value}">
+    `;
+
+    container.appendChild(itemElement);
+  }
+
+  function removeItem(itemId, containerId, value) {
+    document.getElementById(itemId).remove();
+
+    // Rehabilitar la opcion en el combobox
+    const select = document.getElementById(containerId).closest('.selection-group').querySelector('.form-select');
+    Array.from(select.options).forEach(option => {
+      if (option.value === value) {
+        option.disabled = false;
+      }
+    });
+  }
+
+  // El actual select se mantenga actualizado
+  function addAnother(type) {
+    const select = document.getElementById(`${type}-container`).closest('.selection-group').querySelector('.form-select');
+    disableSelectedOptions(select); // refrescar disabled
+    select.focus();
+  }
+</script>
 {% endblock %}
