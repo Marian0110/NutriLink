@@ -18,7 +18,7 @@
     width: 100%;
     margin: 0 auto;
   }
-  
+
   .section-title {
     font-weight: 600;
     color: var(--secondary-color);
@@ -30,7 +30,12 @@
 
   .factors {
     border: 1px solid #dee2e6;
-  }
+    padding: 15px;
+    border-radius: 8px;
+    width: 100%;
+    max-width: 500px;
+    margin-top: 15px;
+}
   
   .clinical-label {
     font-weight: 500;
@@ -101,7 +106,6 @@
   padding: 30px;
   width: 100%;
   max-width: 500px;
-  margin-top: 40px;
 }
 
 .card-header {
@@ -203,8 +207,9 @@
   border-radius: 10px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   padding: 30px;
-  width: 100%;
+  width: 60%;
   margin-top: 40px;
+  margin-bottom: 40px;
 }
 
 .card-title {

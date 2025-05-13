@@ -4,21 +4,22 @@
 
 {% block perfilcontent %}
 <div class="row">
-  <div class="container py-4">
-    <!-- Formulario perfil clinico -->
-    <form method="#" action="#">
-      {% csrf_token %}
-      <div class="clinical-card">
-        <h1 class="h4 fw-bold mb-2">Perfil clínico</h1>
-        <p class="text-muted mb-4">Datos relevantes del paciente para el manejo nutricional</p>
-        <div class="row">
-          <!-- Columna izquierda: Inputs clinicos -->
-          <div class="col-md-6">
+  <div class="container-fluid">
+    <div class="row g-3  align-items-start">
+      <!-- Columna izquierda: Perfil clínico (ahora más angosta) -->
+      <div class="col-md-7">
+        <form method="#" action="#">
+          {% csrf_token %}
+          <div class="clinical-card">
+            <h1 class="h4 fw-bold mb-2">Perfil clínico</h1>
+            <p class="text-muted mb-4">Datos relevantes del paciente para el manejo nutricional</p>
+            
             <div class="mb-3">
               <label class="clinical-label d-block">Etapa de cambio psicológico:</label>
               <input type="text" class="form-control form-control-custom"/>
             </div>
-            <div>
+            
+            <div class="mb-3">
               <label class="clinical-label d-block">Actividad física:</label>
               <select class="form-select form-control-custom" name="actividad_fisica">
                   {% for nivel in niveles_actividad %}
@@ -29,140 +30,145 @@
                       <option value="">No se pudieron cargar los niveles</option>
                   {% endfor %}
               </select>
-          </div>
-          </div>
-          <div class="col-md-4 factors">
-            <h2 class="section-title h5">Factores patológicos</h2>
+            </div>
             
-            {% if error_factores %}
-            <div class="alert alert-danger">
-                Error al cargar factores: {{ error_factores }}
+            <!-- Factores patológicos -->
+            <div class="mb-3 factors" style="width: 60%;">
+              <h2 class="section-title h5">Factores patológicos <span>(Seleccione una opción)</span></h2>
+              
+              {% if error_factores %}
+              <div class="alert alert-danger">
+                  Error al cargar factores: {{ error_factores }}
+              </div>
+              {% endif %}
+              
+              {% for factor in factores_patologicos %}
+              <div class="form-check mb-2" style="margin-left: 5%;">
+                  <input class="form-check-input" type="radio" 
+                         name="factor_patologico" 
+                         id="factor{{ factor.id_factor_patologico }}"
+                         value="{{ factor.id_factor_patologico }}"
+                         {% if forloop.first %}checked{% endif %}>
+                  <label class="form-check-label" for="factor{{ factor.id_factor_patologico }}">
+                      {{ factor.descripcion }} ({{ factor.valor_factor }})
+                  </label>
+              </div>
+              {% empty %}
+              <div class="alert alert-warning">
+                  No se encontraron factores patológicos disponibles
+              </div>
+              {% endfor %}
             </div>
-            {% endif %}
             
-            {% for factor in factores_patologicos %}
-            <div class="form-check mb-2">
-                <input class="form-check-input" type="radio" 
-                       name="factor_patologico" 
-                       id="factor{{ factor.id_factor_patologico }}"
-                       value="{{ factor.id_factor_patologico }}"
-                       {% if forloop.first %}checked{% endif %}>
-                <label class="form-check-label" for="factor{{ factor.id_factor_patologico }}">
-                    {{ factor.descripcion }} ({{ factor.valor_factor }})
-                </label>
+            <div class="d-flex justify-content-center">
+                <button type="button" class="btn btn-save">GUARDAR</button>
             </div>
-            {% empty %}
-            <div class="alert alert-warning">
-                No se encontraron factores patológicos disponibles
-            </div>
-            {% endfor %}
           </div>
-          <div class="d-flex justify-content-center">
-              <button type="button" class="btn btn-save">GUARDAR</button>  <!-- Falta el sweet alert -->
-          </div>
+        </form>
       </div>
-    </form>
-  </div>
-  <!-- Formulario condicion de embarazo -->
-  <div class="container-fluid">
-  <div class="row g-1"> <!-- gutter (espacio) entre columnas -->
-    <div class="col-md-6">
-      <form method="#" action="#">
-        {% csrf_token %}
-        <div class="pregnancy-card">
-          <div class="card-header d-flex justify-content-between align-items-center">
-            <h1 class="card-title mb-0">¿Condición de embarazo?</h1>
-            <div class="radio-group">
-              <label class="radio-option">
-                <input type="radio" name="condicion" value="si" checked>
-                SI
-              </label>
-              <label class="radio-option">
-                <input type="radio" name="condicion" value="no">
-                NO
-              </label>
+      
+      <!-- Columna derecha: Condición de embarazo -->
+      <div class="col-md-5">
+        <form method="#" action="#">
+          {% csrf_token %}
+          <div class="pregnancy-card" style="margin-top: 0%;">
+            <div class="card-header d-flex justify-content-between align-items-center">
+              <h1 class="card-title mb-0">¿Condición de embarazo?</h1>
+              <div class="radio-group">
+                <label class="radio-option">
+                  <input type="radio" name="condicion" value="si" checked>
+                  SI
+                </label>
+                <label class="radio-option">
+                  <input type="radio" name="condicion" value="no">
+                  NO
+                </label>
+              </div>
             </div>
+            <div class="form-group">
+              <label class="form-label">Semanas de gestación:</label>
+              <input type="number" name="semanas" id="inputSemanas" class="form-control" placeholder="Ingresar valor">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Trimestre calculado:</label>
+              <div class="readonly-field p-2 bg-light rounded">1er trimestre</div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Energía extra:</label>
+              <div class="readonly-field p-2 bg-light rounded">300 <span class="unit">kcal</span></div>
+            </div>
+            <div class="divider"></div>
+            <button type="button" class="btn btn-save2 w-100">REGISTRAR</button>
           </div>
-          <div class="form-group">
-            <label class="form-label">Semanas de gestación:</label>
-            <input type="number" name="semanas" id="inputSemanas" class="form-control" placeholder="Ingresar valor">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Trimestre calculado:</label>
-            <div class="readonly-field p-2 bg-light rounded">1er trimestre</div>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Energía extra:</label>
-            <div class="readonly-field p-2 bg-light rounded">300 <span class="unit">kcal</span></div>
-          </div>
-          <div class="divider"></div>
-          <button type="button" class="btn btn-save2 w-100">REGISTRAR</button> <!-- Falta el sweet alert -->
-        </div>
-      </form>
+        </form>
+      </div>
     </div>
-    <!-- Formulario información nutricional (columna derecha) -->
-    <div class="col-md-6">
-      <form method="#" action="#">
-        <div class="rejection-card ">
-          <h1 class="h4 card-title mb-2">Información nutricional</h1>
-          <p class="text-muted card-subtitle mb-4">Estos alimentos serán excluidos en los planes alimenticios.</p>
-          <!-- Rechazos alimenticios -->
-          <div class="mb-4">
-            <label class="form-label">Rechazos alimenticios</label>
-            <div class="selection-group">
-              <select class="form-select mb-2">
-                <option selected disabled>Seleccione un alimento</option>
-                <option>Leche</option>
-                <option>Huevos</option>
-                <option>Pescado</option>
-                <option>Mariscos</option>
-                <option>Frutos secos</option>
-                <option>Trigo</option>
-                <option>Soja</option>
-              </select>
-              <div class="selected-items-container" id="rejected-foods-container"></div>
-              <button type="button" class="btn btn-sm btn-secondary mt-2" onclick="addAnother('rejected-foods')">
-                + Agregar otro rechazo
-              </button>
+    
+    <!-- Información nutricional -->
+    <div class="row mt-3">
+      <div class="col-md-12">
+        <form method="#" action="#">
+          <div class="rejection-card" style="width: 50%;">
+            <h1 class="h4 card-title mb-2">Información nutricional</h1>
+            <p class="text-muted card-subtitle mb-4">Estos alimentos serán excluidos en los planes alimenticios.</p>
+            <!-- Rechazos alimenticios -->
+            <div class="mb-4">
+              <label class="form-label">Rechazos alimenticios</label>
+              <div class="selection-group">
+                <select class="form-select mb-2">
+                  <option selected disabled>Seleccione un alimento</option>
+                  <option>Leche</option>
+                  <option>Huevos</option>
+                  <option>Pescado</option>
+                  <option>Mariscos</option>
+                  <option>Frutos secos</option>
+                  <option>Trigo</option>
+                  <option>Soja</option>
+                </select>
+                <div class="selected-items-container" id="rejected-foods-container"></div>
+                <button type="button" class="btn btn-sm btn-secondary mt-2" onclick="addAnother('rejected-foods')">
+                  + Agregar otro rechazo
+                </button>
+              </div>
             </div>
-          </div>
-          <!-- Alergias -->
-          <div class="mb-4">
-            <label class="form-label">Alergias:</label>
-            <div class="selection-group">
-              <select class="form-select mb-2">
-                <option selected disabled>Seleccione una alergia</option>
-                <option>Alergia al maní</option>
-                <option>Alergia al gluten</option>
-              </select>
-              <div class="selected-items-container" id="allergies-container"></div>
-              <button type="button" class="btn btn-sm btn-secondary mt-2" onclick="addAnother('allergies')">
-                + Agregar otra alergia
-              </button>
+            <!-- Alergias -->
+            <div class="mb-4">
+              <label class="form-label">Alergias:</label>
+              <div class="selection-group">
+                <select class="form-select mb-2">
+                  <option selected disabled>Seleccione una alergia</option>
+                  <option>Alergia al maní</option>
+                  <option>Alergia al gluten</option>
+                </select>
+                <div class="selected-items-container" id="allergies-container"></div>
+                <button type="button" class="btn btn-sm btn-secondary mt-2" onclick="addAnother('allergies')">
+                  + Agregar otra alergia
+                </button>
+              </div>
             </div>
-          </div>
-          <!-- Intolerancias -->
-          <div class="mb-4">
-            <label class="form-label">Intolerancias:</label>
-            <div class="selection-group">
-              <select class="form-select mb-2">
-                <option selected disabled>Seleccione una intolerancia</option>
-                <option>Intolerancia a la lactosa</option>
-                <option>Intolerancia a la fructosa</option>
-                <option>Intolerancia a la sacarosa</option>
-                <option>Intolerancia a la histamina</option>
-              </select>
-              <div class="selected-items-container" id="intolerances-container"></div>
-              <button type="button" class="btn btn-sm btn-secondary mt-2" onclick="addAnother('intolerances')">
-                + Agregar otra intolerancia
-              </button>
+            <!-- Intolerancias -->
+            <div class="mb-4">
+              <label class="form-label">Intolerancias:</label>
+              <div class="selection-group">
+                <select class="form-select mb-2">
+                  <option selected disabled>Seleccione una intolerancia</option>
+                  <option>Intolerancia a la lactosa</option>
+                  <option>Intolerancia a la fructosa</option>
+                  <option>Intolerancia a la sacarosa</option>
+                  <option>Intolerancia a la histamina</option>
+                </select>
+                <div class="selected-items-container" id="intolerances-container"></div>
+                <button type="button" class="btn btn-sm btn-secondary mt-2" onclick="addAnother('intolerances')">
+                  + Agregar otra intolerancia
+                </button>
+              </div>
             </div>
+            <div class="divider"></div>
+            <button type="button" class="btn btn-save3 w-100">REGISTRAR</button>
           </div>
-          <div class="divider"></div>
-          <button type="button" class="btn btn-save3 w-100">REGISTRAR</button> <!-- Falta el sweet alert -->
-        </div>
-      </form>
-    </div> 
+        </form>
+      </div>
+    </div>
   </div>
 </div>
 
