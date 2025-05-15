@@ -149,6 +149,7 @@
   font-weight: 500;
 }
 
+/* MINUTA (mover después) */
 /* Contenedor para cada entrada de tiempo de comida (combobox + tabla) */
 .meal-time-entry {
   display: flex;
@@ -430,3 +431,5 @@
 .single-save-status.success { color: green; }
 .single-save-status.error { color: red; }
 .single-save-status.info { color: var(--secondary-color); }
+
+/* FIN MINUTA  */

@@ -41,6 +41,7 @@
     <script type="text/javascript">
       const PACIENTE_ID_FROM_DJANGO = JSON.parse('{{ paciente.id_paciente|escapejs }}');
       const PACIENTE_EMAIL_FROM_DJANGO = JSON.parse('{% if paciente_email %}"{{ paciente_email|escapejs }}"{% else %}null{% endif %}');
+      const PACIENTE_NOMBRE_COMPLETO_FROM_DJANGO = JSON.parse('{% if paciente.nombre_completo %}"{{ paciente.nombre_completo|escapejs }}"{% else %}null{% endif %}');
     </script>    
 
     <div id="meal-times-container">
@@ -137,14 +138,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderGeneratedMinuta(data) {
-        minutaModalBody.innerHTML = ''; // Limpiar contenido anterior
+        minutaModalBody.innerHTML = ''; 
 
         if (!data.tiempos_de_comida || data.tiempos_de_comida.length === 0) {
             minutaModalBody.innerHTML = '<p>No hay tiempos de comida definidos en la minuta generada.</p>';
             return;
         }
         const minutaTitle = document.createElement('h3');
-        minutaTitle.textContent = `Plan de Alimentación para Paciente ID: ${PACIENTE_ID}`; // Puedes mejorarlo con el nombre del paciente si lo tienes disponible
+        minutaTitle.textContent = `Plan de Alimentación para ${PACIENTE_NOMBRE_COMPLETO_FROM_DJANGO || 'Paciente'}`;
         minutaTitle.style.textAlign = 'center';
         minutaTitle.style.marginBottom = '20px';
         minutaModalBody.appendChild(minutaTitle);
@@ -310,121 +311,101 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     async function handleSaveMinutaPdf() {
-        if (!minutaModalBody || !minutaModalBody.innerHTML.trim()) {
-            alert("No hay contenido en la minuta para generar el PDF.");
-            return;
-        }
-        if (minutaModalStatus) {
-            minutaModalStatus.textContent = 'Generando PDF...';
-            minutaModalStatus.className = 'info';
-        }
-        saveMinutaPdfBtn.disabled = true;
-        sendMinutaEmailBtn.disabled = true;
-
-
-        // Usar una copia del contenido para no modificar el modal original si hacemos cambios
-        const contentForPdf = minutaModalBody.cloneNode(true);
-
-        // Opcional: Estilos adicionales específicos para el PDF
-        // Por ejemplo, asegurar que los textareas se vean bien como texto.
-        // Se puede convertir textareas a divs con su contenido si es necesario.
-        const textareasInPdf = contentForPdf.querySelectorAll('textarea');
-        textareasInPdf.forEach(ta => {
-            // Crear un div que reemplace el textarea para el PDF
-            const div = document.createElement('div');
-            div.style.border = "1px solid #ccc";
-            div.style.padding = "5px";
-            div.style.whiteSpace = "pre-wrap"; // para mantener los saltos de línea
-            div.style.fontFamily = "inherit"; // para mantener la fuente del textarea
-            div.style.minHeight = ta.rows > 1 ? `${ta.rows * 1.2}em` : 'auto'; // Aproximar altura
-            div.textContent = ta.value;
-            ta.parentNode.replaceChild(div, ta);
-        });
-        
-        const opt = {
-            margin:       [10, 10, 15, 10], // top, left, bottom, right en mm
-            filename:     `minuta_paciente_${PACIENTE_ID}.pdf`,
-            image:        { type: 'jpeg', quality: 0.98 },
-            html2canvas:  { scale: 2, useCORS: true, logging: false }, // Aumentar escala para mejor calidad
-            jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-        };
-
-        try {
-            await html2pdf().from(contentForPdf).set(opt).save();
-            if (minutaModalStatus) {
-                minutaModalStatus.textContent = 'PDF generado y descargado.';
-                minutaModalStatus.className = 'success';
-            }
-        } catch (error) {
-            console.error("Error generando PDF:", error);
-            if (minutaModalStatus) {
-                minutaModalStatus.textContent = 'Error al generar PDF.';
-                minutaModalStatus.className = 'error';
-            }
-        } finally {
-            saveMinutaPdfBtn.disabled = false;
-            sendMinutaEmailBtn.disabled = false;
-             setTimeout(() => {
-                if (minutaModalStatus && (minutaModalStatus.className === 'success' || minutaModalStatus.className === 'error' )) {
-                    minutaModalStatus.textContent = '';
-                }
-            }, 3000);
-        }
+    if (!minutaModalBody || !minutaModalBody.innerHTML.trim()) {
+        showMinutaPopup("No hay contenido en la minuta para generar el PDF.", false);
+        return;
     }
+    if (minutaModalStatus) {
+        minutaModalStatus.textContent = 'Generando PDF...';
+        minutaModalStatus.className = 'info';
+    }
+    saveMinutaPdfBtn.disabled = true;
+    sendMinutaEmailBtn.disabled = true;
+
+    const contentForPdf = minutaModalBody.cloneNode(true);
+
+    const textareasInPdf = contentForPdf.querySelectorAll('textarea');
+    textareasInPdf.forEach(ta => {
+        const div = document.createElement('div');
+        div.style.border = "1px solid #ccc";
+        div.style.padding = "5px";
+        div.style.whiteSpace = "pre-wrap";
+        div.style.fontFamily = "inherit";
+        div.style.minHeight = ta.rows > 1 ? `${ta.rows * 1.2}em` : 'auto';
+        div.textContent = ta.value;
+        ta.parentNode.replaceChild(div, ta);
+    });
+
+    const opt = {
+        margin:       [10, 10, 15, 10],
+        filename:     `minuta_paciente_${PACIENTE_ID}.pdf`,
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2, useCORS: true, logging: false },
+        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+
+    try {
+        await html2pdf().from(contentForPdf).set(opt).save();
+        if (minutaModalStatus) {
+            minutaModalStatus.textContent = 'PDF generado y descargado.';
+            minutaModalStatus.className = 'success';
+        }
+        showMinutaPopup('PDF generado y descargado exitosamente.', true);
+    } catch (error) {
+        console.error("Error generando PDF:", error);
+        if (minutaModalStatus) {
+            minutaModalStatus.textContent = 'Error al generar PDF.';
+            minutaModalStatus.className = 'error';
+        }
+        showMinutaPopup('Error al generar PDF.', false);
+    } finally {
+        saveMinutaPdfBtn.disabled = false;
+        sendMinutaEmailBtn.disabled = false;
+        setTimeout(() => {
+            if (minutaModalStatus && (minutaModalStatus.className === 'success' || minutaModalStatus.className === 'error' )) {
+                minutaModalStatus.textContent = '';
+            }
+        }, 3000);
+    }
+}
 
     async function handleSendMinutaEmail() {
-        if (!minutaModalBody || !minutaModalBody.innerHTML.trim()) {
-            alert("No hay contenido en la minuta para enviar por correo.");
-            return;
-        }
-        if (minutaModalStatus) {
-            minutaModalStatus.textContent = 'Enviando correo...';
-            minutaModalStatus.className = 'info';
-        }
-        saveMinutaPdfBtn.disabled = true;
-        sendMinutaEmailBtn.disabled = true;
-
-        // Obtener el contenido HTML de la minuta, con textareas convertidos
-        const minutaHtmlContent = getMinutaHtmlForExport();
-
-        try {
-            const csrfToken = getCookie('csrftoken');
-            // La URL debe coincidir con la que definas en urls.py
-            const response = await fetch(`/patients/${PACIENTE_ID}/enviar_minuta_por_correo/`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': csrfToken
-                },
-                body: JSON.stringify({ minuta_html: minutaHtmlContent })
-            });
-
-            const result = await response.json();
-
-            if (response.ok && result.success) {
-                if (minutaModalStatus) {
-                    minutaModalStatus.textContent = result.message || 'Correo enviado exitosamente.';
-                    minutaModalStatus.className = 'success';
-                }
-            } else {
-                throw new Error(result.message || 'Error al enviar el correo.');
-            }
-        } catch (error) {
-            console.error("Error enviando correo:", error);
-            if (minutaModalStatus) {
-                minutaModalStatus.textContent = `Error: ${error.message}`;
-                minutaModalStatus.className = 'error';
-            }
-        } finally {
-            saveMinutaPdfBtn.disabled = false;
-            sendMinutaEmailBtn.disabled = false;
-            setTimeout(() => {
-                if (minutaModalStatus && (minutaModalStatus.className === 'success' || minutaModalStatus.className === 'error' )) {
-                    minutaModalStatus.textContent = '';
-                }
-            }, 4000);
-        }
+    if (!minutaModalBody || !minutaModalBody.innerHTML.trim()) {
+        alert("No hay contenido en la minuta para enviar por correo.");
+        return;
     }
+    saveMinutaPdfBtn.disabled = true;
+    sendMinutaEmailBtn.disabled = true;
+
+    // Obtener el contenido HTML de la minuta, con textareas convertidos
+    const minutaHtmlContent = getMinutaHtmlForExport();
+
+    try {
+        const csrfToken = getCookie('csrftoken');
+        const response = await fetch(`/patients/${PACIENTE_ID}/enviar_minuta_por_correo/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({ minuta_html: minutaHtmlContent })
+        });
+
+        const result = await response.json();
+
+        if (response.ok && result.success) {
+            showMinutaPopup(result.message || 'Correo enviado exitosamente.', true);
+        } else {
+            throw new Error(result.message || 'Error al enviar el correo.');
+        }
+    } catch (error) {
+        console.error("Error enviando correo:", error);
+        showMinutaPopup(`Error: ${error.message}`, false);
+    } finally {
+        saveMinutaPdfBtn.disabled = false;
+        sendMinutaEmailBtn.disabled = false;
+    }
+}
 
 
     // --- El resto de tu JavaScript existente ---
@@ -1121,7 +1102,15 @@ document.addEventListener('DOMContentLoaded', () => {
             closeMinutaModal();
         }
     });
-
+    // --- POPUP MODAL PARA MENSAJES DE CORREO ---
+    function showMinutaPopup(message, isSuccess = true) {
+    Swal.fire({
+        icon: isSuccess ? 'success' : 'error',
+        title: isSuccess ? '¡Éxito!' : 'Error',
+        text: message,
+        confirmButtonText: 'Aceptar'
+    });
+}
     initializePage();
 });
 </script>
