@@ -1,13 +1,13 @@
 from django.shortcuts import render
 import requests
 from django.conf import settings
-from django.http import Http404
+from django.http import Http404, JsonResponse 
 from datetime import datetime
 from django.core.cache import cache #futuro: para almacenar peticiones en cache por un tiempo def
 from requests.exceptions import RequestException
-from django.core.mail import send_mail # Para enviar emails
+from django.core.mail import send_mail, EmailMultiAlternatives # Para enviar emails
 from django.contrib import messages  # Para mostrar alertas en el template
-from django.http import JsonResponse
+import json
 
 # Create your views here.
 def gestion(request):
@@ -244,7 +244,7 @@ def enviar_credenciales(request, id_paciente):
             'credenciales': None,
             'section': 'info-general'
         })
-
+    
     try:
         mensaje = f"""
 Hola {paciente['nombre_completo']} 👋,
@@ -289,3 +289,97 @@ Equipo NutriLink
         'credenciales': credenciales,
         'section': 'info-general'
     })
+
+# --- VISTA PARA ENVIAR MINUTA POR CORREO ---
+from django.views.decorators.csrf import csrf_protect
+from django.views.decorators.http import require_POST
+
+@csrf_protect
+@require_POST # Asegura que esta vista solo acepte POST
+def enviar_minuta_por_correo(request, id_paciente):
+    try:
+        data = json.loads(request.body)
+        minuta_html = data.get('minuta_html')
+
+        if not minuta_html:
+            return JsonResponse({'success': False, 'message': 'No se recibió contenido de la minuta.'}, status=400)
+
+        # Obtener datos del paciente, incluido el nombre para el saludo
+        paciente_info = get_paciente_data(id_paciente)
+        if not paciente_info:
+             return JsonResponse({'success': False, 'message': 'No se pudo obtener la información del paciente.'}, status=404)
+        
+        nombre_paciente = paciente_info.get('nombre_completo', 'Paciente')
+
+        # Obtener correo usando get_credenciales
+        credenciales = get_credenciales(id_paciente)
+        if not credenciales or not credenciales.get('correo'):
+            return JsonResponse({'success': False, 'message': 'No se pudo obtener el correo del paciente.'}, status=404)
+        
+        correo_paciente = credenciales['correo']
+
+        asunto = f'Tu Plan de Alimentación de NutriLink - {nombre_paciente}'
+        
+        mensaje_html_completo = f"""
+        <html>
+        <head>
+            <style>
+                body {{ font-family: Arial, sans-serif; line-height: 1.6; margin: 20px; color: #333; }}
+                .minuta-container {{ border: 1px solid #ddd; padding: 15px; border-radius: 5px; background-color: #f9f9f9; }}
+                h2, h3, h4, h5 {{ color: #0056b3; }}
+                h3 {{ text-align: center; margin-bottom: 20px; }} /* Para el título general de la minuta */
+                .minuta-tiempo-comida {{ margin-bottom: 20px; padding-bottom:10px; border-bottom: 1px solid #eee; }}
+                .minuta-tiempo-comida:last-child {{ border-bottom: none; }}
+                .hora-sugerida {{ font-style: italic; font-size: 0.9em; color: #555; }}
+                .minuta-grupo-alimento {{ margin-left: 15px; margin-top:10px; }}
+                .minuta-grupo-alimento pre {{ 
+                    font-family: inherit; white-space: pre-wrap; margin: 5px 0; 
+                    padding: 8px; border: 1px solid #ddd; background-color: #fff; 
+                    border-radius: 3px; 
+                }}
+                .footer-email {{ margin-top: 25px; font-size: 0.9em; text-align: center; color: #777; }}
+            </style>
+        </head>
+        <body>
+            <p>Hola {nombre_paciente},</p>
+            <p>Adjunto encontrarás tu plan de alimentación generado recientemente:</p>
+            <div class="minuta-container">
+                {minuta_html}
+            </div>
+            <p>Si tienes alguna duda, por favor contacta a tu nutricionista.</p>
+            <p>¡Saludos!<br>Equipo NutriLink</p>
+            <div class="footer-email">
+                Este es un correo generado automáticamente. Por favor, no respondas directamente a este mensaje.
+            </div>
+        </body>
+        </html>
+        """
+        
+        texto_plano_minuta = minuta_html.replace('<br>', '\n').replace('<br/>', '\n')
+        # Texto plano alternativo (muy básico)
+        mensaje_texto_plano = f"""Hola {nombre_paciente},
+
+        Aquí está tu plan de alimentación. Por favor, revisa el contenido HTML para una mejor visualización.
+
+        {texto_plano_minuta}
+
+        Saludos,
+        Equipo NutriLink"""
+        # Limpiar un poco más el HTML para texto plano sería ideal, pero esto es un inicio.
+
+        email = EmailMultiAlternatives(
+            subject=asunto,
+            body=mensaje_texto_plano, # Contenido de texto plano
+            from_email=settings.DEFAULT_FROM_EMAIL, # Asegúrate que DEFAULT_FROM_EMAIL esté en settings.py
+            to=[correo_paciente]
+        )
+        email.attach_alternative(mensaje_html_completo, "text/html")
+        email.send(fail_silently=False)
+
+        return JsonResponse({'success': True, 'message': 'Minuta enviada por correo exitosamente.'})
+
+    except json.JSONDecodeError:
+        return JsonResponse({'success': False, 'message': 'Error en el formato de los datos enviados.'}, status=400)
+    except Exception as e:
+        print(f"Error en enviar_minuta_por_correo: {str(e)}")
+        return JsonResponse({'success': False, 'message': f'Ocurrió un error al enviar el correo: {str(e)}'}, status=500)

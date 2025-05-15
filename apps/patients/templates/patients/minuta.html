@@ -3,6 +3,8 @@
 {% block title %}Minuta{% endblock %}
 
 {% block perfilcontent %}
+<!-- Incluir html2pdf.js desde un CDN -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <div class="minuta-creation-content patient-content"> 
   <div id="adecuacion-minuta-section" style="margin-bottom: 25px;">
     <h3>Resumen de Adecuación de Minuta Actual</h3>
@@ -38,6 +40,7 @@
 
     <script type="text/javascript">
       const PACIENTE_ID_FROM_DJANGO = JSON.parse('{{ paciente.id_paciente|escapejs }}');
+      const PACIENTE_EMAIL_FROM_DJANGO = JSON.parse('{% if paciente_email %}"{{ paciente_email|escapejs }}"{% else %}null{% endif %}');
     </script>    
 
     <div id="meal-times-container">
@@ -51,16 +54,17 @@
     <div id="general-status" style="min-height: 20px; font-weight: bold;"></div>
     <div id="minuta-modal" class="modal" style="display:none;">
         <div class="modal-content">
-            <span class="close-modal-btn">×</span>
+            <span class="btn-close">×</span>
             <h2>Minuta Generada</h2>
-            <h2>Escoja 1 de las opciones por cada grupo de alimentos</h2>
+            <h3 style="font-weight: normal; font-style: italic;">Escoja 1 de las opciones por cada grupo de alimentos</h3>
             <div id="minuta-modal-body">
                 <!-- El contenido de la minuta se insertará aquí -->
             </div>
             <div class="modal-footer">
-                <button id="save-generated-minuta-btn" class="button-primary">Guardar Cambios de Minuta</button>
-                 <button id="copy-minuta-btn" class="button-secondary">Copiar Minuta</button>
+                <button id="save-minuta-pdf-btn" class="button-primary">Guardar Minuta en PDF</button>
+                <button id="send-minuta-email-btn" class="button-secondary">Enviar Minuta por Correo</button>
             </div>
+            <div id="minuta-modal-status" style="margin-top:10px; font-weight:bold;"></div>
         </div>
     </div>
 </div>
@@ -68,17 +72,18 @@
 <script>
 document.addEventListener('DOMContentLoaded', () => {
     const PACIENTE_ID = typeof PACIENTE_ID_FROM_DJANGO !== 'undefined' ? PACIENTE_ID_FROM_DJANGO : null;
+    let PACIENTE_EMAIL = typeof PACIENTE_EMAIL_FROM_DJANGO !== 'undefined' ? PACIENTE_EMAIL_FROM_DJANGO : null;
 
     const mealTimesContainer = document.getElementById('meal-times-container');
     const addMealTimeBtn = document.getElementById('add-meal-time-btn');
     const generalStatusDiv = document.getElementById('general-status'); 
     const generateMinutaBtn = document.getElementById('generate-minuta-btn');
     const minutaModal = document.getElementById('minuta-modal');
-    const closeModalBtn = document.querySelector('.close-modal-btn');
+    const closeModalBtn = document.querySelector('.btn-close');
     const minutaModalBody = document.getElementById('minuta-modal-body');
-    const saveGeneratedMinutaBtn = document.getElementById('save-generated-minuta-btn');
-    const copyMinutaBtn = document.getElementById('copy-minuta-btn');
-
+    const minutaModalStatus = document.getElementById('minuta-modal-status'); 
+    const saveMinutaPdfBtn = document.getElementById('save-minuta-pdf-btn');
+    const sendMinutaEmailBtn = document.getElementById('send-minuta-email-btn');
     const adecuacionCaloricoEl = document.getElementById('adecuacion-calorico');
     const adecuacionProteinasEl = document.getElementById('adecuacion-proteinas');
     const adecuacionCarbohidratosEl = document.getElementById('adecuacion-carbohidratos');
@@ -108,6 +113,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         minutaModalBody.innerHTML = '<p>Cargando minuta...</p>';
+        if (minutaModalStatus) minutaModalStatus.textContent = '';
         minutaModal.style.display = 'block';
 
         try {
@@ -119,7 +125,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             if (result.status === 'success' && result.data) {
-                currentGeneratedMinutaData = result.data; // Guardar los datos
+                currentGeneratedMinutaData = result.data; 
                 renderGeneratedMinuta(result.data);
             } else {
                 throw new Error(result.mensaje || "No se pudo obtener la minuta generada.");
@@ -137,18 +143,28 @@ document.addEventListener('DOMContentLoaded', () => {
             minutaModalBody.innerHTML = '<p>No hay tiempos de comida definidos en la minuta generada.</p>';
             return;
         }
+        const minutaTitle = document.createElement('h3');
+        minutaTitle.textContent = `Plan de Alimentación para Paciente ID: ${PACIENTE_ID}`; // Puedes mejorarlo con el nombre del paciente si lo tienes disponible
+        minutaTitle.style.textAlign = 'center';
+        minutaTitle.style.marginBottom = '20px';
+        minutaModalBody.appendChild(minutaTitle);
 
         data.tiempos_de_comida.forEach(tiempo => {
             const tiempoDiv = document.createElement('div');
             tiempoDiv.classList.add('minuta-tiempo-comida');
+            tiempoDiv.style.marginBottom = '15px'; 
             
             const tiempoHeader = document.createElement('h4');
             tiempoHeader.textContent = `${tiempo.tiempo_comida}`;
+            tiempoHeader.style.borderBottom = "1px solid #eee"; // Estilo
+            tiempoHeader.style.paddingBottom = "5px"; // Estilo
             tiempoDiv.appendChild(tiempoHeader);
 
             if (tiempo.hora_sugerida) {
                 const horaP = document.createElement('p');
                 horaP.classList.add('hora-sugerida');
+                horaP.style.fontStyle = 'italic'; // Estilo
+                horaP.style.fontSize = '0.9em'; // Estilo
                 horaP.textContent = `Hora Sugerida: ${tiempo.hora_sugerida}`;
                 tiempoDiv.appendChild(horaP);
             }
@@ -157,151 +173,263 @@ document.addEventListener('DOMContentLoaded', () => {
                 tiempo.grupos.forEach(grupo => {
                     const grupoDiv = document.createElement('div');
                     grupoDiv.classList.add('minuta-grupo-alimento');
-                    
+                    grupoDiv.style.marginLeft = "10px"; // Estilo
+
                     const grupoHeader = document.createElement('h5');
                     grupoHeader.textContent = grupo.grupo_descripcion;
                     grupoDiv.appendChild(grupoHeader);
 
+                    // En lugar de textarea, para PDF/Email, podemos usar un div con el texto
+                    // O mantener el textarea si se quiere que el usuario pueda copiar de ahí fácilmente aún.
+                    // Por ahora mantenemos textarea para la interactividad de la "elección" mencionada.
                     const opcionesTextarea = document.createElement('textarea');
-                    opcionesTextarea.rows = grupo.opciones.length + 1 > 3 ? grupo.opciones.length + 1 : 4; // Ajustar altura
-                    opcionesTextarea.dataset.tiempoId = tiempo.id_tiempo_comida; // Podría ser útil
-                    opcionesTextarea.dataset.grupoDesc = grupo.grupo_descripcion; // Útil para guardar
+                    opcionesTextarea.rows = Math.max(4, grupo.opciones.length + 1);
+                    opcionesTextarea.readOnly = false; // Permitir edición para "elegir"
+                    opcionesTextarea.style.width = "95%";
+                    opcionesTextarea.style.padding = "5px";
+                    opcionesTextarea.style.border = "1px solid #ccc";
+                    opcionesTextarea.dataset.tiempoId = tiempo.id_tiempo_comida;
+                    opcionesTextarea.dataset.grupoDesc = grupo.grupo_descripcion;
 
                     let opcionesTexto = '';
                     grupo.opciones.forEach(opcion => {
-                        // Formatear como " - cantidad medida de alimento"
                         opcionesTexto += `- ${opcion.cantidad} ${opcion.medida} de ${opcion.alimento}\n`;
                     });
                     opcionesTextarea.value = opcionesTexto.trim();
-                    
+
                     grupoDiv.appendChild(opcionesTextarea);
                     tiempoDiv.appendChild(grupoDiv);
                 });
             }
             minutaModalBody.appendChild(tiempoDiv);
         });
+        // Div de indicaciones generales
+        const indicacionesGeneralesDiv = document.createElement('div');
+        indicacionesGeneralesDiv.id = 'minuta-indicaciones-generales-container'; // ID para fácil acceso
+        indicacionesGeneralesDiv.style.marginTop = '25px'; // Espacio después de los tiempos de comida
+        indicacionesGeneralesDiv.style.paddingTop = '15px';
+        indicacionesGeneralesDiv.style.borderTop = '1px solid #eee';
+
+        const indicacionesLabel = document.createElement('h4'); // Usar un encabezado para destacarlo
+        indicacionesLabel.textContent = 'Indicaciones Adicionales:';
+        indicacionesLabel.style.marginBottom = '8px';
+
+        const indicacionesTextarea = document.createElement('textarea');
+        indicacionesTextarea.id = 'minuta-indicaciones-generales-textarea'; // ID para fácil acceso
+        indicacionesTextarea.rows = 4; // Puedes ajustar esto
+        indicacionesTextarea.placeholder = 'Ej: Mantener una buena hidratación, realizar actividad física regularmente...';
+        indicacionesTextarea.style.width = '100%';
+        indicacionesTextarea.style.minHeight = '80px';
+        indicacionesTextarea.style.padding = '8px';
+        indicacionesTextarea.style.border = '1px solid #ccc';
+        indicacionesTextarea.style.borderRadius = '4px';
+        indicacionesTextarea.style.boxSizing = 'border-box';
+
+        // PRE-POBLAR SI YA EXISTEN INDICACIONES GENERALES GUARDADAS
+        // Necesitarás tener esta información en `currentGeneratedMinutaData` o `data`
+        // Por ejemplo, si `data.indicaciones_generales_minuta` existe:
+        if (data.indicaciones_generales_minuta) { 
+            indicacionesTextarea.value = data.indicaciones_generales_minuta;
+        }
+
+        indicacionesGeneralesDiv.appendChild(indicacionesLabel);
+        indicacionesGeneralesDiv.appendChild(indicacionesTextarea);
+        minutaModalBody.appendChild(indicacionesGeneralesDiv);
     }
 
     function closeMinutaModal() {
         minutaModal.style.display = 'none';
-        minutaModalBody.innerHTML = ''; // Limpiar al cerrar
-        currentGeneratedMinutaData = null; // Limpiar datos guardados
+        minutaModalBody.innerHTML = '';
+        currentGeneratedMinutaData = null;
+        if (minutaModalStatus) minutaModalStatus.textContent = '';
     }
 
-    async function handleSaveChangesGeneratedMinuta() {
-        if (!currentGeneratedMinutaData) {
-            alert("No hay datos de minuta para guardar.");
+    // --- NUEVAS FUNCIONES PARA LOS BOTONES DEL MODAL ---
+
+    function getMinutaHtmlForExport() {
+        // Clonamos el nodo para no afectar el original con manipulaciones de estilo
+        const contentToExport = minutaModalBody.cloneNode(true);
+
+        // Sincronizar el valor actual del textarea antes de exportar ---
+        const originalTextarea = document.getElementById('minuta-indicaciones-generales-textarea');
+        const clonedTextarea = contentToExport.querySelector('#minuta-indicaciones-generales-textarea');
+        if (originalTextarea && clonedTextarea) {
+            clonedTextarea.value = originalTextarea.value;
+        }
+        
+        // Convertir textareas a divs con <pre> para preservar saltos de línea
+        // y hacerlos no editables para la exportación.
+        const textareas = contentToExport.querySelectorAll('textarea');
+        textareas.forEach(ta => {
+            const pre = document.createElement('pre');
+            pre.textContent = ta.value;
+            pre.style.fontFamily = 'inherit'; // Mantener la fuente
+            pre.style.whiteSpace = 'pre-wrap'; // Asegurar que el texto se ajuste
+            pre.style.margin = '0';
+            pre.style.padding = '5px';
+            pre.style.border = '1px solid #ddd'; // Un borde ligero para visualización
+            pre.style.backgroundColor = '#f9f9f9';
+            ta.parentNode.replaceChild(pre, ta);
+        });
+        const indicacionesGeneralesContainerCloned = contentToExport.querySelector('#minuta-indicaciones-generales-container');
+        if (indicacionesGeneralesContainerCloned) {
+            const textareaIndicaciones = indicacionesGeneralesContainerCloned.querySelector('#minuta-indicaciones-generales-textarea');
+            if (textareaIndicaciones && textareaIndicaciones.value.trim() !== "") {
+                // Reemplazar el textarea con un div/p para el formato de exportación
+                const divParaExportar = document.createElement('div');
+                // Copia los estilos relevantes o aplica nuevos para la exportación
+                divParaExportar.style.marginTop = '25px';
+                divParaExportar.style.paddingTop = '15px';
+                divParaExportar.style.borderTop = '1px solid #eee';
+
+                const labelExportar = document.createElement('h4');
+                labelExportar.textContent = 'Indicaciones Adicionales Generales:';
+                labelExportar.style.marginBottom = '8px';
+                
+                const pExportar = document.createElement('p');
+                pExportar.textContent = textareaIndicaciones.value;
+                pExportar.style.whiteSpace = 'pre-wrap'; // Para mantener saltos de línea
+                pExportar.style.padding = '8px';
+                pExportar.style.border = '1px dashed #eee';
+                pExportar.style.backgroundColor = '#fdfdfd';
+
+
+                divParaExportar.appendChild(labelExportar);
+                divParaExportar.appendChild(pExportar);
+
+                // Reemplazar el contenedor original del textarea con el formateado para exportar
+                indicacionesGeneralesContainerCloned.innerHTML = ''; // Limpiar el contenido del contenedor
+                indicacionesGeneralesContainerCloned.appendChild(divParaExportar); // Añadir el nuevo contenido formateado
+            } else if (textareaIndicaciones) {
+                // Si el textarea está vacío, eliminar todo el contenedor de indicaciones generales de la exportación
+                indicacionesGeneralesContainerCloned.parentNode.removeChild(indicacionesGeneralesContainerCloned);
+            }
+        }
+        return contentToExport.innerHTML;
+    }
+
+
+    async function handleSaveMinutaPdf() {
+        if (!minutaModalBody || !minutaModalBody.innerHTML.trim()) {
+            alert("No hay contenido en la minuta para generar el PDF.");
             return;
         }
-        saveGeneratedMinutaBtn.disabled = true;
-        saveGeneratedMinutaBtn.textContent = 'Guardando...';
+        if (minutaModalStatus) {
+            minutaModalStatus.textContent = 'Generando PDF...';
+            minutaModalStatus.className = 'info';
+        }
+        saveMinutaPdfBtn.disabled = true;
+        sendMinutaEmailBtn.disabled = true;
 
-        const textareas = minutaModalBody.querySelectorAll('textarea');
-        // Aquí necesitas decidir cómo vas a enviar estos datos editados.
-        // El formato de tu API `obtener_minuta` es para mostrar.
-        // Para guardar, probablemente necesites enviar datos estructurados similares
-        // a como guardas las porciones, o un nuevo endpoint que acepte este formato de "minuta textual".
 
-        // EJEMPLO MUY SIMPLIFICADO: Solo loguear los cambios.
-        // DEBERÁS ADAPTAR ESTO PARA LLAMAR A TU API DE GUARDADO.
-        let minutaModificada = {
-            pacienteId: PACIENTE_ID,
-            id_minuta: currentGeneratedMinutaData.id_minuta, // Si se mantiene el ID de minuta
-            tiempos_de_comida: []
+        // Usar una copia del contenido para no modificar el modal original si hacemos cambios
+        const contentForPdf = minutaModalBody.cloneNode(true);
+
+        // Opcional: Estilos adicionales específicos para el PDF
+        // Por ejemplo, asegurar que los textareas se vean bien como texto.
+        // Se puede convertir textareas a divs con su contenido si es necesario.
+        const textareasInPdf = contentForPdf.querySelectorAll('textarea');
+        textareasInPdf.forEach(ta => {
+            // Crear un div que reemplace el textarea para el PDF
+            const div = document.createElement('div');
+            div.style.border = "1px solid #ccc";
+            div.style.padding = "5px";
+            div.style.whiteSpace = "pre-wrap"; // para mantener los saltos de línea
+            div.style.fontFamily = "inherit"; // para mantener la fuente del textarea
+            div.style.minHeight = ta.rows > 1 ? `${ta.rows * 1.2}em` : 'auto'; // Aproximar altura
+            div.textContent = ta.value;
+            ta.parentNode.replaceChild(div, ta);
+        });
+        
+        const opt = {
+            margin:       [10, 10, 15, 10], // top, left, bottom, right en mm
+            filename:     `minuta_paciente_${PACIENTE_ID}.pdf`,
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { scale: 2, useCORS: true, logging: false }, // Aumentar escala para mejor calidad
+            jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
         };
 
-        const tiemposOriginales = currentGeneratedMinutaData.tiempos_de_comida;
-        
-        tiemposOriginales.forEach(tiempoOriginal => {
-            let tiempoModificado = {
-                tiempo_comida: tiempoOriginal.tiempo_comida,
-                hora_sugerida: tiempoOriginal.hora_sugerida, // Asumimos que la hora no se edita en este modal
-                grupos: []
-            };
-            
-            tiempoOriginal.grupos.forEach(grupoOriginal => {
-                // Encontrar el textarea correspondiente (esto es un poco frágil, mejor usar IDs si es posible)
-                const textarea = Array.from(textareas).find(ta => 
-                    ta.dataset.grupoDesc === grupoOriginal.grupo_descripcion && 
-                    ta.parentElement.parentElement.querySelector('h4').textContent === tiempoOriginal.tiempo_comida
-                );
-
-                if (textarea) {
-                    // Aquí necesitarías parsear el textarea de nuevo a una estructura de "opciones"
-                    // Esto es la parte más compleja si permites edición libre.
-                    // Por ahora, solo guardamos el texto como un bloque.
-                    // Para un guardado real, necesitarías un parser o enviar el texto crudo.
-                    tiempoModificado.grupos.push({
-                        id_tiempo_comida: grupoOriginal.id_tiempo_comida, // Es el id del tiempo, no del grupo
-                        grupo_descripcion: grupoOriginal.grupo_descripcion,
-                        opciones_texto_editado: textarea.value // Solo como ejemplo
-                    });
+        try {
+            await html2pdf().from(contentForPdf).set(opt).save();
+            if (minutaModalStatus) {
+                minutaModalStatus.textContent = 'PDF generado y descargado.';
+                minutaModalStatus.className = 'success';
+            }
+        } catch (error) {
+            console.error("Error generando PDF:", error);
+            if (minutaModalStatus) {
+                minutaModalStatus.textContent = 'Error al generar PDF.';
+                minutaModalStatus.className = 'error';
+            }
+        } finally {
+            saveMinutaPdfBtn.disabled = false;
+            sendMinutaEmailBtn.disabled = false;
+             setTimeout(() => {
+                if (minutaModalStatus && (minutaModalStatus.className === 'success' || minutaModalStatus.className === 'error' )) {
+                    minutaModalStatus.textContent = '';
                 }
-            });
-            minutaModificada.tiempos_de_comida.push(tiempoModificado);
-        });
-
-        console.log("Datos de minuta modificados (para enviar a API):", minutaModificada);
-        alert("La funcionalidad de guardar los cambios de la minuta generada aún no está implementada.\nRevisa la consola para ver los datos que se enviarían.");
-
-        // Simular un guardado
-        // try {
-        //     // const response = await fetch('URL_PARA_GUARDAR_MINUTA_EDITADA', {
-        //     //     method: 'POST',
-        //     //     headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
-        //     //     body: JSON.stringify(minutaModificada)
-        //     // });
-        //     // if (!response.ok) throw new Error("Error al guardar minuta editada");
-        //     // alert("Minuta guardada exitosamente (simulado)");
-        //     // closeMinutaModal();
-        // } catch (error) {
-        //     console.error("Error guardando minuta editada:", error);
-        //     alert("Error al guardar la minuta editada: " + error.message);
-        // } finally {
-            saveGeneratedMinutaBtn.disabled = false;
-            saveGeneratedMinutaBtn.textContent = 'Guardar Cambios de Minuta';
-        // }
-    }
-
-    function copyMinutaToClipboard() {
-        if (!minutaModalBody) return;
-        let textToCopy = "";
-        const tiempoComidaDivs = minutaModalBody.querySelectorAll('.minuta-tiempo-comida');
-        
-        tiempoComidaDivs.forEach(tiempoDiv => {
-            const header = tiempoDiv.querySelector('h4');
-            const hora = tiempoDiv.querySelector('.hora-sugerida');
-            if (header) textToCopy += header.textContent + "\n";
-            if (hora) textToCopy += hora.textContent + "\n";
-
-            const grupoDivs = tiempoDiv.querySelectorAll('.minuta-grupo-alimento');
-            grupoDivs.forEach(grupoDiv => {
-                const grupoHeader = grupoDiv.querySelector('h5');
-                const textarea = grupoDiv.querySelector('textarea');
-                if (grupoHeader) textToCopy += "  " + grupoHeader.textContent + ":\n";
-                if (textarea) {
-                    // Añadir cada línea del textarea con un poco más de indentación
-                    textarea.value.split('\n').forEach(line => {
-                        textToCopy += "    " + line + "\n";
-                    });
-                }
-            });
-            textToCopy += "\n"; // Espacio entre tiempos de comida
-        });
-
-        if (textToCopy) {
-            navigator.clipboard.writeText(textToCopy.trim())
-                .then(() => {
-                    alert('Minuta copiada al portapapeles!');
-                })
-                .catch(err => {
-                    console.error('Error al copiar la minuta: ', err);
-                    alert('Error al copiar la minuta. Revisa la consola.');
-                });
-        } else {
-            alert('No hay contenido en la minuta para copiar.');
+            }, 3000);
         }
     }
+
+    async function handleSendMinutaEmail() {
+        if (!minutaModalBody || !minutaModalBody.innerHTML.trim()) {
+            alert("No hay contenido en la minuta para enviar por correo.");
+            return;
+        }
+        if (minutaModalStatus) {
+            minutaModalStatus.textContent = 'Enviando correo...';
+            minutaModalStatus.className = 'info';
+        }
+        saveMinutaPdfBtn.disabled = true;
+        sendMinutaEmailBtn.disabled = true;
+
+        // Obtener el contenido HTML de la minuta, con textareas convertidos
+        const minutaHtmlContent = getMinutaHtmlForExport();
+
+        try {
+            const csrfToken = getCookie('csrftoken');
+            // La URL debe coincidir con la que definas en urls.py
+            const response = await fetch(`/patients/${PACIENTE_ID}/enviar_minuta_por_correo/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify({ minuta_html: minutaHtmlContent })
+            });
+
+            const result = await response.json();
+
+            if (response.ok && result.success) {
+                if (minutaModalStatus) {
+                    minutaModalStatus.textContent = result.message || 'Correo enviado exitosamente.';
+                    minutaModalStatus.className = 'success';
+                }
+            } else {
+                throw new Error(result.message || 'Error al enviar el correo.');
+            }
+        } catch (error) {
+            console.error("Error enviando correo:", error);
+            if (minutaModalStatus) {
+                minutaModalStatus.textContent = `Error: ${error.message}`;
+                minutaModalStatus.className = 'error';
+            }
+        } finally {
+            saveMinutaPdfBtn.disabled = false;
+            sendMinutaEmailBtn.disabled = false;
+            setTimeout(() => {
+                if (minutaModalStatus && (minutaModalStatus.className === 'success' || minutaModalStatus.className === 'error' )) {
+                    minutaModalStatus.textContent = '';
+                }
+            }, 4000);
+        }
+    }
+
+
+    // --- El resto de tu JavaScript existente ---
+    // (fetchAdecuacionData, displayAdecuacionData, loadAndDisplayAdecuacion, fetchApiData, etc.)
+    // ... (Tu código JS extenso aquí, no lo repetiré todo por brevedad)
 
     // --- FUNCIONES PARA ADECUACIÓN ---
     async function fetchAdecuacionData() {
@@ -812,7 +940,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 throw new Error(`Error al guardar adecuación ${adecuacionResponse.status}: ${errAdecuacion.detail || errAdecuacion.mensaje || JSON.stringify(errAdecuacion)}`);
             }
 
-            // AHORA, después de que guardar_adecuacion_minuta fue exitoso, obtenemos la nueva adecuación
             await loadAndDisplayAdecuacion(); 
             
             statusEl.textContent = 'Guardado exitosamente.';
@@ -876,9 +1003,6 @@ document.addEventListener('DOMContentLoaded', () => {
             entryElement.remove(); 
             updateAllSelects();    
             
-            // AHORA, después de que la eliminación fue exitosa, actualizamos la adecuación.
-            // Primero, llamamos a guardar_adecuacion_minuta para que el backend recalcule
-            // (asumiendo que la eliminación de detalles requiere un recálculo de adecuación guardada)
             const adecuacionPayload = { pacienteId: PACIENTE_ID };
             const adecuacionResponse = await fetch('https://nutrilinkapi-production.up.railway.app/api_nutrilink/minuta/guardar_adecuacion_minuta', {
                 method: 'POST',
@@ -888,9 +1012,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!adecuacionResponse.ok) {
                 const errAdecuacion = await adecuacionResponse.json().catch(() => ({detail: "Error al procesar respuesta de guardar adecuación post-eliminación."}));
                 console.warn(`Advertencia al guardar adecuación post-eliminación: ${errAdecuacion.detail || errAdecuacion.mensaje || JSON.stringify(errAdecuacion)}`);
-                // No se considera un error fatal para la operación de eliminación en sí, pero se advierte.
             }
-            // Luego, obtenemos y mostramos la adecuación.
             await loadAndDisplayAdecuacion(); 
 
         } catch (error) {
@@ -900,9 +1022,6 @@ document.addEventListener('DOMContentLoaded', () => {
             saveBtn.disabled = false; 
             deleteBtn.disabled = false;
         }
-        // No se rehabilita deleteBtn aquí si la eliminación fue exitosa, porque la entrada ya no existe.
-        // saveBtn tampoco debería rehabilitarse si la entrada se fue.
-        // La lógica de `finally` en handleSaveSingleMealEntry se encarga de los botones si la eliminación falla.
     }
     
     function getCookie(name) {
@@ -954,8 +1073,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         displayAdecuacionData(adecuacionResponse || { status: 'error', message: 'Fallo carga adecuación.' });
 
-        if (!mealTimes || !foodGroups) { // Si los datos base fallaron
-             if(generalStatusDiv && generalStatusDiv.className !== 'error') { // Solo si no hay un error más grave
+        if (!mealTimes || !foodGroups) {
+             if(generalStatusDiv && generalStatusDiv.className !== 'error') { 
                  generalStatusDiv.textContent = "Error: No se pudieron cargar los datos base (tiempos/grupos).";
                  generalStatusDiv.className = 'error';
              }
@@ -971,15 +1090,15 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (savedDetails === null && generalStatusDiv && generalStatusDiv.className !== 'error') {
             generalStatusDiv.textContent = ""; 
         } else if (generalStatusDiv && generalStatusDiv.className === 'info' && (!savedDetails || savedDetails.length === 0)) {
-            generalStatusDiv.textContent = "No hay tiempos de comida guardados para este paciente.";
+            // generalStatusDiv.textContent = "No hay tiempos de comida guardados para este paciente."; // Comentado para no ser tan verboso
         }
 
         updateAllSelects(); 
         updateAddMealButtonState();
 
-        if(generalStatusDiv && generalStatusDiv.className !== 'error' && (!adecuacionStatusEl || adecuacionStatusEl.className === 'success')) {
+        if(generalStatusDiv && generalStatusDiv.className !== 'error' && (!adecuacionStatusEl || adecuacionStatusEl.className === 'success' || adecuacionStatusEl.className === 'info')) {
              setTimeout(() => { 
-                if(generalStatusDiv && generalStatusDiv.className !== 'error') {
+                if(generalStatusDiv && generalStatusDiv.className !== 'error' && generalStatusDiv.className !== 'loading') {
                     generalStatusDiv.style.display = 'none'; 
                 }
             }, 2000);
@@ -990,20 +1109,20 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // --- Event Listeners ---
     if(addMealTimeBtn) addMealTimeBtn.addEventListener('click', addMealTimeEntry);
-    if(generateMinutaBtn) generateMinutaBtn.addEventListener('click', openGenerateMinutaModal); // NUEVO
-    if(closeModalBtn) closeModalBtn.addEventListener('click', closeMinutaModal); // NUEVO
-    if(saveGeneratedMinutaBtn) saveGeneratedMinutaBtn.addEventListener('click', handleSaveChangesGeneratedMinuta); // NUEVO
-    if(copyMinutaBtn) copyMinutaBtn.addEventListener('click', copyMinutaToClipboard); // NUEVO
+    if(generateMinutaBtn) generateMinutaBtn.addEventListener('click', openGenerateMinutaModal);
+    if(closeModalBtn) closeModalBtn.addEventListener('click', closeMinutaModal);
+    
+    // Event listeners para los NUEVOS botones
+    if(saveMinutaPdfBtn) saveMinutaPdfBtn.addEventListener('click', handleSaveMinutaPdf);
+    if(sendMinutaEmailBtn) sendMinutaEmailBtn.addEventListener('click', handleSendMinutaEmail);
 
-
-    // Cerrar modal si se hace clic fuera del contenido
     window.addEventListener('click', (event) => {
         if (event.target == minutaModal) {
             closeMinutaModal();
         }
     });
 
-    initializePage(); 
+    initializePage();
 });
 </script>
 {% endblock %}

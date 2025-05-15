@@ -11,4 +11,5 @@ urlpatterns = [
     path('<int:id_paciente>/registro-dietario/', views.registroDietario, name='registro-dietario'),
     path('<int:id_paciente>/minuta/', views.minuta, name='minuta'),
     path('info-general/<int:id_paciente>/enviar_credenciales/', views.enviar_credenciales, name='enviar_credenciales'),
+    path('<int:id_paciente>/enviar_minuta_por_correo/', views.enviar_minuta_por_correo, name='enviar_minuta_por_correo'),
 ]
