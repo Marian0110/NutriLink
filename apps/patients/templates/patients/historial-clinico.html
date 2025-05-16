@@ -197,7 +197,10 @@
                 </button>
               </div>
             </div>
-            <div class="divider"></div>
+            <div class="mb-2">
+                <label class="form-label">Motivo rechazo:</label>
+                <textarea class="form-control" name="motivo_rechazo" id="motivo_rechazo"></textarea>
+            </div>
             <button type="button" class="btn btn-save3 w-100">REGISTRAR</button>
           </div>
         </form>
@@ -432,6 +435,7 @@ document.querySelector('.btn-save').addEventListener('click', function (e) {
   "Intolerancia al alcohol": [], // No hay alcohol directamente en esta lista
   "Intolerancia a la cafeína": [] // Ningún alimento contiene cafeína
  };
+
  function filterRejectedFoods() {
     const intoleranciasSeleccionadas = Array.from(
       document.getElementById('intolerances-container').querySelectorAll('input[type="hidden"]')
