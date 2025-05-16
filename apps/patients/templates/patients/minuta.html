@@ -1059,7 +1059,26 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        if (!confirm(`¿Está seguro de que desea eliminar todos los datos para el tiempo de comida "${tiempoComidaSelect.options[tiempoComidaSelect.selectedIndex].text}"? Esta acción no se puede deshacer.`)) {
+        const { value: confirmDelete } = await Swal.fire({
+            icon: 'warning',
+            title: 'Confirmar eliminación',
+            html: `¿Está seguro de que desea eliminar todos los datos para el tiempo de comida 
+                <strong>"${tiempoComidaSelect.options[tiempoComidaSelect.selectedIndex].text}"</strong>?<br><br>
+                <span style="color: #dc3545;">Esta acción no se puede deshacer.</span>`,
+            showCancelButton: true,
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar',
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            reverseButtons: true,
+            focusCancel: true,
+            customClass: {
+                confirmButton: 'button-primary',
+                cancelButton: 'button-secondary'
+            }
+        });
+
+        if (!confirmDelete) {
             return;
         }
 
