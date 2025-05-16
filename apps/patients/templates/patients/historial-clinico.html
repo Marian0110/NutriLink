@@ -470,5 +470,32 @@ document.querySelector('.btn-save').addEventListener('click', function (e) {
     disableSelectedOptions(select); // refrescar disabled
     select.focus();
   }
+
+  document.addEventListener('DOMContentLoaded', async function() {
+  try {
+    const idPaciente = "{{ paciente.id_paciente }}";
+    const API_NODE_URL = `https://nutrilinkapi-production.up.railway.app/api_nutrilink/paciente/obtener_factor_patologico/${idPaciente}`;
+    
+    // Obtener el factor actual del paciente
+    const response = await fetch(API_NODE_URL);
+    if (!response.ok) throw new Error('Error al cargar factor actual');
+    
+    const factorActual = await response.json();
+    
+    // Marcar el radio button si esque existe
+    if (factorActual.descripcion) {
+      const radioButtons = document.querySelectorAll('[name="factor_patologico"]');
+      radioButtons.forEach(radio => {
+        const label = radio.nextElementSibling;
+        if (label.textContent.includes(factorActual.descripcion)) {
+          radio.checked = true;
+        }
+      });
+    }
+    
+  } catch (error) {
+    console.error('Error:', error);
+  }
+});
 </script>
 {% endblock %}
