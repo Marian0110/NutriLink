@@ -36,7 +36,7 @@ function generarBloquesHorarios(horasSeleccionadas = []) {
         const mensaje = document.getElementById('mensaje-reservadas');
         if (mensaje) {
             mensaje.style.display = hayReservadas ? 'block' : 'none';
-}
+        }
     }
 }
 
@@ -162,6 +162,113 @@ async function cargarResumenAgenda(id_nutricionista) {
     }
 }
 
+async function cargarResumenCitas(id_nutricionista) {
+    const contenedor = document.getElementById('resumen-citas');
+    contenedor.innerHTML = '<p class="text-muted">Cargando citas...</p>';
+    console.log('🔄 Iniciando carga de citas para nutricionista ID:', id_nutricionista);
+
+    try {
+        const response = await fetch(`https://nutrilinkapi-production.up.railway.app/api_nutrilink/agenda/citas_nutricionista/${id_nutricionista}`);
+        const result = await response.json();
+
+        console.log('📥 Respuesta recibida del servidor:', result);
+
+        if (!response.ok || result.status !== 'ok') {
+            console.warn('⚠️ Respuesta NO OK del servidor:', result);
+            throw new Error(result.mensaje || 'No se pudo cargar el resumen de citas.');
+        }
+
+        const citas = result.citas || [];
+        console.log(`📋 Total de citas recibidas: ${citas.length}`);
+
+        if (citas.length === 0) {
+            contenedor.innerHTML = '<p class="text-muted">No hay citas agendadas.</p>';
+            return;
+        }
+
+        // Agrupar por fecha
+        const citasPorFecha = {};
+        citas.forEach(cita => {
+            const fechaClave = cita.fecha.split('T')[0];
+            if (!citasPorFecha[fechaClave]) {
+                citasPorFecha[fechaClave] = [];
+            }
+            citasPorFecha[fechaClave].push(cita);
+        });
+
+        contenedor.innerHTML = ''; // Limpiar antes de insertar
+
+        Object.entries(citasPorFecha).forEach(([fechaISO, listaCitas]) => {
+            const fechaObj = new Date(fechaISO);
+            const tituloFecha = fechaObj.toLocaleDateString('es-CL', {
+                weekday: 'long',
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric'
+            });
+
+            const titulo = document.createElement('h6');
+            titulo.className = 'fw-bold mt-3 mb-2 text-dark border-bottom pb-1';
+            titulo.textContent = tituloFecha.charAt(0).toUpperCase() + tituloFecha.slice(1);
+            contenedor.appendChild(titulo);
+
+            const lista = document.createElement('ul');
+            lista.className = 'list-group list-group-flush';
+
+            listaCitas.sort((a, b) => a.hora.localeCompare(b.hora)); // Ordenar por hora
+
+            listaCitas.forEach((cita, index) => {
+                console.log(`➡️ Procesando cita ${index + 1}:`, cita);
+
+                const horaTexto = cita.hora?.substring(0, 5) ?? '--:--';
+
+                let borderClass = 'border-secondary';
+                let badgeClass = 'bg-secondary';
+                let backgroundClass = 'bg-light';
+
+                switch (cita.estado) {
+                    case 'Reservada':
+                        borderClass = 'border-success';
+                        badgeClass = 'bg-success';
+                        backgroundClass = 'bg-success bg-opacity-25';
+                        break;
+                    case 'Completada':
+                        borderClass = 'border-info';
+                        badgeClass = 'bg-info';
+                        backgroundClass = 'bg-info bg-opacity-25';
+                        break;
+                    case 'Cancelada':
+                    case 'Cancelada por Nutricionista':
+                    case 'Cancelada por Paciente':
+                        borderClass = 'border-danger';
+                        badgeClass = 'bg-danger';
+                        backgroundClass = 'bg-danger bg-opacity-25';
+                        break;
+                }
+
+                const li = document.createElement('li');
+                li.className = `list-group-item ${backgroundClass} border-start border-4 ${borderClass} mb-2 rounded shadow-sm`;
+
+                li.innerHTML = `
+                    <strong>${cita.primer_nombre} ${cita.apellido_paterno}</strong><br>
+                    <small>${cita.correo}</small><br>
+                    ${horaTexto}<br>
+                    <span class="badge ${badgeClass}">${cita.estado}</span>
+                `;
+
+                lista.appendChild(li);
+            });
+
+            contenedor.appendChild(lista);
+        });
+
+        console.log('✅ Renderizado exitoso de todas las citas.');
+    } catch (error) {
+        console.error('❌ Error al cargar resumen de citas:', error);
+        contenedor.innerHTML = '<p class="text-danger">Error al cargar las citas agendadas.</p>';
+    }
+}
+
 // DOM
 document.addEventListener('DOMContentLoaded', function () {
     console.log('✅ DOMContentLoaded se ejecutó');
@@ -177,7 +284,7 @@ document.addEventListener('DOMContentLoaded', function () {
         inputFecha.addEventListener('change', () => {
             const fechaSeleccionada = inputFecha.value;
             const id_nutricionista = sessionStorage.getItem('id_nutricionista');
-            console.log('📦 ID del nutricionista desde sessionStorage:', id_nutricionista);
+            console.log('📦 ID del nutricionista desde sessionStorageeee:', id_nutricionista);
 
             // Validar que no se seleccione una fecha pasada
             if (fechaSeleccionada < hoy) {
@@ -267,5 +374,7 @@ document.addEventListener('DOMContentLoaded', function () {
     console.log('📦 ID del nutricionista desde sessionStorage:', id_nutricionista);
     if (id_nutricionista) {
         cargarResumenAgenda(parseInt(id_nutricionista));
+        console.log('Antes de la función cargar Nutri :', id_nutricionista);
+        cargarResumenCitas(parseInt(id_nutricionista));
     }
 });

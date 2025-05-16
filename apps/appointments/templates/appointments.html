@@ -7,7 +7,8 @@
 <div class="container-fluid">
     <div class="row">
         <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
-            <div style="max-width: 1100px; margin-left: 20px;">
+            <div style="max-width: 1200px; margin-left: 20px;">
+                <!-- Título general -->
                 <div
                     class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                     <h1 class="h3 mb-0">
@@ -15,54 +16,77 @@
                     </h1>
                 </div>
 
-                <div class="card shadow-lg mt-3"
-                    style="border-radius: 15px; border: none; height: auto !important; min-height: unset;">
-                    <div class="card-body">
-                        <!-- Calendario -->
-                        <div class="mb-4">
-                            <label for="fecha" class="form-label">Selecciona una fecha:</label>
-                            <input type="date" id="fecha" class="form-control w-100 w-md-50" min="" />
+                <!-- CONTENIDO EN DOS COLUMNAS INTERNAS -->
+                <div class="row">
+                    <!-- Columna izquierda: calendario + resumen de agenda -->
+                    <div class="col-lg-8">
+                        <!-- Calendario y disponibilidad de horas -->
+                        <div class="card shadow-lg mt-3"
+                            style="border-radius: 15px; border: none; height: auto !important; min-height: unset;">
+                            <div class="card-body">
+                                <!-- Calendario -->
+                                <div class="mb-4">
+                                    <label for="fecha" class="form-label">Selecciona una fecha:</label>
+                                    <input type="date" id="fecha" class="form-control w-100 w-md-50" min="" />
+                                </div>
+
+                                <!-- Bloques horarios -->
+                                <div id="bloques-horarios" class="row row-cols-2 row-cols-sm-3 row-cols-md-4 g-3 mb-4">
+                                    <!-- Se generan dinámicamente -->
+                                </div>
+
+                                <!-- Mensaje si hay horas reservadas -->
+                                <div class="alert alert-warning mt-2" role="alert" id="mensaje-reservadas"
+                                    style="display: none;">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                    Las horas en <strong>amarillo</strong> ya han sido reservadas. Si las desmarcas, las
+                                    citas de los pacientes se cancelarán y serán notificados oportunamente.
+                                </div>
+
+                                <!-- Botón guardar -->
+                                <div class="d-flex justify-content-end">
+                                    <button id="guardarDisponibilidad" class="btn btn-success px-4 rounded-pill">
+                                        Guardar disponibilidad
+                                    </button>
+                                </div>
+                            </div>
                         </div>
 
-                        <!-- Bloques horarios -->
-                        <div id="bloques-horarios" class="row row-cols-2 row-cols-sm-3 row-cols-md-4 g-3 mb-4">
-                            <!-- Se generan dinámicamente -->
-                        </div>
+                        <!-- Resumen de horas disponibles -->
+                        <div class="card shadow-lg mt-4" style="border-radius: 15px; border: none;">
+                            <div class="card-body">
+                                <h5 class="card-title mb-3">
+                                    <i class="fas fa-calendar-alt me-2"></i>Resumen de agenda
+                                </h5>
 
-                        <div class="alert alert-warning mt-2" role="alert" id="mensaje-reservadas" style="display: none;">
-                            <i class="fas fa-exclamation-triangle me-2"></i>
-                            Las horas en <strong>amarillo</strong> ya han sido reservadas. Si las desmarcas, las citas de los pacientes se
-                            cancelarán y serán notificados oportunamente.
-                        </div>
+                                <div id="resumen-agenda">
+                                    <!-- Aquí se insertará el resumen dinámico -->
+                                </div>
 
-                        <!-- Botón guardar -->
-                        <div class="d-flex justify-content-end">
-                            <button id="guardarDisponibilidad" class="btn btn-success px-4 rounded-pill">
-                                Guardar disponibilidad
-                            </button>
+                                <div class="mt-3">
+                                    <small>
+                                        <span class="badge bg-success">D</span> Disponible
+                                        <span class="badge bg-warning text-dark ms-2">R</span> Reservada
+                                    </small>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- Resumen de agenda -->
-                <div class="card shadow-lg mt-4" style="border-radius: 15px; border: none;">
-                    <div class="card-body">
-                        <h5 class="card-title mb-3">
-                            <i class="fas fa-calendar-alt me-2"></i>Resumen de agenda
-                        </h5>
-                
-                        <div id="resumen-agenda">
-                            <!-- Aquí se insertará el resumen dinámico -->
-                        </div>
-                
-                        <div class="mt-3">
-                            <small>
-                                <span class="badge bg-success">D</span> Disponible
-                                <span class="badge bg-warning text-dark ms-2">R</span> Reservada
-                            </small>
+                    <!-- Columna derecha: resumen de citas agendadas -->
+                    <div class="col-lg-4">
+                        <div class="card shadow-lg mt-3 mt-lg-0" style="border-radius: 15px; border: none;">
+                            <div class="card-body">
+                                <h5 class="card-title mb-3">
+                                    <i class="fas fa-user-clock me-2"></i>Citas Agendadas
+                                </h5>
+                                <div id="resumen-citas">
+                                    <p class="text-muted">Cargando citas...</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
+                </div> <!-- Cierre row interior -->
             </div>
         </main>
     </div>
