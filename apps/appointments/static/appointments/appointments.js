@@ -186,10 +186,10 @@ async function cargarResumenCitas(id_nutricionista) {
             return;
         }
 
-        // Agrupar por fecha
+        // Agrupar por fecha (clave: YYYY-MM-DD)
         const citasPorFecha = {};
         citas.forEach(cita => {
-            const fechaClave = cita.fecha.split('T')[0];
+            const fechaClave = cita.fecha.split('T')[0]; // "2025-06-02"
             if (!citasPorFecha[fechaClave]) {
                 citasPorFecha[fechaClave] = [];
             }
@@ -199,7 +199,9 @@ async function cargarResumenCitas(id_nutricionista) {
         contenedor.innerHTML = ''; // Limpiar antes de insertar
 
         Object.entries(citasPorFecha).forEach(([fechaISO, listaCitas]) => {
-            const fechaObj = new Date(fechaISO);
+            // Evitar desfase interpretando como local
+            const [anio, mes, dia] = fechaISO.split('-');
+            const fechaObj = new Date(parseInt(anio), parseInt(mes) - 1, parseInt(dia));
             const tituloFecha = fechaObj.toLocaleDateString('es-CL', {
                 weekday: 'long',
                 day: 'numeric',
