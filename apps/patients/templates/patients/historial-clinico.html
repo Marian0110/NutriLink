@@ -19,12 +19,21 @@
                 </span>
             </h1>
             <p class="text-muted mb-4">Datos relevantes del paciente para el manejo nutricional</p>
-            
+            <div class="mb-3">
+              <label class="clinical-label d-block">Notas:</label>
+              <textarea class="form-control" name="notas_varias" id="notas_varias"></textarea>
+            </div>
+
             <div class="mb-3">
               <label class="clinical-label d-block">Etapa de cambio psicológico:</label>
-              <input type="text" class="form-control form-control-custom"/>
+              <input type="text" class="form-control form-control-custom" name="cambio_psicologico" id="cambio_psicologico"/>
             </div>
             
+            <div class="mb-3">
+              <label class="clinical-label d-block">Medicamentos actuales:</label>
+              <input type="text" class="form-control form-control-custom" name="medicamentos_actuales" id="medicamentos_actuales"/>
+            </div>
+
             <div class="mb-3">
               <label class="clinical-label d-block">Actividad física:</label>
               <select class="form-select form-control-custom" name="actividad_fisica" id="actividadFisicaSelect">
@@ -240,13 +249,17 @@ document.querySelector('.btn-save').addEventListener('click', function (e) {
     const descripcion_factor = factorLabel ? factorLabel.textContent.split(' (')[0].trim() : null;
     
     const descripcion_naf = document.querySelector('select[name="actividad_fisica"] option:checked')?.textContent.trim() || null;
-    const etapa_cambio_psicologico = document.querySelector('.form-control-custom[type="text"]').value.trim() || null;
+    const etapa_cambio_psicologico = document.querySelector('.form-control-custom[name="cambio_psicologico"]').value.trim() || null;
+    const medicamentos_actuales = document.querySelector('.form-control-custom[name="medicamentos_actuales"]').value.trim() || null;
+    const notas_varias= document.querySelector('.form-control[name="notas_varias"]').value.trim() || null;
 
     const data = {
         id_paciente: parseInt(id_paciente),
         descripcion_factor: descripcion_factor,
         descripcion_naf: descripcion_naf,
-        etapa_cambio_psicologico: etapa_cambio_psicologico
+        etapa_cambio_psicologico: etapa_cambio_psicologico,
+        medicamentos_actuales: medicamentos_actuales,
+        notas_varias: notas_varias,
     };
 
     try {
