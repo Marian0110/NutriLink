@@ -15,7 +15,7 @@
     <div class="profile-header">
       <div class="avatar-section">
         <div class="avatar-icon"><i class="bi bi-person-fill"></i></div>
-        <div><!--Datos en duro por el momento -->
+        <div>
           <div class="patient-name" id="patient-name">{{ paciente.nombre_completo }}</div>
           <div class="patient-rut" id="patient-rut">RUT: {{ paciente.rut_paciente }}</div>
         </div>
@@ -25,12 +25,12 @@
         <div class="basic-info-title mb-3">Información Básica</div>
         <div class="row">
           <div class="col-md-6">
-            <div class="basic-info-item"><strong>Edad: </strong> <span id="patient-age">{{ paciente.edad }}</span> años</div>
-            <div class="basic-info-item mt-2"><strong>Género: </strong><span id="patient-gender">{{ paciente.sexo }}</span></div>
+            <div class="basic-info-item"><strong>Edad: </strong> <span id="patient-age">{{ paciente.edad|default:" "  }}</span> años</div>
+            <div class="basic-info-item mt-2"><strong>Género: </strong><span id="patient-gender">{{ paciente.sexo|default:" "  }}</span></div>
           </div>
           <div class="col-md-6">
-            <div class="basic-info-item"><strong>Teléfono: </strong><span id="patient-phone">{{ paciente.telefono }}</span></div>
-            <div class="basic-info-item"><strong>Correo: </strong> <span id="patient-email">{{ paciente.correo }}</span></div>
+            <div class="basic-info-item"><strong>Teléfono: </strong><span id="patient-phone">{{ paciente.telefono|default:"No especificado"}}</span></div>
+            <div class="basic-info-item"><strong>Correo: </strong> <span id="patient-email">{{ paciente.correo  }}</span></div>
         </div>
       </div>
     </div>

@@ -15,27 +15,35 @@ def gestion(request):
     return render(request, 'patients/gestion.html')
     
 def get_paciente_data(id_paciente):
-    try: #construir api y hacer peticion
+    try:
         api_url = f'https://nutrilinkapi-production.up.railway.app/api_nutrilink/paciente/perfil/{id_paciente}'
         response = requests.get(api_url, timeout=10)
         
-        #verificar si la respuesta fue exitosa
         if response.status_code == 404:
             raise Http404("Paciente no encontrado")
         response.raise_for_status()
         
         paciente_data = response.json()
-        #calcular edad
         fecha_nac = datetime.strptime(paciente_data['fechanac'], "%Y-%m-%d")
         edad = datetime.now().year - fecha_nac.year
         
+        nombres = [paciente_data['primer_nombre']]
+        if paciente_data.get('segundo_nombre'):
+            nombres.append(paciente_data['segundo_nombre'])
+        
+        apellidos = [paciente_data['apellido_paterno']]
+        if paciente_data.get('apellido_materno'):
+            apellidos.append(paciente_data['apellido_materno'])
+        
+        nombre_completo = ' '.join(nombres + apellidos).strip()
+        
         return {
             'id_paciente': paciente_data['id_paciente'],
-            'nombre_completo': f"{paciente_data['primer_nombre']} {paciente_data.get('segundo_nombre', '')} {paciente_data['apellido_paterno']} {paciente_data.get('apellido_materno', '')}".strip(),
+            'nombre_completo': nombre_completo if nombre_completo else ' ',
             'rut_paciente': f"{paciente_data['rut_paciente']}-{paciente_data['dv']}",
             'edad': edad,
             'sexo': 'Masculino' if paciente_data['sexo'] == 'M' else 'Femenino',
-            'telefono': paciente_data.get('telefono', 'No especificado'),
+            'telefono': paciente_data.get('telefono'),
             'correo': paciente_data['correo'],
             'fecha_nacimiento': paciente_data['fechanac']
         }
