@@ -12,10 +12,10 @@
             <span class="subtext">Datos básicos del paciente</span>
             <form form method="#" action="#">
                 {% csrf_token %}
-                <div class="form-group full-width">
-                    <label class="form-label">Motivo de consulta:</label> <!--Form de django, al cargar la página se muestran los datos ya guardados en cada campo, Despues, si el usuario hace cambios y vuelve a enviar el formulario los datos modificados se actualizan y se siguen mostrando actualizados, por defecto se muestra en blanco-->
+                <!-- <div class="form-group full-width">
+                    <label class="form-label">Motivo de consulta:</label>
                     <textarea class="form-control" name="motivo_consulta">{{ form.motivo_consulta.value|default:'' }}</textarea>
-                </div> 
+                </div>  -->
                 <div class="form-group">
                     <label class="form-label">Ocupación:</label>
                     <input type="text" class="form-control" name="ocupacion" value="{{ form.ocupacion.value|default:'' }}">
@@ -28,10 +28,10 @@
                     <label class="form-label">Con quién vive:</label>
                     <input type="text" class="form-control" name="convivencia" value="{{ form.convivencia.value|default:'' }}">
                 </div>
-                <div class="form-group full-width">
+                <!-- <div class="form-group full-width">
                     <label class="form-label">Compromiso acordado:</label>
                     <textarea class="form-control" name="compromiso">{{ form.compromiso.value|default:'' }}</textarea>
-                </div>
+                </div> -->
                 <h5>Antecedentes</h5>
                 <div class="form-group full-width">
                     <label class="form-label">Antecedentes mórbidos:</label>
