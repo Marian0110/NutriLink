@@ -504,62 +504,63 @@ document.querySelector('.btn-save').addEventListener('click', function (e) {
     select.focus();
   }
 
-  //Obtener factor patológico
+
+  //Obtener perfil completo clinico del paciente
+
+  // Función para cargar el perfil clínico completo
   document.addEventListener('DOMContentLoaded', async function() {
-  try {
-    const idPaciente = "{{ paciente.id_paciente }}";
-    const API_NODE_URL = `https://nutrilinkapi-production.up.railway.app/api_nutrilink/paciente/obtener_factor_patologico/${idPaciente}`;
-    
-    // factor actual del paciente
-    const response = await fetch(API_NODE_URL);
-    if (!response.ok) throw new Error('Error al cargar factor actual');
-    
-    const factorActual = await response.json();
-    
-    // Marcar el radio button si esque existe
-    if (factorActual.descripcion) {
-      const radioButtons = document.querySelectorAll('[name="factor_patologico"]');
-      radioButtons.forEach(radio => {
-        const label = radio.nextElementSibling;
-        if (label.textContent.includes(factorActual.descripcion)) {
-          radio.checked = true;
-        }
-      });
-    }
-    
-  } catch (error) {
-    console.error('Error:', error);
-  }
- });
-
-
-  // Cargar actividad física actual del paciente
-  document.addEventListener('DOMContentLoaded', async function () {
-  try {
-    const idPaciente = "{{ paciente.id_paciente }}";
-    const select = document.getElementById('actividadFisicaSelect');
-
-    const response = await fetch(`https://nutrilinkapi-production.up.railway.app/api_nutrilink/paciente/obtener_actividad_fisica/${idPaciente}`);
-
-    if (response.ok) {
-      const data = await response.json();
-
-      if (data && data.id_actividad_fisica) {
-        // Habilitar temporalmente la opción por defecto
-        const defaultOption = select.querySelector('option[value=""]');
+    try {
+      const idPaciente = "{{ paciente.id_paciente }}";
+      const URL = `https://nutrilinkapi-production.up.railway.app/api_nutrilink/paciente/obtener_perfil_clinico/${idPaciente}`;
+      
+      const response = await fetch(URL);
+      if (!response.ok) throw new Error('Error al cargar perfil clínico');
+      
+      const perfilClinico = await response.json();
+      
+      if (perfilClinico.status !== 'ok' || !perfilClinico.datos) {
+        throw new Error('Datos del perfil clínico no disponibles');
+      }
+      
+      const datos = perfilClinico.datos;
+      
+      //Cargar factor patológico
+      if (datos.id_factor_patologico) {
+        const radioButtons = document.querySelectorAll('[name="factor_patologico"]');
+        radioButtons.forEach(radio => {
+          const label = radio.nextElementSibling;
+          if (label.textContent.includes(datos.factor_patologico_descripcion)) {
+            radio.checked = true;
+          }
+        });
+      }
+      
+      //Cargar actividad física
+      const selectActividad = document.getElementById('actividadFisicaSelect');
+      if (datos.id_actividad_fisica) {
+        const defaultOption = selectActividad.querySelector('option[value=""]');
         if (defaultOption) defaultOption.disabled = false;
-
-        // Seleccionar la opción correspondiente por ID
-        select.value = data.id_actividad_fisica;
-
-        // Deshabilitar nuevamente la opción por defecto
+        
+        selectActividad.value = datos.id_actividad_fisica;
+        
         if (defaultOption) defaultOption.disabled = true;
       }
+      
+      if (datos.etapa_cambio_psicologico) {
+        document.getElementById('cambio_psicologico').value = datos.etapa_cambio_psicologico;
+      }
+      
+      if (datos.medicamentos_actuales) {
+        document.getElementById('medicamentos_actuales').value = datos.medicamentos_actuales;
+      }
+      
+      if (datos.notas_varias) {
+        document.getElementById('notas_varias').value = datos.notas_varias;
+      }
+      
+    } catch (error) {
+      console.error('Error al cargar perfil clínico:', error);
     }
-  } catch (error) {
-    console.error('Error al cargar actividad física:', error);
-  }
- });
-
+  });
 </script>
 {% endblock %}
