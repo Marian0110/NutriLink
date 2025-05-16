@@ -10,29 +10,28 @@
         <div class="card-info">
             <h1 class="card-title mb-2">Información general</h1>
             <span class="subtext">Datos básicos del paciente</span>
-            <form id="antecedentesForm" method="post" action="#">
-                {% csrf_token %}
-                <input type="hidden" name="id_paciente" value="{{ paciente.id_paciente }}">
+            <form id="antecedentesForm">
+                <input type="hidden" name="id_paciente" id="id_paciente" value="{{ paciente.id_paciente }}">
                 <div class="form-group">
                     <label class="form-label">Ocupación:</label>
-                    <input type="text" class="form-control" name="ocupacion" value="{{ form.ocupacion.value|default:'' }}">
+                    <input type="text" class="form-control" name="ocupacion" id="ocupacion">
                 </div>
                 <div class="form-group">
                     <label class="form-label">Horario laboral:</label>
-                    <input type="text" class="form-control" name="horario_laboral" value="{{ form.horario_laboral.value|default:'' }}">
+                    <input type="text" class="form-control" name="horario_laboral" id="horario_laboral">
                 </div>
                 <div class="form-group">
                     <label class="form-label">Con quién vive:</label>
-                    <input type="text" class="form-control" name="conviviente" value="{{ form.conviviente.value|default:'' }}">
+                    <input type="text" class="form-control" name="conviviente" id="conviviente">
                 </div>
                 <h5>Antecedentes</h5>
                 <div class="form-group full-width">
                     <label class="form-label">Antecedentes mórbidos:</label>
-                    <textarea class="form-control" name="antecedentes_morbidos">{{ form.antecedentes_morbidos.value|default:'' }}</textarea>
+                    <textarea class="form-control" name="antecedentes_morbidos" id="antecedentes_morbidos"></textarea>
                 </div>
                 <div class="form-group full-width">
                     <label class="form-label">Antecedentes familiares:</label>
-                    <textarea class="form-control" name="antecedentes_familiares">{{ form.antecedentes_familiares.value|default:'' }}</textarea>
+                    <textarea class="form-control" name="antecedentes_familiares" id="antecedentes_familiares"></textarea>
                 </div>
                 <button type="button" class="btn-update full-width" name="guardar_info">ACTUALIZAR</button>
             </form>
@@ -66,6 +65,45 @@
 </div>
 
 <script>
+    document.addEventListener('DOMContentLoaded', cargarAntecedentes);
+    async function cargarAntecedentes() {
+    try {
+        const idPaciente = document.getElementById('id_paciente').value;
+        
+        const URL = `https://nutrilinkapi-production.up.railway.app/api_nutrilink/paciente/antecedentes/${idPaciente}`;
+        
+        const response = await fetch(URL, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' }
+        });
+
+        if (!response.ok) {
+            throw new Error('Error al obtener los antecedentes');
+        }
+
+        const data = await response.json();
+        
+        // Si hay datos, llenamos el formulario
+        if (data) {
+            document.getElementById('ocupacion').value = data.ocupacion || '';
+            document.getElementById('horario_laboral').value = data.horario_laboral || '';
+            document.getElementById('conviviente').value = data.conviviente || '';
+            document.getElementById('antecedentes_morbidos').value = data.antecedentes_morbidos || '';
+            document.getElementById('antecedentes_familiares').value = data.antecedentes_familiares || '';
+        }
+        
+    } catch (error) {
+        console.error('Error al cargar antecedentes:', error);
+        Swal.fire({
+            title: 'Error',
+            text: 'No se pudieron cargar los antecedentes del paciente',
+            icon: 'error',
+            timer: 3000
+        });
+    }
+ }
+
+
     document.querySelector('.btn-update').addEventListener('click', async (e) => {
     const confirmacion = await Swal.fire({
         title: 'Actualizar información',
