@@ -134,27 +134,7 @@
         <form method="#" action="#">
           <div class="rejection-card" style="width: 50%;">
             <h1 class="h4 card-title mb-2">Información nutricional</h1>
-            <p class="text-muted card-subtitle mb-4">Estos alimentos serán excluidos en los planes alimenticios.</p>
-            <!-- Rechazos alimenticios -->
-            <div class="mb-4">
-              <label class="form-label">Rechazos alimenticios</label>
-              <div class="selection-group">
-                <select class="form-select mb-2">
-                  <option selected disabled>Seleccione un alimento</option>
-                  <option>Leche</option>
-                  <option>Huevos</option>
-                  <option>Pescado</option>
-                  <option>Mariscos</option>
-                  <option>Frutos secos</option>
-                  <option>Trigo</option>
-                  <option>Soja</option>
-                </select>
-                <div class="selected-items-container" id="rejected-foods-container"></div>
-                <button type="button" class="btn btn-sm btn-secondary mt-2" onclick="addAnother('rejected-foods')">
-                  + Agregar otro rechazo
-                </button>
-              </div>
-            </div>
+            <p class="text-muted card-subtitle mb-4">Los rechazos alimenticios serán excluidos en los planes alimenticios.</p>
             <!-- Alergias -->
             <div class="mb-4">
               <label class="form-label">Alergias:</label>
@@ -162,7 +142,15 @@
                 <select class="form-select mb-2">
                   <option selected disabled>Seleccione una alergia</option>
                   <option>Alergia al maní</option>
-                  <option>Alergia al gluten</option>
+                  <option>Alergia a los mariscos</option>
+                  <option>Alergia al pescado</option>
+                  <option>Alergia al huevo</option>
+                  <option>Alergia a la leche</option>
+                  <option>Alergia al trigo</option>
+                  <option>Alergia a la soya</option>
+                  <option>Alergia a los frutos secos (nueces, almendras, etc.)</option>
+                  <option>Alergia al sésamo</option>
+                  <option>Alergia al maíz</option>
                 </select>
                 <div class="selected-items-container" id="allergies-container"></div>
                 <button type="button" class="btn btn-sm btn-secondary mt-2" onclick="addAnother('allergies')">
@@ -177,13 +165,32 @@
                 <select class="form-select mb-2">
                   <option selected disabled>Seleccione una intolerancia</option>
                   <option>Intolerancia a la lactosa</option>
+                  <option>Intolerancia al gluten (no celíaca)</option>
                   <option>Intolerancia a la fructosa</option>
                   <option>Intolerancia a la sacarosa</option>
                   <option>Intolerancia a la histamina</option>
+                  <option>Intolerancia a los sulfitos</option>
+                  <option>Intolerancia a los aditivos alimentarios</option>
+                  <option>Intolerancia al alcohol</option>
+                  <option>Intolerancia a la cafeína</option>
                 </select>
                 <div class="selected-items-container" id="intolerances-container"></div>
                 <button type="button" class="btn btn-sm btn-secondary mt-2" onclick="addAnother('intolerances')">
                   + Agregar otra intolerancia
+                </button>
+              </div>
+            </div>
+             <!-- Rechazos alimenticios -->
+            <div class="mb-4">
+              <label class="form-label">Rechazos alimenticios</label>
+              <div class="selection-group">
+                <select class="form-select mb-2">
+                  <option selected disabled>Seleccione un alimento</option>
+                  <!--carga de la bd de alimentos-->
+                </select>
+                <div class="selected-items-container" id="rejected-foods-container"></div>
+                <button type="button" class="btn btn-sm btn-secondary mt-2" onclick="addAnother('rejected-foods')">
+                  + Agregar otro rechazo
                 </button>
               </div>
             </div>
