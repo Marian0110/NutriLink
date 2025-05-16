@@ -410,7 +410,10 @@ def enviar_minuta_por_correo(request, id_paciente):
         email.attach_alternative(mensaje_html_completo, "text/html")
         email.send(fail_silently=False)
 
-        return JsonResponse({'success': True, 'message': 'Minuta enviada por correo exitosamente.'})
+        return JsonResponse({
+            'success': True,
+            'message': f'Minuta enviada por correo exitosamente a {correo_paciente}.'
+        })
 
     except json.JSONDecodeError:
         return JsonResponse({'success': False, 'message': 'Error en el formato de los datos enviados.'}, status=400)
