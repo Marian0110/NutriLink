@@ -138,8 +138,18 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderGeneratedMinuta(data) {
+        // Ordenar los tiempos de comida por hora antes de renderizar
+        if (data.tiempos_de_comida && data.tiempos_de_comida.length > 0) {
+            data.tiempos_de_comida.sort((a, b) => {
+                const timeToMinutes = timeStr => {
+                    const [hours, minutes] = (timeStr || '00:00').split(':').map(Number);
+                    return hours * 60 + minutes;
+                };
+                return timeToMinutes(a.hora_sugerida) - timeToMinutes(b.hora_sugerida);
+            });
+        }
+        
         minutaModalBody.innerHTML = ''; 
-
         if (!data.tiempos_de_comida || data.tiempos_de_comida.length === 0) {
             minutaModalBody.innerHTML = '<p>No hay tiempos de comida definidos en la minuta generada.</p>';
             return;
@@ -830,19 +840,41 @@ document.addEventListener('DOMContentLoaded', () => {
     
     function processAndDisplaySavedDetails(savedDetailsArray) {
         if (!Array.isArray(savedDetailsArray) || savedDetailsArray.length === 0) return;
+        // Primero agrupa y luego ordena por hora
         const groupedDetails = savedDetailsArray.reduce((acc, detail) => {
             const tiempoId = detail.id_tiempo_comida;
             if (!acc[tiempoId]) {
-                acc[tiempoId] = { hora: detail.hora_tiempo_comida, portions: {} };
+                acc[tiempoId] = {
+                    hora: detail.hora_tiempo_comida,
+                    tiempoData: ALL_MEAL_TIMES_DATA.find(t => t.id_tiempo_comida === tiempoId),
+                    portions: {}
+                };
             }
             acc[tiempoId].portions[detail.id_grupo_alimenticio] = detail.numero_porciones_grupo;
             return acc;
         }, {});
-        const sortedTiempoIds = Object.keys(groupedDetails).sort((a, b) => parseInt(a) - parseInt(b));
-        sortedTiempoIds.forEach(tiempoIdStr => {
-             const tiempoId = parseInt(tiempoIdStr, 10);
-             const details = groupedDetails[tiempoId];
-             createAndPopulateMealTimeEntry(tiempoId, details.hora, details.portions);
+
+        // Convertir a array y ordenar por hora
+        const sortedDetails = Object.values(groupedDetails).sort((a, b) => {
+            // Convertir horas HH:MM a minutos para comparación
+            const timeToMinutes = timeStr => {
+                const [hours, minutes] = timeStr.split(':').map(Number);
+                return hours * 60 + minutes;
+            };
+            
+            return timeToMinutes(a.hora) - timeToMinutes(b.hora);
+        });
+
+        // Limpiar el contenedor antes de agregar los elementos ordenados
+        mealTimesContainer.innerHTML = '';
+
+        // Crear entradas en el orden correcto
+        sortedDetails.forEach(detail => {
+            createAndPopulateMealTimeEntry(
+                detail.tiempoData.id_tiempo_comida,
+                detail.hora,
+                detail.portions
+            );
         });
     }
 
@@ -945,8 +977,42 @@ document.addEventListener('DOMContentLoaded', () => {
          selectElement.addEventListener('change', updateAllSelects);
          mealTimeEntryCounter++;
          updateAllSelects(); 
+         reorderMealTimesByTime();
     }
 
+    // Función para reordenar los tiempos de comida por hora
+    function reorderMealTimesByTime() {
+        const entries = Array.from(mealTimesContainer.querySelectorAll('.meal-time-entry'));
+        
+        if (entries.length <= 1) return; // No hay nada que ordenar
+        
+        // Obtener datos de cada entrada
+        const entriesData = entries.map(entry => {
+            const select = entry.querySelector('.meal-time-select');
+            const timeInput = entry.querySelector('.meal-hour-input');
+            return {
+                element: entry,
+                tiempoId: select.value,
+                hora: timeInput.value,
+                tiempoText: select.options[select.selectedIndex].text
+            };
+        });
+        
+        // Ordenar por hora
+        entriesData.sort((a, b) => {
+            const timeToMinutes = timeStr => {
+                const [hours, minutes] = timeStr.split(':').map(Number);
+                return hours * 60 + minutes;
+            };
+            return timeToMinutes(a.hora) - timeToMinutes(b.hora);
+        });
+        
+        // Reorganizar el DOM
+        mealTimesContainer.innerHTML = '';
+        entriesData.forEach(data => {
+            mealTimesContainer.appendChild(data.element);
+        });
+    }
     // --- FUNCIÓN DE GUARDADO INDIVIDUAL ---
     async function handleSaveSingleMealEntry(entryElement, saveBtn, deleteBtn, statusEl) {
         saveBtn.disabled = true;
@@ -1218,6 +1284,13 @@ document.addEventListener('DOMContentLoaded', () => {
     if(addMealTimeBtn) addMealTimeBtn.addEventListener('click', addMealTimeEntry);
     if(generateMinutaBtn) generateMinutaBtn.addEventListener('click', openGenerateMinutaModal);
     if(closeModalBtn) closeModalBtn.addEventListener('click', closeMinutaModal);
+
+    // LISTENER PARA REORDENAR AL CAMBIAR HORA
+    document.addEventListener('change', (e) => {
+        if (e.target.classList.contains('meal-hour-input')) {
+            reorderMealTimesByTime();
+        }
+    });
     
     // Event listeners para los NUEVOS botones
     if(saveMinutaPdfBtn) saveMinutaPdfBtn.addEventListener('click', handleSaveMinutaPdf);

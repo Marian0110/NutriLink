@@ -306,3 +306,7 @@
 .single-save-status.success { color: green; }
 .single-save-status.error { color: red; }
 .single-save-status.info { color: var(--secondary-color); }
+
+.meal-time-entry {
+    transition: transform 0.3s ease;
+}
