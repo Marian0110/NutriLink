@@ -11,7 +11,13 @@
         <form method="#" action="#">
           {% csrf_token %}
           <div class="clinical-card">
-            <h1 class="h4 fw-bold mb-2">Perfil clínico</h1>
+            <h1 class="card-title mb-2">
+                Perfil clínico
+                <span class="tooltip-container">
+                  <i class="info-icon">ℹ</i>
+                  <span class="tooltip-text">Los valores visualizados corresponden a la información más actual registrada para este paciente</span>
+                </span>
+            </h1>
             <p class="text-muted mb-4">Datos relevantes del paciente para el manejo nutricional</p>
             
             <div class="mb-3">

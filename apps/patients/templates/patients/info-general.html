@@ -8,7 +8,13 @@
     <div class="patient-form-container">
         <!-- Formulario informacion general -->
         <div class="card-info">
-            <h1 class="card-title mb-2">Información general</h1>
+            <h1 class="card-title mb-2">
+                Información general
+                <span class="tooltip-container">
+                  <i class="info-icon">ℹ</i>
+                  <span class="tooltip-text">Los valores visualizados corresponden a la información más actual registrada para este paciente</span>
+                </span>
+            </h1>
             <span class="subtext">Datos básicos del paciente</span>
             <form id="antecedentesForm">
                 <input type="hidden" name="id_paciente" id="id_paciente" value="{{ paciente.id_paciente }}">
@@ -42,9 +48,9 @@
                 Credenciales de acceso
                 <span class="tooltip-container">
                   <i class="info-icon">ℹ</i>
-                  <span class="tooltip-text">Estas credenciales serán enviadas al correo del paciente</span>
+                  <span class="tooltip-text">Estas credenciales serán enviadas al gmail del paciente</span>
                 </span>
-              </h1>
+            </h1>
             <span class="subtext" style="text-align: center;">Estas son las credenciales de su paciente para el primer ingreso en la app NutriLink</span>
             <form method="post" class="credential-form" action="{% url 'patients:enviar_credenciales' paciente.id_paciente %}"> <!--disparar vista enviar_credenciales-->
                 {% csrf_token %}

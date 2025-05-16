@@ -265,3 +265,54 @@
   margin-top: 5px;
   display: inline-block;
 }
+
+/* Tooltip */
+.tooltip-container {
+    position: relative;
+    display: inline-block;
+    cursor: pointer;
+  }
+  
+  .tooltip-container .tooltip-text {
+    visibility: hidden;
+    background-color: var(--light-text);
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 6px 10px;
+    position: absolute;
+    z-index: 1;
+    bottom: 125%; /*encima */
+    left: 50%;
+    transform: translateX(-50%);
+    opacity: 0;
+    transition: opacity 0.3s;
+    font-size: 12px;
+    max-width: 200px;
+    white-space: normal;
+    word-wrap: break-word;
+  }
+  
+  .tooltip-container .tooltip-text::after {
+    content: '';
+    position: absolute;
+    top: 100%; /* debajo del tooltip */
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 5px;
+    border-style: solid;
+    border-color: #333 transparent transparent transparent;
+  }
+  
+  .tooltip-container:hover .tooltip-text {
+    visibility: visible;
+    opacity: 1;
+  }
+  
+.info-icon {
+    font-style: normal;
+    font-weight: bold;
+    font-size: 14px;
+    color: #4a90e2;
+    margin-left: 10px;
+}
