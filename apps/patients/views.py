@@ -239,20 +239,27 @@ def get_alimentos():
         alimentos = response.json()
 
         # Campos necesarios para el combobox
-        alimentos_filtrados = [
-            {
-                'id_alimento': a.get('id_alimento'),
-                'nombre_alimento': a.get('nombre_alimento'),
-                'nombre_grupo_alimenticio': a.get('nombre_grupo_alimenticio', '')
-            }
-            for a in alimentos
-            if a.get('id_alimento') and a.get('nombre_alimento')
-        ]
+        alimentos_filtrados = []
+        for a in alimentos:
+            id_alimento = a.get('id_alimento')
+            nombre = a.get('nombre_alimento')
+            grupo = a.get('nombre_grupo_alimenticio', '')
+            
+            # Imprimir para depuración
+            print(f"ID: {id_alimento}, {nombre}")
+
+            if id_alimento and nombre:
+                alimentos_filtrados.append({
+                    'id_alimento': id_alimento,
+                    'nombre_alimento': nombre,
+                    'nombre_grupo_alimenticio': grupo
+                })
 
         return alimentos_filtrados
     except requests.RequestException as e:
         print(f"Error al obtener alimentos: {str(e)}")
         return []
+
 
 #---------------------------- ENVIO DE CREDENCIALES PACIENTE ----------------------------
 def enviar_credenciales(request, id_paciente):

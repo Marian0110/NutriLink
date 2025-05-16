@@ -423,49 +423,6 @@ document.querySelector('.btn-save').addEventListener('click', function (e) {
     radio.addEventListener('change', actualizarInput);
   });
 
-  //INTOLERANCIAS MAPEO POR ID_ALIMENTO
-  const intoleranciaAlimentoMap = {
-  "Intolerancia a la lactosa": [11, 12, 15, 16, 17, 18, 56, 57, 58, 60], // Queso, yogurt, leche, flan, manjar, leche condensada, yogurt griego
-  "Intolerancia al gluten (no celíaca)": [8, 9], // Pan de molde, avena
-  "Intolerancia a la fructosa": [1, 2, 3, 4, 5, 54, 55, 56, 57], // Frutas, miel, mermelada, manjar
-  "Intolerancia a la sacarosa": [54, 55, 56, 57], // Azúcar blanco, miel, mermelada, manjar
-  "Intolerancia a la histamina": [29, 30, 31, 32, 33, 34, 35, 36, 37], // Carnes y pescados procesados, enlatados, embutidos
-  "Intolerancia a los sulfitos": [9, 53], // Pan de molde, aceitunas (procesadas)
-  "Intolerancia a los aditivos alimentarios": [55, 56, 57, 58], // Mermelada, manjar, leche condensada, flan (todos con aditivos)
-  "Intolerancia al alcohol": [], // No hay alcohol directamente en esta lista
-  "Intolerancia a la cafeína": [] // Ningún alimento contiene cafeína
- };
-
- function filterRejectedFoods() {
-    const intoleranciasSeleccionadas = Array.from(
-      document.getElementById('intolerances-container').querySelectorAll('input[type="hidden"]')
-    ).map(input => input.value.trim());
-
-    const allRechazoOptions = document.querySelectorAll('#rechazo-alimenticio option');
-
-    // Si no hay intolerancias seleccionadas, mostrar todos los alimentos
-    if (intoleranciasSeleccionadas.length === 0) {
-        allRechazoOptions.forEach(option => option.hidden = false);
-        return;
-    }
-
-    // Obtener todos los IDs de alimentos que deben ser OCULTADOS (los relacionados con las intolerancias)
-    let idsParaOcultar = new Set();
-    intoleranciasSeleccionadas.forEach(intolerancia => {
-        const ids = intoleranciaAlimentoMap[intolerancia] || [];
-        ids.forEach(id => idsParaOcultar.add(String(id)));
-    });
-
-    // Mostrar solo los alimentos que NO están en la lista de ocultar
-    allRechazoOptions.forEach(option => {
-        if (!option.value) { // Mantener visible la opcion por defecto
-            option.hidden = false;
-        } else {
-            // Ocultar si esta en la lista de alimentos prohibidos
-            option.hidden = idsParaOcultar.has(option.value);
-        }
-    });
-  }
   // script de informacion nutricional manejo de comboboxes
   document.querySelectorAll('.form-select').forEach(select => {
     select.addEventListener('change', function () {
@@ -513,10 +470,6 @@ document.querySelector('.btn-save').addEventListener('click', function (e) {
   `;
 
   container.appendChild(itemElement);
-   // Si es el contenedor de intolerancias, actualizar el filtro
-  if (containerId === 'intolerances-container') {
-    filterRejectedFoods();
-  }
  }
 
   function removeItem(itemId, containerId, value) {
@@ -529,10 +482,6 @@ document.querySelector('.btn-save').addEventListener('click', function (e) {
         option.disabled = false;
       }
     });
-    // Si es intolerancia, actualizar alimentos rechazados visibles
-    if (containerId === 'intolerances-container') {
-      filterRejectedFoods();
-    }
   }
 
   // El actual select se mantenga actualizado
