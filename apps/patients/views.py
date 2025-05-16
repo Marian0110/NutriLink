@@ -51,23 +51,26 @@ def historialClinico(request, id_paciente):
         paciente = get_paciente_data(id_paciente)
         success, factores_patologicos, error = get_factores_patologicos()
         niveles_actividad = get_niveles_actividad_fisica()
-        
+        alimentos = get_alimentos()
+
         if not success:
             return render(request, 'patients/historial-clinico.html', {
                 'paciente': paciente,
                 'factores_patologicos': [],
                 'error_factores': error,
                 'niveles_actividad': niveles_actividad,
+                'alimentos': alimentos,
                 'section': 'historial-clinico'
             })
-        
+
         return render(request, 'patients/historial-clinico.html', {
             'paciente': paciente,
             'factores_patologicos': factores_patologicos,
             'niveles_actividad': niveles_actividad,
+            'alimentos': alimentos,
             'section': 'historial-clinico'
         })
-        
+
     except Exception as e:
         print(f"Error en historialClinico: {str(e)}")
         raise Http404(f"Error al cargar historial clínico: {str(e)}")
@@ -227,6 +230,30 @@ def get_diagnosticos_antropometricos(id_paciente, fecha):
         print(f"Error al obtener diagnósticos antropométricos: {str(e)}")
         return None
     
+# GET de la bd Alimentos   
+def get_alimentos():
+    url = 'https://nutrilinkapi-production.up.railway.app/api_nutrilink/alimento/alimentos'
+    try:
+        response = requests.get(url, timeout=10)
+        response.raise_for_status()
+        alimentos = response.json()
+
+        # Campos necesarios para el combobox
+        alimentos_filtrados = [
+            {
+                'id_alimento': a.get('id_alimento'),
+                'nombre_alimento': a.get('nombre_alimento'),
+                'nombre_grupo_alimenticio': a.get('nombre_grupo_alimenticio', '')
+            }
+            for a in alimentos
+            if a.get('id_alimento') and a.get('nombre_alimento')
+        ]
+
+        return alimentos_filtrados
+    except requests.RequestException as e:
+        print(f"Error al obtener alimentos: {str(e)}")
+        return []
+
 #---------------------------- ENVIO DE CREDENCIALES PACIENTE ----------------------------
 def enviar_credenciales(request, id_paciente):
     """

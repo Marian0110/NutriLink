@@ -184,10 +184,13 @@
             <div class="mb-4">
               <label class="form-label">Rechazos alimenticios</label>
               <div class="selection-group">
-                <select class="form-select mb-2">
-                  <option selected disabled>Seleccione un alimento</option>
-                  <!--carga de la bd de alimentos-->
+                <select name="rechazo_alimenticio" id="rechazo-alimenticio" class="form-select">
+                    <option value="">Seleccione un alimento</option>
+                    {% for alimento in alimentos %}
+                        <option value="{{ alimento.id_alimento }}">{{ alimento.nombre_alimento }}</option>
+                    {% endfor %}
                 </select>
+                
                 <div class="selected-items-container" id="rejected-foods-container"></div>
                 <button type="button" class="btn btn-sm btn-secondary mt-2" onclick="addAnother('rejected-foods')">
                   + Agregar otro rechazo
@@ -427,13 +430,13 @@ document.querySelector('.btn-save').addEventListener('click', function (e) {
         const existingValues = Array.from(container.querySelectorAll('input[type="hidden"]')).map(input => input.value);
 
         if (!existingValues.includes(this.value)) {
-          addSelectedItem(containerId, this.value);
+          const selectedText = this.options[this.selectedIndex].text; // Captura el texto visible
+          addSelectedItem(containerId, this.value, selectedText); // Pásalo a la función
           disableSelectedOptions(this);
         } else {
           alert('Esta opción ya fue seleccionada');
         }
 
-        // Reset al valor seleccionar x
         this.selectedIndex = 0;
       }
     });
@@ -450,21 +453,21 @@ document.querySelector('.btn-save').addEventListener('click', function (e) {
     });
   }
 
-  function addSelectedItem(containerId, value) {
-    const container = document.getElementById(containerId);
-    const itemId = 'item-' + Math.random().toString(36).substr(2, 9);
+  function addSelectedItem(containerId, value, displayText) {
+  const container = document.getElementById(containerId);
+  const itemId = 'item-' + Math.random().toString(36).substr(2, 9);
 
-    const itemElement = document.createElement('div');
-    itemElement.className = 'selected-item';
-    itemElement.id = itemId;
-    itemElement.innerHTML = `
-      ${value}
-      <span class="remove-item" onclick="removeItem('${itemId}', '${containerId}', '${value}')">×</span>
-      <input type="hidden" name="${containerId.replace('-container', '')}[]" value="${value}">
-    `;
+  const itemElement = document.createElement('div');
+  itemElement.className = 'selected-item';
+  itemElement.id = itemId;
+  itemElement.innerHTML = `
+    ${displayText}
+    <span class="remove-item" onclick="removeItem('${itemId}', '${containerId}', '${value}')">×</span>
+    <input type="hidden" name="${containerId.replace('-container', '')}[]" value="${value}">
+  `;
 
-    container.appendChild(itemElement);
-  }
+  container.appendChild(itemElement);
+ }
 
   function removeItem(itemId, containerId, value) {
     document.getElementById(itemId).remove();
