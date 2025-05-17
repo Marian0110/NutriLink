@@ -923,7 +923,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const actionsDiv = document.createElement('div');
             actionsDiv.classList.add('meal-entry-actions');
             const saveButton = document.createElement('button');
-            saveButton.textContent = 'Guardar Cambios';
+            saveButton.textContent = 'Guardar Tiempo de Comida';
             saveButton.classList.add('save-single-meal-btn');
             saveButton.type = 'button';
             const deleteButton = document.createElement('button');
@@ -1247,83 +1247,88 @@ document.addEventListener('DOMContentLoaded', () => {
         const tiempoComidaId = tiempoComidaSelect.value;
 
         if (!tiempoComidaId) {
-            statusEl.textContent = 'Seleccione un tiempo de comida para eliminar.';
-            statusEl.className = 'single-save-status error';
-            setTimeout(() => { if (statusEl.className === 'single-save-status error') statusEl.textContent = ''; }, 3000);
+            // Si no hay tiempo de comida seleccionado, simplemente eliminar el elemento
+            entryElement.remove();
+            updateAllSelects();
             return;
         }
 
-        const { value: confirmDelete } = await Swal.fire({
-            icon: 'warning',
-            title: 'Confirmar eliminación',
-            html: `¿Está seguro de que desea eliminar todos los datos para el tiempo de comida 
-                <strong>"${tiempoComidaSelect.options[tiempoComidaSelect.selectedIndex].text}"</strong>?<br><br>
-                <span style="color: #dc3545;">Esta acción no se puede deshacer.</span>`,
-            showCancelButton: true,
-            confirmButtonText: 'Sí, eliminar',
-            cancelButtonText: 'Cancelar',
-            confirmButtonColor: '#d33',
-            cancelButtonColor: '#3085d6',
-            reverseButtons: true,
-            focusCancel: true,
-            customClass: {
-                confirmButton: 'button-primary',
-                cancelButton: 'button-secondary'
-            }
-        });
-
-        if (!confirmDelete) {
-            return;
-        }
-
-        saveBtn.disabled = true;
-        deleteBtn.disabled = true;
-        statusEl.textContent = 'Eliminando...';
-        statusEl.className = 'single-save-status info';
-
-        try {
-            const csrfToken = document.querySelector('input[name="csrfmiddlewaretoken"]')?.value || getCookie('csrftoken');
-            const url = new URL('https://nutrilinkapi-production.up.railway.app/api_nutrilink/minuta/eliminar_detalle_ultima_minuta');
-            url.searchParams.append('pacienteId', PACIENTE_ID);
-            url.searchParams.append('tiempoComidaId', tiempoComidaId);
-
-            const deleteResponse = await fetch(url.toString(), {
-                method: 'DELETE',
-                headers: { 'X-CSRFToken': csrfToken }
-            });
-
-            const result = await deleteResponse.json();
-
-            if (!deleteResponse.ok) {
-                throw new Error(result.mensaje || `Error al eliminar ${deleteResponse.status}`);
-            }
-
-            statusEl.textContent = result.mensaje || 'Eliminado exitosamente.';
-            statusEl.className = 'single-save-status success';
-            
-            entryElement.remove(); 
-            updateAllSelects();    
-            
-            const adecuacionPayload = { pacienteId: PACIENTE_ID };
-            const adecuacionResponse = await fetch('https://nutrilinkapi-production.up.railway.app/api_nutrilink/minuta/guardar_adecuacion_minuta', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
-                body: JSON.stringify(adecuacionPayload)
-            });
-            if (!adecuacionResponse.ok) {
-                const errAdecuacion = await adecuacionResponse.json().catch(() => ({detail: "Error al procesar respuesta de guardar adecuación post-eliminación."}));
-                console.warn(`Advertencia al guardar adecuación post-eliminación: ${errAdecuacion.detail || errAdecuacion.mensaje || JSON.stringify(errAdecuacion)}`);
-            }
-            await loadAndDisplayAdecuacion(); 
-
-        } catch (error) {
-            console.error("Error al eliminar tiempo de comida:", error);
-            statusEl.textContent = `Error: ${error.message}`;
-            statusEl.className = 'single-save-status error';
-            saveBtn.disabled = false; 
-            deleteBtn.disabled = false;
-        }
+const { value: confirmDelete } = await Swal.fire({
+    icon: 'warning',
+    title: 'Confirmar eliminación',
+    html: `¿Está seguro de que desea eliminar todos los datos para el tiempo de comida 
+        <strong>"${tiempoComidaSelect.options[tiempoComidaSelect.selectedIndex].text}"</strong>?<br><br>
+        <span style="color: #dc3545;">Esta acción no se puede deshacer.</span>`,
+    showCancelButton: true,
+    confirmButtonText: 'Sí, eliminar',
+    cancelButtonText: 'Cancelar',
+    confirmButtonColor: '#d33',
+    cancelButtonColor: '#3085d6',
+    reverseButtons: true,
+    focusCancel: true,
+    customClass: {
+        confirmButton: 'button-primary',
+        cancelButton: 'button-secondary'
     }
+});
+
+if (!confirmDelete) {
+    return;
+}
+
+saveBtn.disabled = true;
+deleteBtn.disabled = true;
+statusEl.textContent = 'Eliminando...';
+statusEl.className = 'single-save-status info';
+
+const csrfToken = document.querySelector('input[name="csrfmiddlewaretoken"]')?.value || getCookie('csrftoken');
+try {
+    const url = new URL('https://nutrilinkapi-production.up.railway.app/api_nutrilink/minuta/eliminar_detalle_ultima_minuta');
+    url.searchParams.append('pacienteId', PACIENTE_ID);
+    url.searchParams.append('tiempoComidaId', tiempoComidaId);
+
+    const deleteResponse = await fetch(url.toString(), {
+        method: 'DELETE',
+        headers: { 'X-CSRFToken': csrfToken }
+    });
+
+    const result = await deleteResponse.json();
+
+    if (!deleteResponse.ok) {
+        statusEl.textContent = result.mensaje || `Error al eliminar ${deleteResponse.status}`;
+        statusEl.className = 'single-save-status error';
+    } else {
+        statusEl.textContent = result.mensaje || 'Eliminado exitosamente.';
+        statusEl.className = 'single-save-status success';
+    }
+
+} catch (error) {
+    console.error("Error al eliminar tiempo de comida:", error);
+    statusEl.textContent = `Error: ${error.message}`;
+    statusEl.className = 'single-save-status error';
+} finally {
+    // Independientemente del resultado de la API, eliminar el elemento del DOM
+    entryElement.remove();
+    updateAllSelects();
+    saveBtn.disabled = false;
+    deleteBtn.disabled = false;
+
+    statusEl.textContent = 'Actualizando adecuación...';
+    statusEl.className = 'single-save-status info';
+
+    const adecuacionPayload = { pacienteId: PACIENTE_ID };
+    const adecuacionResponse = await fetch('https://nutrilinkapi-production.up.railway.app/api_nutrilink/minuta/guardar_adecuacion_minuta', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+        body: JSON.stringify(adecuacionPayload)
+    });
+    if (!adecuacionResponse.ok) {
+        const errAdecuacion = await adecuacionResponse.json().catch(() => ({detail: "Error al procesar respuesta de guardar adecuación post-eliminación."}));
+        console.warn(`Advertencia al guardar adecuación post-eliminación: ${errAdecuacion.detail || errAdecuacion.mensaje || JSON.stringify(errAdecuacion)}`);
+    }
+    await loadAndDisplayAdecuacion();
+}
+}
     function getCookie(name) {  
         let cookieValue = null;
         if (document.cookie && document.cookie !== '') {

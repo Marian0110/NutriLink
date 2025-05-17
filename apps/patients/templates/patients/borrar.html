@@ -1,0 +1,113 @@
+    // --- FUNCIÓN PARA ELIMINAR ---
+    async function handleDeleteSingleMealEntry(entryElement, saveBtn, deleteBtn, statusEl) {
+        const tiempoComidaSelect = entryElement.querySelector('.meal-time-select');
+        const tiempoComidaId = tiempoComidaSelect.value;
+
+        if (!tiempoComidaId) {
+            entryElement.remove();
+            updateAllSelects();
+            return;
+        }
+
+        const { value: confirmDelete } = await Swal.fire({
+            // ... (confirmación con Swal)
+        });
+
+        if (!confirmDelete) {
+            return;
+        }
+
+        saveBtn.disabled = true;
+        deleteBtn.disabled = true;
+        statusEl.textContent = 'Eliminando...';
+        statusEl.className = 'single-save-status info';
+
+        // Declarar csrfToken aquí para que esté disponible en el bloque finally
+        const csrfToken = document.querySelector('input[name="csrfmiddlewaretoken"]')?.value || getCookie('csrftoken');
+
+        try {
+            // const csrfToken = ... // Estaba aquí, ahora está arriba
+            const url = new URL('https://nutrilinkapi-production.up.railway.app/api_nutrilink/minuta/eliminar_detalle_ultima_minuta');
+            url.searchParams.append('pacienteId', PACIENTE_ID);
+            url.searchParams.append('tiempoComidaId', tiempoComidaId);
+
+            const deleteResponse = await fetch(url.toString(), {
+                method: 'DELETE',
+                headers: { 'X-CSRFToken': csrfToken } // Asegúrate que csrfToken está definido aquí
+            });
+
+            const result = await deleteResponse.json();
+
+            if (!deleteResponse.ok) {
+                statusEl.textContent = result.mensaje || `Error al eliminar ${deleteResponse.status}`;
+                statusEl.className = 'single-save-status error';
+                // No retornar aquí todavía, queremos que el finally se ejecute
+            } else {
+                statusEl.textContent = result.mensaje || 'Eliminado exitosamente.';
+                statusEl.className = 'single-save-status success';
+            }
+
+        } catch (error) {
+            console.error("Error al eliminar tiempo de comida:", error);
+            statusEl.textContent = `Error: ${error.message}`;
+            statusEl.className = 'single-save-status error';
+        } finally {
+            // Independientemente del resultado de la API, eliminar el elemento del DOM
+            entryElement.remove();
+            updateAllSelects();
+            saveBtn.disabled = false; // Habilitar botones de nuevo
+            if (deleteBtn) deleteBtn.disabled = false;
+
+
+            // ESTA ES LA PARTE CLAVE QUE YA TIENES:
+            statusEl.textContent = 'Actualizando adecuación...'; // Mensaje opcional
+            statusEl.className = 'single-save-status info';     // Mensaje opcional
+
+            try {
+                const adecuacionPayload = { pacienteId: PACIENTE_ID };
+                const adecuacionResponse = await fetch('https://nutrilinkapi-production.up.railway.app/api_nutrilink/minuta/guardar_adecuacion_minuta', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken // Asegúrate que csrfToken está definido y es válido aquí
+                    },
+                    body: JSON.stringify(adecuacionPayload)
+                });
+
+                if (!adecuacionResponse.ok) {
+                    const errAdecuacion = await adecuacionResponse.json().catch(() => ({ detail: "Error al procesar respuesta de guardar adecuación post-eliminación." }));
+                    console.warn(`Advertencia al guardar adecuación post-eliminación: ${errAdecuacion.detail || errAdecuacion.mensaje || JSON.stringify(errAdecuacion)}`);
+                    // Puedes mostrar un error más específico al usuario si esta llamada falla
+                    if (statusEl.className.includes('success')) { // Si la eliminación fue exitosa pero esto falla
+                        statusEl.textContent += ' (Error actualizando adecuación)';
+                        statusEl.className = 'single-save-status warning'; // O 'error'
+                    }
+                } else {
+                     // Si la llamada a guardar_adecuacion_minuta fue exitosa, el backend ya recalculó.
+                     // Ahora, simplemente necesitamos volver a pedir los datos actualizados.
+                     if (statusEl.className.includes('success')) {
+                        statusEl.textContent = 'Eliminado. Adecuación actualizada.';
+                     }
+                }
+            } catch (error) {
+                console.error("Error al llamar a guardar_adecuacion_minuta post-eliminación:", error);
+                if (statusEl.className.includes('success')) {
+                    statusEl.textContent += ' (Fallo al actualizar adecuación)';
+                    statusEl.className = 'single-save-status warning';
+                }
+            }
+
+            // Y LUEGO CARGAS Y MUESTRAS LA NUEVA ADECUACIÓN:
+            await loadAndDisplayAdecuacion(); // Esta función ya obtiene y muestra los nuevos datos.
+
+            // Limpiar el mensaje de estado después de un tiempo si todo fue bien
+            setTimeout(() => {
+                if (statusEl.className.includes('success') || statusEl.className.includes('info')) {
+                    // Solo limpiar si no es un error persistente
+                     if(statusEl.textContent.includes("Eliminado. Adecuación actualizada.") || statusEl.textContent.includes("Actualizando adecuación...")){
+                        statusEl.textContent = '';
+                     }
+                }
+            }, 4000);
+        }
+    }
