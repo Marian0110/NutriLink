@@ -310,3 +310,30 @@
 .meal-time-entry {
     transition: transform 0.3s ease;
 }
+
+/* Estilos para el selector de minutas */
+.minuta-selector-container {
+  margin-bottom: 25px;
+  padding: 15px;
+  background-color: var(--white);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px var(--shadow);
+}
+
+.minuta-selector-container label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: var(--primary-color);
+}
+
+#minuta-date-selector {
+  width: 100%;
+  max-width: 300px;
+  padding: 10px 12px;
+  border: 1px solid var(--input-border);
+  border-radius: 5px;
+  background-color: var(--input-background);
+  color: var(--text-color);
+  font-size: 0.95rem;
+}
