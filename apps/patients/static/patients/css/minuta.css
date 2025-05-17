@@ -113,7 +113,6 @@
   border-radius: 4px;
   text-align: center;
   font-size: 0.9rem;
-  -moz-appearance: textfield; /* Oculta spinners en Firefox */
 }
 .food-portions-table input[type="number"]::-webkit-outer-spin-button,
 .food-portions-table input[type="number"]::-webkit-inner-spin-button {
