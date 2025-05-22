@@ -7,8 +7,267 @@
   --light-text: #747474;
   --white: #ffffff;
   --shadow: #d1d0d057;
-  --border-color: #e0e0e0; 
+  --border-color: #e0e0e0;
   --input-background: var(--white);
   --input-border: #ced4da;
+  --danger-color: #dc3545;
+  --danger-hover-color: #c82333;
 }
 
+/* Estilos generales para la página de registro dietario */
+.registro-dietario-content {
+  padding: 20px;
+}
+
+.registro-dietario-content h2 {
+  color: var(--primary-color);
+  margin-bottom: 1.5em;
+  font-size: 1.6rem;
+  font-weight: 600;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 0.5em;
+}
+
+.registro-dietario-content h3 {
+  color: var(--secondary-color);
+  margin-top: 1.8em;
+  margin-bottom: 0.8em;
+  font-size: 1.3rem;
+  font-weight: 500;
+}
+
+/* Contenedor de la tabla de registro */
+.registro-tabla-container {
+  margin-bottom: 20px;
+  overflow-x: auto; /* Para tablas anchas en móviles */
+  background-color: var(--white);
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px var(--shadow);
+}
+
+/* Tabla de registro de comidas */
+.registro-tabla {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.registro-tabla th,
+.registro-tabla td {
+  border: 1px solid var(--border-color);
+  padding: 10px 8px;
+  text-align: left;
+  font-size: 0.9rem;
+  vertical-align: middle;
+}
+
+.registro-tabla th {
+  background-color: #f8f9fa;
+  color: var(--secondary-color);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Inputs y selects dentro de la tabla */
+.input-tabla,
+.select-tabla {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--input-border);
+  border-radius: 4px;
+  background-color: var(--input-background);
+  color: var(--text-color);
+  font-size: 0.85rem;
+  box-sizing: border-box;
+  min-width: 80px;
+}
+
+.input-tabla[type="time"] {
+  min-width: 110px; /* Suficiente para HH:MM AM/PM o 24h */
+}
+.input-tabla[type="text"] { /* Para Medida Equivalente */
+  min-width: 140px;
+}
+.select-tabla { /* Para Tiempo Comida y Alimento */
+  min-width: 150px;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%23333' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.7em top 50%;
+  background-size: 0.9em auto;
+  padding-right: 2.5em;
+}
+
+.input-tabla.input-numero { /* Para Porciones, Gr, Kcal */
+  width: 75px;
+  min-width: 60px;
+  text-align: right;
+}
+.input-tabla.input-numero::-webkit-outer-spin-button,
+.input-tabla.input-numero::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.input-tabla.input-numero[type=number] {
+  -moz-appearance: textfield; /* Firefox */
+}
+
+.input-tabla:focus,
+.select-tabla:focus {
+  border-color: var(--primary-color);
+  outline: 0;
+  box-shadow: 0 0 0 0.2rem rgba(23, 59, 76, 0.25);
+}
+
+/* Botones de acciones para la tabla y página */
+.acciones-tabla {
+  margin-top: 5px; /* Más pegado a la tabla */
+  margin-bottom: 25px;
+  display: flex;
+  gap: 10px;
+}
+
+/* Estilos para botones (reutilizando y adaptando de minuta.css) */
+.button-primary,
+.button-secondary,
+.button-eliminar-fila {
+  padding: 10px 18px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 0.95rem;
+  transition: background-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  text-align: center;
+  line-height: 1.5; /* Para mejor alineación vertical del texto */
+}
+
+.button-primary {
+  background-color: var(--primary-color);
+  color: var(--white);
+}
+.button-primary:hover:not(:disabled) {
+  background-color: var(--secondary-color);
+  box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+}
+
+.button-secondary {
+  background-color: var(--secondary-color);
+  color: var(--white);
+}
+.button-secondary:hover:not(:disabled) {
+  background-color: var(--primary-color);
+}
+
+.button-eliminar-fila {
+  background-color: var(--danger-color);
+  color: var(--white);
+  padding: 6px 12px;
+  font-size: 0.85rem;
+}
+.button-eliminar-fila:hover:not(:disabled) {
+  background-color: var(--danger-hover-color);
+}
+
+.button-primary:disabled,
+.button-secondary:disabled,
+.button-eliminar-fila:disabled {
+  background-color: #adb5bd;
+  color: #6c757d;
+  cursor: not-allowed;
+  box-shadow: none;
+  border-color: #adb5bd;
+}
+
+/* Sección de Notas */
+.notas-registro-container {
+  margin-bottom: 25px;
+  background-color: var(--white);
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px var(--shadow);
+}
+
+.textarea-notas {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--input-border);
+  border-radius: 5px;
+  background-color: var(--input-background);
+  color: var(--text-color);
+  font-size: 0.9rem;
+  box-sizing: border-box;
+  min-height: 100px;
+  resize: vertical;
+}
+.textarea-notas:focus {
+  border-color: var(--primary-color);
+  outline: 0;
+  box-shadow: 0 0 0 0.2rem rgba(23, 59, 76, 0.25);
+}
+
+/* Sección de Adecuación de la Dieta */
+.adecuacion-dieta-registro-container {
+  background-color: var(--white);
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px var(--shadow);
+  margin-bottom: 25px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 992px) { /* Ajustado breakpoint para tabletas */
+    .registro-tabla th,
+    .registro-tabla td {
+        font-size: 0.85rem;
+        padding: 8px 6px;
+    }
+    .select-tabla, .input-tabla[type="text"] {
+        min-width: 120px; /* Reducir min-width en pantallas más pequeñas */
+    }
+}
+
+@media (max-width: 768px) {
+  .registro-dietario-content h2 {
+    font-size: 1.4rem;
+  }
+  .registro-dietario-content h3 {
+    font-size: 1.1rem;
+  }
+  .registro-tabla th,
+  .registro-tabla td {
+    font-size: 0.8rem;
+    padding: 8px 4px;
+  }
+
+  .input-tabla,
+  .select-tabla {
+    font-size: 0.8rem;
+    padding: 6px 8px;
+  }
+  .select-tabla {
+    min-width: 100px;
+    padding-right: 2em; /* Ajustar padding para flecha */
+  }
+  .input-tabla.input-numero {
+    width: 60px;
+    min-width: 50px;
+  }
+
+  .button-primary,
+  .button-secondary {
+    font-size: 0.9rem;
+    padding: 8px 15px;
+  }
+  .acciones-tabla {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .acciones-pagina {
+    text-align: center !important; /* Forzar centrado en móviles */
+  }
+  .acciones-pagina .button-primary {
+    width: 100%;
+    max-width: 280px; /* Para que no ocupe todo el ancho en pantallas muy chicas pero sí sea grande */
+  }
+}
