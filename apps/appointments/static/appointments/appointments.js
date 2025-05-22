@@ -190,6 +190,7 @@ async function cargarResumenCitas(id_nutricionista) {
         const citasPorFecha = {};
         citas.forEach(cita => {
             const fechaClave = cita.fecha.split('T')[0]; // "2025-06-02"
+            // const fechaClave = cita.fecha;
             if (!citasPorFecha[fechaClave]) {
                 citasPorFecha[fechaClave] = [];
             }
@@ -256,7 +257,15 @@ async function cargarResumenCitas(id_nutricionista) {
                     <small>${cita.correo}</small><br>
                     ${horaTexto}<br>
                     <span class="badge ${badgeClass}">${cita.estado}</span>
-                `;
+                    ${cita.estado === 'Reservada' ? `
+                        <button class="btn btn-sm btn-outline-danger mt-2 cancelar-cita-btn"
+                        data-paciente-id="${cita.id_paciente}"
+                        data-nutricionista-id="${id_nutricionista}"
+                        data-fecha-hora="${cita.fecha} ${cita.hora}">
+                        <i class="fas fa-times-circle me-1"></i>Cancelar cita
+                        </button>
+                    ` : ''}
+                    `;
 
                 lista.appendChild(li);
             });
@@ -269,6 +278,53 @@ async function cargarResumenCitas(id_nutricionista) {
         console.error('❌ Error al cargar resumen de citas:', error);
         contenedor.innerHTML = '<p class="text-danger">Error al cargar las citas agendadas.</p>';
     }
+
+    document.querySelectorAll('.cancelar-cita-btn').forEach(btn => {
+        btn.addEventListener('click', async function () {
+            const idPaciente = this.getAttribute('data-paciente-id');
+            const idNutricionista = this.getAttribute('data-nutricionista-id');
+            const fechaHora = this.getAttribute('data-fecha-hora');
+
+            const confirmacion = await Swal.fire({
+                title: '¿Cancelar cita?',
+                text: '¿Está seguro que desea cancelar esta cita?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Sí, cancelar',
+                cancelButtonText: 'No'
+            });
+
+            if (!confirmacion.isConfirmed) return;
+
+            try {
+                const response = await fetch('https://nutrilinkapi-production.up.railway.app/api_nutrilink/agenda/cancelar_cita_nutricionista', {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        id_paciente: parseInt(idPaciente),
+                        id_nutricionista: parseInt(idNutricionista),
+                        fecha_hora: fechaHora
+                    })
+                });
+
+                const result = await response.json();
+
+                if (!response.ok || result.status !== 'ok') {
+                    throw new Error(result.mensaje || 'Error al cancelar la cita');
+                }
+
+                await Swal.fire('¡Cita cancelada!', result.mensaje, 'success');
+                cargarResumenCitas(parseInt(idNutricionista));
+
+            } catch (error) {
+                console.error('❌ Error al cancelar cita:', error);
+                Swal.fire('Error', error.message || 'No se pudo cancelar la cita', 'error');
+            }
+        });
+    });
+
 }
 
 // DOM

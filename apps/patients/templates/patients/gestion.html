@@ -672,6 +672,8 @@ document.addEventListener('click', async function (e) {
 
       const opciones = data.disponibilidades
         .filter(d => {
+          if (d.estado !== 'Disponible') return false; // ❌ Excluir si está Reservado
+
           const [anio, mes, dia] = d.fecha.split('T')[0].split('-');
           const fechaObj = new Date(parseInt(anio), parseInt(mes) - 1, parseInt(dia));
           const [horaStr, minutosStr] = d.hora.split(':');
