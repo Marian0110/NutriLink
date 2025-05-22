@@ -1,8 +1,165 @@
-{% extends "basePerfil.html" %}
+{% extends 'basePerfil.html' %}
 {% load static %}
-
-{% block title %}Antropometria{% endblock %}
+{% block title %}Registro Dietario 24 Horas{% endblock %}
 
 {% block perfilcontent %}
+<div class="registro-dietario-content patient-content">
+  <h2>Registro de 24 horas</h2>
 
+  <div class="registro-tabla-container">
+    <table id="tabla-registro-comidas" class="registro-tabla">
+      <thead>
+        <tr>
+          <th>Hora</th>
+          <th>Tiempo de Comida</th>
+          <th>Medida Equiv. (1 porción)</th>
+          <th>Porciones</th>
+          <th>Alimento</th>
+          <th>Gr</th>
+          <th>Kcal</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody id="cuerpo-tabla-registro">
+        <!-- Fila inicial de ejemplo -->
+        <tr>
+          <td><input type="time" class="input-tabla" name="hora_0"></td>
+          <td>
+            <select name="tiempo_comida_0" class="select-tabla">
+              <option value="" selected disabled>Seleccionar...</option>
+              <option value="desayuno">Desayuno</option>
+              <option value="colacion_am">Colación AM</option>
+              <option value="almuerzo">Almuerzo</option>
+              <option value="colacion_pm">Colación PM</option>
+              <option value="once">Once</option>
+              <option value="cena">Cena</option>
+              <option value="colacion_noche">Colación Noche</option>
+            </select>
+          </td>
+          <td><input type="text" class="input-tabla" name="medida_porcion_0" placeholder="Ej: 1 taza, 100g"></td>
+          <td><input type="number" class="input-tabla input-numero" name="porciones_0" min="0" step="0.1" placeholder="0"></td>
+          <td>
+            <select name="alimento_0" class="select-tabla">
+              <option value="" selected disabled>Seleccionar...</option>
+              <!-- Aquí idealmente se cargarían alimentos desde la BD -->
+              <option value="manzana">Manzana</option>
+              <option value="pollo_asado">Pollo Asado</option>
+              <option value="arroz_blanco">Arroz Blanco</option>
+              <option value="lentejas">Lentejas</option>
+              <option value="yogurt_natural">Yogurt Natural</option>
+            </select>
+          </td>
+          <td><input type="number" class="input-tabla input-numero" name="gramos_0" min="0" placeholder="0"></td>
+          <td><input type="number" class="input-tabla input-numero" name="kcal_0" min="0" placeholder="0"></td>
+          <td><button type="button" class="button-eliminar-fila">Eliminar</button></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="acciones-tabla">
+    <button type="button" id="btn-anadir-fila" class="button-secondary">Añadir Registro de Comida</button>
+  </div>
+
+  <div class="notas-registro-container">
+    <h3>Notas</h3>
+    <textarea id="notas-adicionales" name="notas_adicionales" class="textarea-notas" rows="4" placeholder="Suplementos / agua consumida / etc."></textarea>
+  </div>
+
+  <div class="adecuacion-dieta-registro-container">
+    <h3>Adecuación de la dieta</h3>
+    <!-- El contenido detallado de la adecuación se desarrollará más adelante -->
+    <p style="font-style: italic; color: var(--light-text);">Los cálculos de adecuación aparecerán aquí una vez guardado el registro.</p>
+  </div>
+
+  <div class="acciones-pagina" style="margin-top: 30px; text-align: right;">
+      <button type="button" id="btn-guardar-registro" class="button-primary">Guardar Registro de 24h</button>
+  </div>
+
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const btnAnadirFila = document.getElementById('btn-anadir-fila');
+    const cuerpoTabla = document.getElementById('cuerpo-tabla-registro');
+    let contadorFilas = 1; // Inicia en 1 ya que la fila 0 es la de ejemplo
+
+    if (btnAnadirFila && cuerpoTabla) {
+        btnAnadirFila.addEventListener('click', () => {
+            const nuevaFila = document.createElement('tr');
+            nuevaFila.innerHTML = `
+                <td><input type="time" class="input-tabla" name="hora_${contadorFilas}"></td>
+                <td>
+                    <select name="tiempo_comida_${contadorFilas}" class="select-tabla">
+                        <option value="" selected disabled>Seleccionar...</option>
+                        <option value="desayuno">Desayuno</option>
+                        <option value="colacion_am">Colación AM</option>
+                        <option value="almuerzo">Almuerzo</option>
+                        <option value="colacion_pm">Colación PM</option>
+                        <option value="once">Once</option>
+                        <option value="cena">Cena</option>
+                        <option value="colacion_noche">Colación Noche</option>
+                    </select>
+                </td>
+                <td><input type="text" class="input-tabla" name="medida_porcion_${contadorFilas}" placeholder="Ej: 1 taza, 100g"></td>
+                <td><input type="number" class="input-tabla input-numero" name="porciones_${contadorFilas}" min="0" step="0.1" placeholder="0"></td>
+                <td>
+                    <select name="alimento_${contadorFilas}" class="select-tabla">
+                        <option value="" selected disabled>Seleccionar...</option>
+                        <option value="manzana">Manzana</option>
+                        <option value="pollo_asado">Pollo Asado</option>
+                        <option value="arroz_blanco">Arroz Blanco</option>
+                        <option value="lentejas">Lentejas</option>
+                        <option value="yogurt_natural">Yogurt Natural</option>
+                    </select>
+                </td>
+                <td><input type="number" class="input-tabla input-numero" name="gramos_${contadorFilas}" min="0" placeholder="0"></td>
+                <td><input type="number" class="input-tabla input-numero" name="kcal_${contadorFilas}" min="0" placeholder="0"></td>
+                <td><button type="button" class="button-eliminar-fila">Eliminar</button></td>
+            `;
+            cuerpoTabla.appendChild(nuevaFila);
+            contadorFilas++;
+        });
+
+        cuerpoTabla.addEventListener('click', (event) => {
+            if (event.target.classList.contains('button-eliminar-fila')) {
+                if (cuerpoTabla.rows.length > 1) {
+                    event.target.closest('tr').remove();
+                } else {
+                    // Opcional: Limpiar campos de la última fila en lugar de alertar
+                    const ultimaFila = cuerpoTabla.rows[0];
+                    ultimaFila.querySelectorAll('input, select').forEach(input => {
+                        if(input.tagName === 'SELECT') input.selectedIndex = 0;
+                        else input.value = '';
+                    });
+                    // alert("No se puede eliminar la última fila. Puedes modificarla.");
+                }
+            }
+        });
+    }
+
+    // Placeholder para la lógica de guardado
+    const btnGuardarRegistro = document.getElementById('btn-guardar-registro');
+    if (btnGuardarRegistro) {
+        btnGuardarRegistro.addEventListener('click', () => {
+            // Aquí iría la lógica para recolectar los datos de la tabla y las notas
+            // y enviarlos al backend.
+            console.log("Guardando registro...");
+            alert("Funcionalidad de guardado aún no implementada completamente.");
+            // Ejemplo de recolección:
+            // const filasData = [];
+            // cuerpoTabla.querySelectorAll('tr').forEach(fila => {
+            //     const filaData = {
+            //         hora: fila.querySelector('input[name^="hora_"]').value,
+            //         tiempo_comida: fila.querySelector('select[name^="tiempo_comida_"]').value,
+            //         // ... y así con los demás campos
+            //     };
+            //     filasData.push(filaData);
+            // });
+            // const notas = document.getElementById('notas-adicionales').value;
+            // console.log({ registros: filasData, notas: notas });
+        });
+    }
+});
+</script>
 {% endblock %}

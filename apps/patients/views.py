@@ -109,7 +109,7 @@ def minuta(request, id_paciente):
         'paciente': paciente,
         'section': 'minuta'
     })
-
+    
 def registroDietario(request, id_paciente):
     paciente = get_paciente_data(id_paciente)
     
