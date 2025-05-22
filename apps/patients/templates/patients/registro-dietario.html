@@ -2,6 +2,10 @@
 {% load static %}
 {% block title %}Registro Dietario 24 Horas{% endblock %}
 
+{% block head_extra %}
+  <link rel="stylesheet" href="{% static 'css/registro-dietario.css' %}">
+{% endblock %}
+
 {% block perfilcontent %}
 <div class="registro-dietario-content patient-content">
   <h2>Registro de 24 horas</h2>
@@ -21,27 +25,21 @@
         </tr>
       </thead>
       <tbody id="cuerpo-tabla-registro">
-        <!-- Fila inicial de ejemplo -->
+        <!-- Fila inicial (el select de tiempo de comida se llenará dinámicamente) -->
         <tr>
           <td><input type="time" class="input-tabla" name="hora_0"></td>
           <td>
-            <select name="tiempo_comida_0" class="select-tabla">
-              <option value="" selected disabled>Seleccionar...</option>
-              <option value="desayuno">Desayuno</option>
-              <option value="colacion_am">Colación AM</option>
-              <option value="almuerzo">Almuerzo</option>
-              <option value="colacion_pm">Colación PM</option>
-              <option value="once">Once</option>
-              <option value="cena">Cena</option>
-              <option value="colacion_noche">Colación Noche</option>
+            <select name="tiempo_comida_0" class="select-tabla select-tiempo-comida">
+              <option value="" selected disabled>Cargando tiempos...</option>
+              <!-- Opciones se cargarán desde JS -->
             </select>
           </td>
           <td><input type="text" class="input-tabla" name="medida_porcion_0" placeholder="Ej: 1 taza, 100g"></td>
           <td><input type="number" class="input-tabla input-numero" name="porciones_0" min="0" step="0.1" placeholder="0"></td>
           <td>
-            <select name="alimento_0" class="select-tabla">
+            <select name="alimento_0" class="select-tabla select-alimento">
               <option value="" selected disabled>Seleccionar...</option>
-              <!-- Aquí idealmente se cargarían alimentos desde la BD -->
+              <!-- Aquí idealmente se cargarían alimentos desde la BD o API -->
               <option value="manzana">Manzana</option>
               <option value="pollo_asado">Pollo Asado</option>
               <option value="arroz_blanco">Arroz Blanco</option>
@@ -68,7 +66,6 @@
 
   <div class="adecuacion-dieta-registro-container">
     <h3>Adecuación de la dieta</h3>
-    <!-- El contenido detallado de la adecuación se desarrollará más adelante -->
     <p style="font-style: italic; color: var(--light-text);">Los cálculos de adecuación aparecerán aquí una vez guardado el registro.</p>
   </div>
 
@@ -79,32 +76,73 @@
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => { // Hacemos el callback async
     const btnAnadirFila = document.getElementById('btn-anadir-fila');
     const cuerpoTabla = document.getElementById('cuerpo-tabla-registro');
+    const btnGuardarRegistro = document.getElementById('btn-guardar-registro');
     let contadorFilas = 1; // Inicia en 1 ya que la fila 0 es la de ejemplo
+    let listaTiemposComida = []; // Para almacenar los tiempos de comida
 
+    // --- FUNCIÓN PARA OBTENER TIEMPOS DE COMIDA ---
+    async function fetchTiemposComida() {
+        try {
+            const response = await fetch('https://nutrilinkapi-production.up.railway.app/api_nutrilink/minuta/obtener_tiempos_comida_con_id');
+            if (!response.ok) {
+                throw new Error(`Error HTTP ${response.status} al obtener tiempos de comida`);
+            }
+            const data = await response.json();
+            listaTiemposComida = data; // Guardar los datos
+            return data;
+        } catch (error) {
+            console.error("Error al cargar tiempos de comida:", error);
+            // Podrías mostrar un mensaje al usuario aquí
+            const selectsTiempoComida = document.querySelectorAll('.select-tiempo-comida');
+            selectsTiempoComida.forEach(select => {
+                select.innerHTML = '<option value="" disabled selected>Error al cargar</option>';
+            });
+            return []; // Retorna array vacío en caso de error
+        }
+    }
+
+    // --- FUNCIÓN PARA POBLAR UN SELECT DE TIEMPO DE COMIDA ---
+    function populateTiempoComidaSelect(selectElement, tiempos) {
+        if (!selectElement || !tiempos || tiempos.length === 0) {
+            if(selectElement) selectElement.innerHTML = '<option value="" disabled selected>No hay opciones</option>';
+            return;
+        }
+        selectElement.innerHTML = '<option value="" selected disabled>Seleccionar...</option>'; // Limpiar y añadir placeholder
+        tiempos.forEach(tiempo => {
+            const option = document.createElement('option');
+            option.value = tiempo.id_tiempo_comida; // Usamos el ID como valor
+            option.textContent = tiempo.descripcion;
+            selectElement.appendChild(option);
+        });
+    }
+
+    // --- INICIALIZACIÓN ---
+    // Cargar tiempos de comida al inicio y poblar el select inicial
+    await fetchTiemposComida(); // Esperar a que se carguen los tiempos
+    const selectInicial = cuerpoTabla.querySelector('tr:first-child .select-tiempo-comida');
+    if (selectInicial) {
+        populateTiempoComidaSelect(selectInicial, listaTiemposComida);
+    }
+
+
+    // --- EVENT LISTENERS ---
     if (btnAnadirFila && cuerpoTabla) {
         btnAnadirFila.addEventListener('click', () => {
             const nuevaFila = document.createElement('tr');
             nuevaFila.innerHTML = `
                 <td><input type="time" class="input-tabla" name="hora_${contadorFilas}"></td>
                 <td>
-                    <select name="tiempo_comida_${contadorFilas}" class="select-tabla">
-                        <option value="" selected disabled>Seleccionar...</option>
-                        <option value="desayuno">Desayuno</option>
-                        <option value="colacion_am">Colación AM</option>
-                        <option value="almuerzo">Almuerzo</option>
-                        <option value="colacion_pm">Colación PM</option>
-                        <option value="once">Once</option>
-                        <option value="cena">Cena</option>
-                        <option value="colacion_noche">Colación Noche</option>
+                    <select name="tiempo_comida_${contadorFilas}" class="select-tabla select-tiempo-comida">
+                        <!-- Opciones se cargarán desde JS -->
                     </select>
                 </td>
                 <td><input type="text" class="input-tabla" name="medida_porcion_${contadorFilas}" placeholder="Ej: 1 taza, 100g"></td>
                 <td><input type="number" class="input-tabla input-numero" name="porciones_${contadorFilas}" min="0" step="0.1" placeholder="0"></td>
                 <td>
-                    <select name="alimento_${contadorFilas}" class="select-tabla">
+                    <select name="alimento_${contadorFilas}" class="select-tabla select-alimento">
                         <option value="" selected disabled>Seleccionar...</option>
                         <option value="manzana">Manzana</option>
                         <option value="pollo_asado">Pollo Asado</option>
@@ -118,6 +156,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 <td><button type="button" class="button-eliminar-fila">Eliminar</button></td>
             `;
             cuerpoTabla.appendChild(nuevaFila);
+
+            // Poblar el nuevo select de tiempo de comida
+            const nuevoSelectTiempoComida = nuevaFila.querySelector('.select-tiempo-comida');
+            if (nuevoSelectTiempoComida) {
+                populateTiempoComidaSelect(nuevoSelectTiempoComida, listaTiemposComida);
+            }
             contadorFilas++;
         });
 
@@ -126,40 +170,133 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (cuerpoTabla.rows.length > 1) {
                     event.target.closest('tr').remove();
                 } else {
-                    // Opcional: Limpiar campos de la última fila en lugar de alertar
                     const ultimaFila = cuerpoTabla.rows[0];
                     ultimaFila.querySelectorAll('input, select').forEach(input => {
-                        if(input.tagName === 'SELECT') input.selectedIndex = 0;
+                        if(input.tagName === 'SELECT') input.selectedIndex = 0; // Resetea a "Seleccionar..." o "Cargando..."
                         else input.value = '';
                     });
-                    // alert("No se puede eliminar la última fila. Puedes modificarla.");
+                    // Si el select es de tiempo de comida, repoblarlo por si se borró al resetear
+                    const selectTiempo = ultimaFila.querySelector('.select-tiempo-comida');
+                    if (selectTiempo) {
+                        populateTiempoComidaSelect(selectTiempo, listaTiemposComida);
+                    }
                 }
             }
         });
     }
 
-    // Placeholder para la lógica de guardado
-    const btnGuardarRegistro = document.getElementById('btn-guardar-registro');
     if (btnGuardarRegistro) {
         btnGuardarRegistro.addEventListener('click', () => {
-            // Aquí iría la lógica para recolectar los datos de la tabla y las notas
-            // y enviarlos al backend.
             console.log("Guardando registro...");
-            alert("Funcionalidad de guardado aún no implementada completamente.");
-            // Ejemplo de recolección:
-            // const filasData = [];
-            // cuerpoTabla.querySelectorAll('tr').forEach(fila => {
-            //     const filaData = {
-            //         hora: fila.querySelector('input[name^="hora_"]').value,
-            //         tiempo_comida: fila.querySelector('select[name^="tiempo_comida_"]').value,
-            //         // ... y así con los demás campos
-            //     };
-            //     filasData.push(filaData);
+            
+            const filasData = [];
+            const filasInvalidas = [];
+            let esValido = true;
+
+            cuerpoTabla.querySelectorAll('tr').forEach((fila, index) => {
+                const horaInput = fila.querySelector('input[name^="hora_"]');
+                const tiempoComidaSelect = fila.querySelector('select[name^="tiempo_comida_"]');
+                // Podrías añadir más validaciones aquí (ej. alimento seleccionado, alguna cantidad)
+
+                let filaValida = true;
+                if (!horaInput.value) {
+                    horaInput.style.borderColor = 'red';
+                    filaValida = false;
+                } else {
+                    horaInput.style.borderColor = '';
+                }
+
+                if (!tiempoComidaSelect.value) {
+                    tiempoComidaSelect.style.borderColor = 'red';
+                    filaValida = false;
+                } else {
+                    tiempoComidaSelect.style.borderColor = '';
+                }
+
+                // Si al menos un campo de cantidad (porciones, gr, kcal) tiene valor, considerar la fila para guardar.
+                // Esto evita guardar filas completamente vacías accidentalmente.
+                const porciones = fila.querySelector('input[name^="porciones_"]').value;
+                const gramos = fila.querySelector('input[name^="gramos_"]').value;
+                const kcal = fila.querySelector('input[name^="kcal_"]').value;
+
+                if (horaInput.value || tiempoComidaSelect.value || porciones || gramos || kcal) { // Solo procesar si hay algún dato
+                    if (!filaValida) {
+                        esValido = false;
+                        filasInvalidas.push(index + 1); // +1 para que sea human-readable
+                    }
+
+                    const filaData = {
+                        hora: horaInput.value,
+                        id_tiempo_comida: tiempoComidaSelect.value, // Guardamos el ID
+                        tiempo_comida_descripcion: tiempoComidaSelect.selectedOptions.length > 0 ? tiempoComidaSelect.selectedOptions[0].text : '',
+                        medida_porcion: fila.querySelector('input[name^="medida_porcion_"]').value,
+                        porciones: porciones,
+                        id_alimento: fila.querySelector('select[name^="alimento_"]').value,
+                        alimento_descripcion: fila.querySelector('select[name^="alimento_"]').selectedOptions.length > 0 ? fila.querySelector('select[name^="alimento_"]').selectedOptions[0].text : '',
+                        gramos: gramos,
+                        kcal: kcal,
+                    };
+                    filasData.push(filaData);
+                }
+            });
+
+            if (!esValido) {
+                alert(`Por favor, complete los campos obligatorios (Hora, Tiempo de Comida) en la(s) fila(s): ${filasInvalidas.join(', ')}.`);
+                return;
+            }
+            
+            if (filasData.length === 0) {
+                alert("No hay registros de comida para guardar. Por favor, añada al menos uno.");
+                return;
+            }
+
+            const notas = document.getElementById('notas-adicionales').value;
+            const payload = {
+                registros: filasData,
+                notas: notas
+                // Aquí podrías añadir el ID del paciente si es necesario para el backend
+                // paciente_id: TU_PACIENTE_ID
+            };
+            console.log("Payload a enviar:", JSON.stringify(payload, null, 2));
+            alert("Datos listos para enviar (ver consola). Implementar el fetch al backend aquí.");
+
+            // Aquí iría el fetch POST al backend
+            // fetch('/api/guardar_registro_dietario', {
+            //     method: 'POST',
+            //     headers: {
+            //         'Content-Type': 'application/json',
+            //         'X-CSRFToken': getCookie('csrftoken') // Si usas Django CSRF
+            //     },
+            //     body: JSON.stringify(payload)
+            // })
+            // .then(response => response.json())
+            // .then(data => {
+            //     console.log('Respuesta del servidor:', data);
+            //     alert('Registro guardado exitosamente!');
+            // })
+            // .catch(error => {
+            //     console.error('Error al guardar:', error);
+            //     alert('Error al guardar el registro.');
             // });
-            // const notas = document.getElementById('notas-adicionales').value;
-            // console.log({ registros: filasData, notas: notas });
         });
     }
+
+    // Función para obtener cookies (si usas Django CSRF)
+    // function getCookie(name) {
+    //     let cookieValue = null;
+    //     if (document.cookie && document.cookie !== '') {
+    //         const cookies = document.cookie.split(';');
+    //         for (let i = 0; i < cookies.length; i++) {
+    //             const cookie = cookies[i].trim();
+    //             if (cookie.substring(0, name.length + 1) === (name + '=')) {
+    //                 cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+    //                 break;
+    //             }
+    //         }
+    //     }
+    //     return cookieValue;
+    // }
+
 });
 </script>
 {% endblock %}
