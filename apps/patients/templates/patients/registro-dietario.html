@@ -3,6 +3,11 @@
 {% load static %}
 {% block title %}Registro Dietario 24 Horas{% endblock %}
 
+{% block head_extra %}
+  <link rel="stylesheet" href="{% static 'css/registro-dietario.css' %}">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+{% endblock %}
+
 {% block perfilcontent %}
 <div class="registro-dietario-content patient-content">
   <h2>Registro de 24 horas</h2>
@@ -73,7 +78,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const datosAlimentoPorFilaDOM = new Map();
     let mealTimeBlockCounter = 0;
 
-    async function fetchAPI(url, entityName, options = {}) {
+    async function fetchAPI(url, entityName, options = {}) { /* ... sin cambios ... */ 
         try {
             const response = await fetch(url, options);
             if (!response.ok) {
@@ -81,7 +86,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 try {
                     const errorData = await response.json();
                     errorDetail = errorData.mensaje || errorData.detail || JSON.stringify(errorData);
-                } catch (e) { /* No es JSON, usar el status text o el errorDetail original */ 
+                } catch (e) { 
                     errorDetail = response.statusText || errorDetail;
                 }
                 throw new Error(errorDetail);
@@ -94,32 +99,39 @@ document.addEventListener('DOMContentLoaded', async () => {
             throw error;
         }
     }
-
-    function populateSelect(selectElement, opciones, valorKey, textoKey, placeholderTexto = "Seleccionar...", currentValue = null, disabled = false) {
-        selectElement.innerHTML = `<option value="" ${!currentValue ? 'selected' : ''} disabled>${placeholderTexto}</option>`;
+    
+    function populateSelect(selectElement, opciones, valorKey, textoKey, placeholderTexto = "Seleccionar...", currentValue = null, disabled = false) { /* ... sin cambios ... */
+        const valorSeleccionadoAntes = currentValue !== null ? currentValue : selectElement.value;
+        selectElement.innerHTML = `<option value="" ${!valorSeleccionadoAntes ? 'selected' : ''} disabled>${placeholderTexto}</option>`;
+        
         if (!opciones || opciones.length === 0) {
-             selectElement.innerHTML += `<option value="" disabled>No hay opciones disponibles</option>`;
-             selectElement.disabled = true;
+             selectElement.innerHTML += `<option value="" disabled>No hay opciones</option>`;
              return;
         }
         opciones.forEach(opcion => {
             const optionEl = document.createElement('option');
             optionEl.value = opcion[valorKey];
             optionEl.textContent = opcion[textoKey];
-            if (currentValue && opcion[valorKey].toString() === currentValue.toString()) {
-                optionEl.selected = true;
-            }
             selectElement.appendChild(optionEl);
         });
+        
+        if (valorSeleccionadoAntes && selectElement.querySelector(`option[value="${valorSeleccionadoAntes}"]`)) {
+            selectElement.value = valorSeleccionadoAntes;
+        } else if (selectElement.options.length > 1 && !selectElement.value) { 
+             selectElement.selectedIndex = 0;
+        }
         selectElement.disabled = disabled;
     }
 
-    async function cargarDatosBase() {
+    async function cargarDatosBase() { /* ... sin cambios ... */ 
         try {
             [ALL_TIEMPOS_COMIDA_DATA, ALL_ALIMENTOS_DATA] = await Promise.all([
                 fetchAPI('https://nutrilinkapi-production.up.railway.app/api_nutrilink/minuta/obtener_tiempos_comida_con_id', 'tiempos de comida'),
                 fetchAPI('https://nutrilinkapi-production.up.railway.app/api_nutrilink/alimento/alimentos', 'alimentos')
             ]);
+            if (ALL_ALIMENTOS_DATA) {
+                ALL_ALIMENTOS_DATA.sort((a, b) => a.nombre_alimento.localeCompare(b.nombre_alimento));
+            }
         } catch (error) {
             if (btnAnadirTiempoComida) btnAnadirTiempoComida.disabled = true;
             if (btnGuardarRegistroCompleto) btnGuardarRegistroCompleto.disabled = true;
@@ -127,7 +139,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
     
-    function actualizarValoresNutricionalesFilaAlimento(filaAlimento, alimentoData, porciones) {
+    function actualizarValoresNutricionalesFilaAlimento(filaAlimento, alimentoData, porciones) { /* ... sin cambios ... */ 
         const numPorciones = parseFloat(porciones) || 0;
         const inputs = {
             medidaEquiv: filaAlimento.querySelector('.input-medida-equiv'),
@@ -147,7 +159,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             sodio: filaAlimento.querySelector('.input-sodio'),
         };
 
-        if (alimentoData && inputs.medidaEquiv) { // Asegurarse que los inputs existen
+        if (alimentoData && inputs.medidaEquiv) { 
             inputs.medidaEquiv.value = `${parseFloat(alimentoData.numero_medida).toFixed(2)} ${alimentoData.medida}`;
             const camposBase = {
                 gramos: alimentoData.masa, kcal: alimentoData.kcal, proteinas: alimentoData.proteinas_gr,
@@ -181,7 +193,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
     
-    function createMealTimeBlock(tiempoComidaIdPreselect = null, horaPreselect = "", alimentosPreselect = []) {
+    function createMealTimeBlock(tiempoComidaIdPreselect = null, horaPreselect = "", alimentosPreselect = []) { /* ... sin cambios ... */ 
         const blockId = `mtb-${mealTimeBlockCounter++}`;
         const blockDiv = document.createElement('div');
         blockDiv.classList.add('tiempo-comida-block');
@@ -270,8 +282,105 @@ document.addEventListener('DOMContentLoaded', async () => {
         const nuevaFilaAlimento = tbodyAlimentos.insertRow();
         nuevaFilaAlimento.dataset.foodRowId = foodRowId;
         
-        nuevaFilaAlimento.innerHTML = `
-            <td><select name="alimento_${foodRowId}" class="select-tabla select-alimento"><option value="" selected disabled>Cargando...</option></select></td>
+        const cellAlimento = nuevaFilaAlimento.insertCell();
+        cellAlimento.classList.add('cell-alimento-dropdown-container'); 
+
+        // Contenedor principal del dropdown "inteligente"
+        const dropdownContainer = document.createElement('div');
+        dropdownContainer.classList.add('alimento-searchable-dropdown');
+
+        // Botón que muestra la selección actual y abre el panel
+        const dropdownButton = document.createElement('button');
+        dropdownButton.type = 'button';
+        dropdownButton.classList.add('alimento-dropdown-button');
+        dropdownButton.textContent = 'Seleccione alimento...'; // Placeholder inicial
+
+        // Panel desplegable con el input de búsqueda y la lista de opciones
+        const dropdownPanel = document.createElement('div');
+        dropdownPanel.classList.add('alimento-dropdown-panel');
+
+        const inputFiltroPanel = document.createElement('input');
+        inputFiltroPanel.type = 'text';
+        inputFiltroPanel.classList.add('input-tabla', 'input-filtro-alimento-panel');
+        inputFiltroPanel.placeholder = 'Buscar...';
+        
+        const optionsList = document.createElement('ul');
+        optionsList.classList.add('alimento-options-list');
+
+        dropdownPanel.appendChild(inputFiltroPanel);
+        dropdownPanel.appendChild(optionsList);
+        
+        // Select oculto que realmente almacena el valor
+        const hiddenSelect = document.createElement('select');
+        hiddenSelect.name = `alimento_${foodRowId}`; // El name va en el select real
+        hiddenSelect.style.display = 'none'; // Ocultar este select
+        hiddenSelect.classList.add('select-alimento-hidden'); // Clase para identificarlo
+
+        dropdownContainer.appendChild(dropdownButton);
+        dropdownContainer.appendChild(dropdownPanel);
+        dropdownContainer.appendChild(hiddenSelect); // Añadir el select oculto
+        cellAlimento.appendChild(dropdownContainer);
+
+        // Función para poblar la lista de opciones en el panel
+        function populateOptionsList(alimentosToShow, selectedValue) {
+            optionsList.innerHTML = ''; // Limpiar lista
+            if (alimentosToShow.length === 0) {
+                const noResultsLi = document.createElement('li');
+                noResultsLi.classList.add('no-results');
+                noResultsLi.textContent = 'No se encontraron alimentos.';
+                optionsList.appendChild(noResultsLi);
+                return;
+            }
+            alimentosToShow.forEach(alimento => {
+                const li = document.createElement('li');
+                li.classList.add('alimento-option-item');
+                li.textContent = alimento.nombre_alimento;
+                li.dataset.value = alimento.id_alimento;
+                if (alimento.id_alimento.toString() === selectedValue) {
+                    li.classList.add('selected-item');
+                }
+                li.addEventListener('click', () => {
+                    hiddenSelect.value = alimento.id_alimento;
+                    dropdownButton.textContent = alimento.nombre_alimento;
+                    inputFiltroPanel.value = alimento.nombre_alimento; // Sincronizar input del panel
+                    dropdownPanel.classList.remove('visible');
+                    // Disparar evento change en el select oculto para la lógica de actualización de nutrientes
+                    hiddenSelect.dispatchEvent(new Event('change', { bubbles: true }));
+                });
+                optionsList.appendChild(li);
+            });
+        }
+        
+        // Evento para el input de filtro dentro del panel
+        inputFiltroPanel.addEventListener('input', () => {
+            const filtro = inputFiltroPanel.value.toLowerCase().trim();
+            const alimentosFiltrados = ALL_ALIMENTOS_DATA.filter(alimento => 
+                alimento.nombre_alimento.toLowerCase().includes(filtro)
+            );
+            populateOptionsList(alimentosFiltrados, hiddenSelect.value);
+        });
+
+        // Evento para abrir/cerrar el panel
+        dropdownButton.addEventListener('click', (e) => {
+            e.stopPropagation(); // Evitar que el click se propague al document
+            // Cerrar otros paneles abiertos
+            document.querySelectorAll('.alimento-dropdown-panel.visible').forEach(panel => {
+                if (panel !== dropdownPanel) panel.classList.remove('visible');
+            });
+            dropdownPanel.classList.toggle('visible');
+            if (dropdownPanel.classList.contains('visible')) {
+                inputFiltroPanel.focus(); // Foco en el input al abrir
+                // Poblar con todos los alimentos o el filtrado actual si ya había texto
+                const filtroActual = inputFiltroPanel.value.toLowerCase().trim();
+                const alimentosAMostrar = filtroActual ? 
+                    ALL_ALIMENTOS_DATA.filter(a => a.nombre_alimento.toLowerCase().includes(filtroActual)) :
+                    ALL_ALIMENTOS_DATA;
+                populateOptionsList(alimentosAMostrar, hiddenSelect.value);
+            }
+        });
+        
+        // Insertar el resto de las celdas
+        const otherCellsHTML = `
             <td><input type="text" class="input-tabla input-medida-equiv" name="medida_equiv_${foodRowId}" readonly></td>
             <td><input type="number" class="input-tabla input-numero input-porciones" name="porciones_${foodRowId}" min="0" step="0.1" value="${porcionesPreselect}"></td>
             <td><input type="number" class="input-tabla input-numero input-gramos" name="gramos_${foodRowId}" readonly></td>
@@ -290,12 +399,22 @@ document.addEventListener('DOMContentLoaded', async () => {
             <td><input type="number" class="input-tabla input-numero input-sodio" name="sodio_${foodRowId}" readonly></td>
             <td><button type="button" class="button-eliminar-fila button-eliminar-alimento">Eliminar</button></td>
         `;
-        const selectAlimento = nuevaFilaAlimento.querySelector('.select-alimento');
-        populateSelect(selectAlimento, ALL_ALIMENTOS_DATA, 'id_alimento', 'nombre_alimento', 'Seleccione alimento...', alimentoIdPreselect);
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = `<table><tr>${otherCellsHTML}</tr></table>`;
+        Array.from(tempDiv.querySelector('tr').cells).forEach(cell => {
+            nuevaFilaAlimento.appendChild(cell);
+        });
 
+        // Poblar el select oculto para que tenga las opciones (aunque no sea visible)
+        // Esto es importante si algún código externo o validación depende de él.
+        populateSelect(hiddenSelect, ALL_ALIMENTOS_DATA, 'id_alimento', 'nombre_alimento', 'Seleccione alimento...', alimentoIdPreselect);
+        
         if (alimentoIdPreselect) {
             const alimentoData = ALL_ALIMENTOS_DATA.find(a => a.id_alimento.toString() === alimentoIdPreselect.toString());
             if (alimentoData) {
+                dropdownButton.textContent = alimentoData.nombre_alimento; // Actualizar texto del botón
+                inputFiltroPanel.value = alimentoData.nombre_alimento; // Sincronizar input del panel
+                hiddenSelect.value = alimentoIdPreselect; // Asegurar valor en select oculto
                 datosAlimentoPorFilaDOM.set(nuevaFilaAlimento, alimentoData);
                 actualizarValoresNutricionalesFilaAlimento(nuevaFilaAlimento, alimentoData, porcionesPreselect);
             } else {
@@ -305,16 +424,26 @@ document.addEventListener('DOMContentLoaded', async () => {
             actualizarValoresNutricionalesFilaAlimento(nuevaFilaAlimento, null, porcionesPreselect);
         }
     }
+    
+    // Cerrar todos los dropdowns de alimento si se hace clic fuera de ellos
+    document.addEventListener('click', (e) => {
+        const openPanels = document.querySelectorAll('.alimento-dropdown-panel.visible');
+        openPanels.forEach(panel => {
+            const dropdownContainer = panel.closest('.alimento-searchable-dropdown');
+            if (dropdownContainer && !dropdownContainer.contains(e.target)) {
+                panel.classList.remove('visible');
+            }
+        });
+    });
 
-    function getSelectedMealTimeIdsDOM() {
+    function getSelectedMealTimeIdsDOM() { /* ... sin cambios ... */ 
         const selected = [];
         tiemposComidaContainer.querySelectorAll('.select-tiempo-comida-block').forEach(select => {
             if (select.value && select.value !== "") selected.push(parseInt(select.value));
         });
         return selected;
     }
-
-    function updateAllMealTimeSelects() {
+    function updateAllMealTimeSelects() { /* ... sin cambios ... */ 
         const allBlockSelects = tiemposComidaContainer.querySelectorAll('.select-tiempo-comida-block');
         const overallSelectedIds = getSelectedMealTimeIdsDOM(); 
 
@@ -327,35 +456,26 @@ document.addEventListener('DOMContentLoaded', async () => {
                        !overallSelectedIds.some(id => id === time.id_tiempo_comida && id !== currentValueForThisSelect);
             });
             
-            const currentlySelectedValueInDOM = currentSelect.value; // Guardar el valor actual del DOM
+            const currentlySelectedValueInDOM = currentSelect.value; 
             populateSelect(currentSelect, availableForThisSelect, 'id_tiempo_comida', 'descripcion', 'Seleccionar Tiempo...', currentValueForThisSelect);
             
-            // Re-establecer el valor si el dataset.tiempoId no estaba en las opciones disponibles pero sí estaba seleccionado en el DOM
-            // Esto es para cuando se carga la página y un tiempo ya estaba seleccionado pero aún no se había filtrado por overallSelectedIds
-            if (currentValueForThisSelect && currentSelect.value !== currentValueForThisSelect.toString()) {
-                 if (availableForThisSelect.some(opt => opt.id_tiempo_comida === currentValueForThisSelect)) {
+            if (currentValueForThisSelect && currentSelect.value != currentValueForThisSelect) { 
+                 if (availableForThisSelect.some(opt => opt.id_tiempo_comida == currentValueForThisSelect)) {
                     currentSelect.value = currentValueForThisSelect;
                  } else if (currentlySelectedValueInDOM && availableForThisSelect.some(opt => opt.id_tiempo_comida.toString() === currentlySelectedValueInDOM)) {
-                    // Si el dataset.tiempoId ya no es válido (porque otro bloque lo tomó),
-                    // pero el valor que *tenía* el select antes de repopular sigue siendo válido, usar ese.
                     currentSelect.value = currentlySelectedValueInDOM;
-                    blockDiv.dataset.tiempoId = currentlySelectedValueInDOM; // Actualizar el dataset
+                    blockDiv.dataset.tiempoId = currentlySelectedValueInDOM; 
                  } else {
-                    // Si ni el dataset.tiempoId ni el valor anterior del DOM son válidos,
-                    // el select quedará en el placeholder (primera opción disabled).
-                    // Y el dataset.tiempoId debería limpiarse o el usuario elegir uno nuevo.
                     blockDiv.dataset.tiempoId = ""; 
+                    if (currentSelect.options.length > 0) currentSelect.selectedIndex = 0; 
                  }
             } else if (!currentValueForThisSelect && currentSelect.value !== "") {
-                // Si el dataset no tenía valor pero el select sí, actualizar el dataset.
                 blockDiv.dataset.tiempoId = currentSelect.value;
             }
-
         });
         updateAddMealButtonState();
     }
-
-    function updateAddMealButtonState() {
+    function updateAddMealButtonState() { /* ... sin cambios ... */ 
         if (!btnAnadirTiempoComida || !ALL_TIEMPOS_COMIDA_DATA) return;
         const numBloquesActuales = tiemposComidaContainer.querySelectorAll('.tiempo-comida-block').length;
         const numTotalTiemposComida = ALL_TIEMPOS_COMIDA_DATA.length;
@@ -368,8 +488,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             btnAnadirTiempoComida.disabled = true;
         }
     }
-
-    async function handleDeleteMealTimeBlock(blockDiv) {
+    async function handleDeleteMealTimeBlock(blockDiv) { /* ... sin cambios ... */ 
         const result = await Swal.fire({
             title: '¿Eliminar Tiempo de Comida?',
             text: "Esto quitará este tiempo de comida y todos sus alimentos del registro actual. Los cambios se reflejarán al guardar.",
@@ -390,21 +509,38 @@ document.addEventListener('DOMContentLoaded', async () => {
             reorderMealTimeBlocksByTime(); 
         }
     }
-
-    function handleDeleteFoodRow(foodRowElement) {
+    function handleDeleteFoodRow(foodRowElement) { /* ... sin cambios ... */ 
         const tbody = foodRowElement.closest('tbody');
         if (tbody && tbody.rows.length > 1) {
             datosAlimentoPorFilaDOM.delete(foodRowElement);
             foodRowElement.remove();
         } else { 
-            foodRowElement.querySelector('.select-alimento').value = "";
+            // Para el nuevo dropdown:
+            const dropdownContainer = foodRowElement.querySelector('.alimento-searchable-dropdown');
+            if (dropdownContainer) {
+                dropdownContainer.querySelector('.alimento-dropdown-button').textContent = 'Seleccione alimento...';
+                dropdownContainer.querySelector('.input-filtro-alimento-panel').value = "";
+                const hiddenSelect = dropdownContainer.querySelector('.select-alimento-hidden');
+                hiddenSelect.value = "";
+                 // Repoblar la lista de opciones del panel con todos los alimentos
+                const optionsList = dropdownContainer.querySelector('.alimento-options-list');
+                optionsList.innerHTML = ''; // Limpiar primero
+                ALL_ALIMENTOS_DATA.forEach(alimento => {
+                     const li = document.createElement('li');
+                     li.classList.add('alimento-option-item');
+                     li.textContent = alimento.nombre_alimento;
+                     li.dataset.value = alimento.id_alimento;
+                     li.addEventListener('click', () => { /* Re-asignar evento si es necesario o confiar en la lógica de populateOptionsList */ });
+                     optionsList.appendChild(li);
+                });
+
+            }
             foodRowElement.querySelector('.input-porciones').value = "1";
             actualizarValoresNutricionalesFilaAlimento(foodRowElement, null, 1);
             datosAlimentoPorFilaDOM.delete(foodRowElement);
         }
     }
-
-    function reorderMealTimeBlocksByTime() {
+    function reorderMealTimeBlocksByTime() { /* ... sin cambios ... */ 
         const blocks = Array.from(tiemposComidaContainer.querySelectorAll('.tiempo-comida-block'));
         if (blocks.length <= 1) return;
 
@@ -420,6 +556,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         blocks.forEach(block => tiemposComidaContainer.appendChild(block));
     }
 
+    // Modificar el event listener de 'change' para el select oculto
     tiemposComidaContainer.addEventListener('change', (event) => {
         const target = event.target;
         const foodRow = target.closest('tr[data-food-row-id]');
@@ -431,11 +568,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         } else if (target.classList.contains('input-hora-block') && blockDiv) {
             blockDiv.dataset.hora = target.value; 
              reorderMealTimeBlocksByTime();
-        } else if (target.classList.contains('select-alimento') && foodRow) {
-            const alimentoId = target.value;
+        } else if (target.classList.contains('select-alimento-hidden') && foodRow) { // Escuchar el select oculto
+            const alimentoId = target.value; // El valor del select oculto
             const porcionesInput = foodRow.querySelector('.input-porciones');
+            // El botón y el input del panel ya se actualizan al hacer clic en un item del panel.
             
-            if (alimentoId && ALL_ALIMENTOS_DATA) { // Asegurar que ALL_ALIMENTOS_DATA esté cargado
+            if (alimentoId && ALL_ALIMENTOS_DATA) { 
                 const alimentoSeleccionado = ALL_ALIMENTOS_DATA.find(a => a.id_alimento.toString() === alimentoId);
                 datosAlimentoPorFilaDOM.set(foodRow, alimentoSeleccionado);
                 if (!porcionesInput.value) porcionesInput.value = "1";
@@ -443,11 +581,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             } else {
                 datosAlimentoPorFilaDOM.delete(foodRow);
                 actualizarValoresNutricionalesFilaAlimento(foodRow, null, 0);
+                 // Si se deselecciona, asegurar que el botón muestre el placeholder
+                const dropdownButton = foodRow.querySelector('.alimento-dropdown-button');
+                if(dropdownButton) dropdownButton.textContent = 'Seleccione alimento...';
             }
         }
     });
 
-    tiemposComidaContainer.addEventListener('input', (event) => {
+    tiemposComidaContainer.addEventListener('input', (event) => { /* ... sin cambios ... */ 
         const target = event.target;
         const foodRow = target.closest('tr[data-food-row-id]');
         if (target.classList.contains('input-porciones') && foodRow) {
@@ -459,7 +600,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
     
-    tiemposComidaContainer.addEventListener('click', (event) => {
+    tiemposComidaContainer.addEventListener('click', (event) => { /* ... sin cambios ... */ 
         if (event.target.classList.contains('button-eliminar-alimento')) {
             const foodRow = event.target.closest('tr[data-food-row-id]');
             if (foodRow) {
@@ -468,7 +609,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
-    if (btnAnadirTiempoComida) {
+    if (btnAnadirTiempoComida) { /* ... sin cambios ... */ 
         btnAnadirTiempoComida.addEventListener('click', () => {
             const newBlock = createMealTimeBlock();
             updateAllMealTimeSelects(); 
@@ -476,7 +617,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
     
-    if (btnGuardarRegistroCompleto) {
+    if (btnGuardarRegistroCompleto) { /* ... sin cambios, PERO la validación debe tomar el valor del hiddenSelect ... */ 
         btnGuardarRegistroCompleto.addEventListener('click', async () => {
             const notasAGuardar = notasGeneralesTextarea.value;
             const detallesAGuardar = [];
@@ -498,16 +639,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                     horaInput.style.borderColor = '';
                 }
 
-                let alimentosEnBloque = 0;
                 blockDiv.querySelectorAll('tbody tr[data-food-row-id]').forEach(foodRow => {
-                    const alimentoSelect = foodRow.querySelector('.select-alimento');
+                    const hiddenAlimentoSelect = foodRow.querySelector('.select-alimento-hidden'); // Usar el select oculto
+                    const dropdownButton = foodRow.querySelector('.alimento-dropdown-button'); // Para feedback visual
                     const porcionesInput = foodRow.querySelector('.input-porciones');
-                    const alimentoId = alimentoSelect.value;
+                    const alimentoId = hiddenAlimentoSelect.value;
                     const porciones = parseFloat(porcionesInput.value);
                     
                     if (alimentoId && !isNaN(porciones) && porciones > 0) {
-                        alimentosEnBloque++;
-                        alimentoSelect.style.borderColor = '';
+                        if(dropdownButton) dropdownButton.style.borderColor = ''; 
                         porcionesInput.style.borderColor = '';
                         detallesAGuardar.push({
                             pacienteId: parseInt(pacienteId),
@@ -515,15 +655,18 @@ document.addEventListener('DOMContentLoaded', async () => {
                             tiempoComidaId: parseInt(tiempoComidaId),
                             numeroPorciones: porciones,
                             alimentoId: parseInt(alimentoId),
-                            notas: notasAGuardar // Enviando la nota general con cada detalle
+                            notas: notasAGuardar 
                         });
                     } else if (alimentoId || (porcionesInput.value && porcionesInput.value !== "1")) { 
                         esValidoGeneral = false;
-                        alimentoSelect.style.borderColor = !alimentoId ? 'red' : '';
+                        if (!alimentoId && dropdownButton) {
+                            dropdownButton.style.borderColor = 'red';
+                        } else if (dropdownButton) {
+                             dropdownButton.style.borderColor = '';
+                        }
                         porcionesInput.style.borderColor = (isNaN(porciones) || porciones <= 0) ? 'red' : '';
                     }
                 });
-                 
             });
 
             if (!esValidoGeneral) {
@@ -538,7 +681,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 didOpen: () => { Swal.showLoading(); }
             });
 
-            // Para que el guardado de notas sea más explícito si no hay alimentos:
             let promesasGuardado = [];
             if (detallesAGuardar.length > 0) {
                 promesasGuardado = detallesAGuardar.map(detalle =>
@@ -549,27 +691,24 @@ document.addEventListener('DOMContentLoaded', async () => {
                     }).catch(error => ({ error: true, message: error.message, detalle }))
                 );
             } else if (notasAGuardar.trim()) {
-                
                 const payloadSoloNotas = {
                     pacienteId: parseInt(pacienteId),
                     notas: notasAGuardar,
                 };
-                console.warn("Intentando guardar solo notas. El backend debe estar preparado para esto o se necesita un endpoint dedicado.");
+                console.warn("Intentando guardar solo notas con el endpoint de detalle. El backend debe estar preparado para esto.");
                 promesasGuardado.push(
-                     fetchAPI('https://nutrilinkapi-production.up.railway.app/api_nutrilink/dieta/guardar_detalle_dieta', 'notas de dieta', { // Ajustar nombre entidad
-                        method: 'POST', // O PUT si es a un recurso de dieta existente
+                     fetchAPI('https://nutrilinkapi-production.up.railway.app/api_nutrilink/dieta/guardar_detalle_dieta', 'notas de dieta', {
+                        method: 'POST', 
                         headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
-                        body: JSON.stringify(payloadSoloNotas) // Backend debe saber qué hacer con esto
+                        body: JSON.stringify(payloadSoloNotas) 
                     }).catch(error => ({ error: true, message: error.message, detalle: { notas: notasAGuardar } }))
                 );
             }
-
 
             if (promesasGuardado.length === 0 && !notasAGuardar.trim()) {
                  Swal.fire('Sin datos', 'No hay registros de comida ni notas para guardar.', 'info');
                  return;
             }
-
 
             try {
                 const resultados = await Promise.all(promesasGuardado);
@@ -591,7 +730,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    async function cargarYMostrarResumenNutricionalYDetalles() {
+    async function cargarYMostrarResumenNutricionalYDetalles() { /* ... sin cambios ... */ 
         if (!pacienteId) {
             adecuacionStatusDiv.textContent = "ID de paciente no disponible.";
             adecuacionStatusDiv.className = 'info';
@@ -604,10 +743,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         mealTimeBlockCounter = 0; 
         datosAlimentoPorFilaDOM.clear(); 
         tablaAdecuacionCuerpo.querySelectorAll('td[data-consumido], td[data-adecuacion]').forEach(td => td.textContent = '-');
-        notasGeneralesTextarea.value = ''; // Limpiar notas antes de cargar
+        notasGeneralesTextarea.value = ''; 
 
         try {
-            // 1. Obtener el resumen nutricional para la tabla de adecuación
             const urlResumen = `https://nutrilinkapi-production.up.railway.app/api_nutrilink/dieta/obtener_resumen_nutricional?pacienteId=${pacienteId}`;
             const resumenResponse = await fetchAPI(urlResumen, 'resumen nutricional');
 
@@ -630,7 +768,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
                 adecuacionStatusDiv.textContent = "Resumen y adecuación actualizados.";
                 adecuacionStatusDiv.className = 'success';
-            } else if (resumenResponse.status === "not_found" || !resumenResponse.data || (resumenResponse.data.detalles_por_tiempo_comida && resumenResponse.data.detalles_por_tiempo_comida.length === 0 && !resumenResponse.data.totales_consumidos)) {
+            } else if (resumenResponse.status === "not_found" || !resumenResponse.data || (resumenResponse.data && resumenResponse.data.detalles_por_tiempo_comida && resumenResponse.data.detalles_por_tiempo_comida.length === 0 && !resumenResponse.data.totales_consumidos)) {
                  adecuacionStatusDiv.textContent = "No hay datos de adecuación para este paciente aún.";
                  if (adecuacionStatusDiv.className !== 'success') adecuacionStatusDiv.className = 'info';
             } else {
@@ -640,8 +778,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             }
 
-            // 2. Obtener los detalles de la dieta para poblar la UI editable
-            // USA EL NUEVO ENDPOINT Y ESTRUCTURA DE RESPUESTA
             const urlDetalles = `https://nutrilinkapi-production.up.railway.app/api_nutrilink/dieta/detalles_dieta?pacienteId=${pacienteId}`;
             const detallesResponse = await fetchAPI(urlDetalles, 'detalles de dieta');
 
@@ -653,7 +789,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 if (datosDieta.detalles && datosDieta.detalles.length > 0) {
                     const detallesAgrupados = datosDieta.detalles.reduce((acc, detalle) => {
-                        const key = `${detalle.id_tiempo_comida}-${detalle.hora_tiempo_comida}`; // Agrupar por tiempo Y hora
+                        const key = `${detalle.id_tiempo_comida}-${detalle.hora_tiempo_comida}`; 
                         if (!acc[key]) {
                             acc[key] = {
                                 id_tiempo_comida: detalle.id_tiempo_comida,
@@ -676,7 +812,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                          adecuacionStatusDiv.textContent = "Registro cargado para edición.";
                          adecuacionStatusDiv.className = 'info'; 
                     }
-                } else { // No hay detalles de alimentos, pero pueden haber notas
+                } else { 
                      if (adecuacionStatusDiv.className !== 'success' && adecuacionStatusDiv.className !== 'warning') {
                         adecuacionStatusDiv.textContent = datosDieta.notas ? "Notas cargadas. No hay alimentos registrados." : "No hay alimentos registrados. Puede empezar a añadir.";
                         adecuacionStatusDiv.className = 'info';
@@ -716,7 +852,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             updateAddMealButtonState();
             setTimeout(() => {
                 if (adecuacionStatusDiv.className === 'success' || adecuacionStatusDiv.className === 'info') {
-                    
+                    // No limpiar
                 }
             }, 4000);
         }
