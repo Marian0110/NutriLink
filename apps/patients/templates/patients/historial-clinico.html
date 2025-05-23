@@ -198,8 +198,8 @@
                     {% endfor %}
                 </select>
                 
-                <div class="selected-items-container" id="rejected-foods-container"></div>
-                <!-- <button type="button" class="btn btn-sm btn-secondary mt-2" onclick="addAnother('rejected-foods')">
+                <!--<div class="selected-items-container" id="rejected-foods-container"></div>
+                <button type="button" class="btn btn-sm btn-secondary mt-2" onclick="addAnother('rejected-foods')">
                   + Agregar otro rechazo
                 </button> -->
               </div>
@@ -316,26 +316,20 @@ document.querySelector('.btn-save').addEventListener('click', function (e) {
 
   // SweetAlert: success para el boton REGISTRAR (Informacion nutricional)
   document.querySelector('.btn-save3').addEventListener('click', function (e) {
+    e.preventDefault();
     Swal.fire({
       title: '¿Confirmar registro?',
-      text: 'Se guardará la información nutricional adicional.',
+      text: 'Se guardará el alimento rechazado.',
       icon: 'question',
       showCancelButton: true,
       confirmButtonText: 'Sí, registrar',
       cancelButtonText: 'Cancelar'
     }).then((result) => {
       if (result.isConfirmed) {
-        Swal.fire({
-          title: 'Registrado correctamente',
-          icon: 'success',
-          timer: 2000,
-          showConfirmButton: false
-        });
-
-        // e.target.closest('form').submit();
+        guardarRechazoAlimentario();
       }
     });
-  });
+});
 
   // Funcion para actualizar la condicion de embarazo
   async function actualizarCondicionEmbarazo() {
@@ -467,43 +461,41 @@ document.querySelector('.btn-save').addEventListener('click', function (e) {
     });
   }
 
-  function addSelectedItem(containerId, value, displayText) {
-  const container = document.getElementById(containerId);
-  const itemId = 'item-' + Math.random().toString(36).substr(2, 9);
+//   //Funciones para manejar rechazos alimenticios multiples
+//   function addSelectedItem(containerId, value, displayText) {
+//   const container = document.getElementById(containerId);
+//   const itemId = 'item-' + Math.random().toString(36).substr(2, 9);
 
-  const itemElement = document.createElement('div');
-  itemElement.className = 'selected-item';
-  itemElement.id = itemId;
-  itemElement.innerHTML = `
-    ${displayText}
-    <span class="remove-item" onclick="removeItem('${itemId}', '${containerId}', '${value}')">×</span>
-    <input type="hidden" name="${containerId.replace('-container', '')}[]" value="${value}">
-  `;
+//   const itemElement = document.createElement('div');
+//   itemElement.className = 'selected-item';
+//   itemElement.id = itemId;
+//   itemElement.innerHTML = `
+//     ${displayText}
+//     <span class="remove-item" onclick="removeItem('${itemId}', '${containerId}', '${value}')">×</span>
+//     <input type="hidden" name="${containerId.replace('-container', '')}[]" value="${value}">
+//   `;
 
-  container.appendChild(itemElement);
- }
+//   container.appendChild(itemElement);
+//  }
 
-  function removeItem(itemId, containerId, value) {
-    document.getElementById(itemId).remove();
+//   function removeItem(itemId, containerId, value) {
+//     document.getElementById(itemId).remove();
 
-    // Rehabilitar la opcion en el combobox
-    const select = document.getElementById(containerId).closest('.selection-group').querySelector('.form-select');
-    Array.from(select.options).forEach(option => {
-      if (option.value === value) {
-        option.disabled = false;
-      }
-    });
-  }
+//     // Rehabilitar la opcion en el combobox
+//     const select = document.getElementById(containerId).closest('.selection-group').querySelector('.form-select');
+//     Array.from(select.options).forEach(option => {
+//       if (option.value === value) {
+//         option.disabled = false;
+//       }
+//     });
+//   }
 
-  // El actual select se mantenga actualizado
-  function addAnother(type) {
-    const select = document.getElementById(`${type}-container`).closest('.selection-group').querySelector('.form-select');
-    disableSelectedOptions(select); // refrescar disabled
-    select.focus();
-  }
-
-
-  //Obtener perfil completo clinico del paciente
+//   // El actual select se mantenga actualizado
+//   function addAnother(type) {
+//     const select = document.getElementById(`${type}-container`).closest('.selection-group').querySelector('.form-select');
+//     disableSelectedOptions(select); // refrescar disabled
+//     select.focus();
+//   }
 
   // Función para cargar el perfil clínico completo
   document.addEventListener('DOMContentLoaded', async function() {
@@ -560,5 +552,71 @@ document.querySelector('.btn-save').addEventListener('click', function (e) {
       console.error('Error al cargar perfil clínico:', error);
     }
   });
+
+  // Función para guardar el rechazo alimenticio
+  async function guardarRechazoAlimentario() {
+    const alimentoSelect = document.getElementById('rechazo-alimenticio');
+    const alimentoId = alimentoSelect.value;
+    const motivoRechazo = document.getElementById('motivo_rechazo').value.trim();
+    const pacienteId = "{{ paciente.id_paciente }}";
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+    if (!alimentoId || !motivoRechazo) {
+        Swal.fire({
+            title: 'Error',
+            text: 'Debes seleccionar un alimento y especificar el motivo de rechazo',
+            icon: 'error'
+        });
+        return;
+    }
+
+    try {
+        const response = await fetch('https://nutrilinkapi-production.up.railway.app/api_nutrilink/minuta/guardar_alimento_rechazo', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken,
+            },
+            body: JSON.stringify({
+                pacienteId: pacienteId,
+                alimentoId: alimentoId,
+                motivoRechazo: motivoRechazo
+            })
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            Swal.fire({
+                title: 'Registrado correctamente',
+                text: 'El alimento rechazado se ha guardado exitosamente',
+                icon: 'success',
+                timer: 2000,
+                showConfirmButton: false
+            }).then(() => {
+                // Limpiar el formulario
+                alimentoSelect.value = '';
+                document.getElementById('motivo_rechazo').value = '';
+            });
+        } else {
+            let errorMsg = result.mensaje || 'Error al guardar el alimento rechazado';
+            if (result.detalle_db) {
+                errorMsg += ` (Detalle: ${result.detalle_db})`;
+            }
+            Swal.fire({
+                title: 'Error',
+                text: errorMsg,
+                icon: 'error'
+            });
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        Swal.fire({
+            title: 'Error de conexión',
+            text: 'No se pudo conectar con el servidor',
+            icon: 'error'
+        });
+    }
+ }
 </script>
 {% endblock %}
