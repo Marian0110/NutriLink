@@ -263,10 +263,16 @@ async function cargarResumenCitas(id_nutricionista) {
                     <span class="badge ${badgeClass}">${cita.estado}</span>
                     ${cita.estado === 'Reservada' ? `
                         <button class="btn btn-sm btn-outline-danger mt-2 cancelar-cita-btn"
-                        data-paciente-id="${cita.id_paciente}"
-                        data-nutricionista-id="${id_nutricionista}"
-                        data-fecha-hora="${cita.fecha} ${cita.hora}">
-                        <i class="fas fa-times-circle me-1"></i>Cancelar cita
+                            data-paciente-id="${cita.id_paciente}"
+                            data-nutricionista-id="${id_nutricionista}"
+                            data-fecha-hora="${cita.fecha} ${cita.hora}">
+                            <i class="fas fa-times-circle me-1"></i>Cancelar cita
+                        </button>
+                        <button class="btn btn-sm btn-outline-primary mt-2 completar-cita-btn"
+                            data-paciente-id="${cita.id_paciente}"
+                            data-nutricionista-id="${id_nutricionista}"
+                            data-fecha-hora="${cita.fecha}T${cita.hora}">
+                            <i class="fas fa-check-circle me-1"></i>Marcar como completada
                         </button>
                     ` : ''}
                     `;
@@ -325,6 +331,52 @@ async function cargarResumenCitas(id_nutricionista) {
             } catch (error) {
                 console.error('❌ Error al cancelar cita:', error);
                 Swal.fire('Error', error.message || 'No se pudo cancelar la cita', 'error');
+            }
+        });
+    });
+
+    document.querySelectorAll('.completar-cita-btn').forEach(btn => {
+        btn.addEventListener('click', async function () {
+            const idPaciente = this.getAttribute('data-paciente-id');
+            const idNutricionista = this.getAttribute('data-nutricionista-id');
+            const fechaHora = this.getAttribute('data-fecha-hora');
+
+            const confirmacion = await Swal.fire({
+                title: '¿Marcar como completada?',
+                text: '¿Está seguro que desea completar esta cita?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Sí, completar',
+                cancelButtonText: 'Cancelar'
+            });
+
+            if (!confirmacion.isConfirmed) return;
+
+            try {
+                const response = await fetch('https://nutrilinkapi-production.up.railway.app/api_nutrilink/agenda/completar_cita_nutricionista', {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        id_paciente: parseInt(idPaciente),
+                        id_nutricionista: parseInt(idNutricionista),
+                        fecha_hora: fechaHora
+                    })
+                });
+
+                const result = await response.json();
+
+                if (!response.ok || result.status !== 'ok') {
+                    throw new Error(result.mensaje || 'Error al completar la cita');
+                }
+
+                await Swal.fire('✅ Cita completada', result.mensaje, 'success');
+                cargarResumenCitas(parseInt(idNutricionista));
+
+            } catch (error) {
+                console.error('❌ Error al completar cita:', error);
+                Swal.fire('Error', error.message || 'No se pudo completar la cita', 'error');
             }
         });
     });
