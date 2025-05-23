@@ -1,3 +1,4 @@
+<!-- ... (El HTML de la plantilla permanece igual que en tu última versión) ... -->
 {% extends 'basePerfil.html' %}
 {% load static %}
 {% block title %}Registro Dietario 24 Horas{% endblock %}
@@ -49,7 +50,7 @@
 
   <div class="notas-registro-container">
     <h3>Notas</h3>
-    <textarea id="notas-generales-registro" name="notas_generales_registro" class="textarea-notas" rows="4" placeholder="Suplementos / agua consumida / etc. Estas notas se asociarán a cada alimento guardado."></textarea>
+    <textarea id="notas-generales-registro" name="notas_generales_registro" class="textarea-notas" rows="4" placeholder="Suplementos / agua consumida / etc."></textarea>
   </div>
 
 </div>
@@ -72,23 +73,35 @@ document.addEventListener('DOMContentLoaded', async () => {
     const datosAlimentoPorFilaDOM = new Map();
     let mealTimeBlockCounter = 0;
 
-    async function fetchAPI(url, entityName, options = {}) { /* ... (sin cambios) ... */ 
+    async function fetchAPI(url, entityName, options = {}) {
         try {
             const response = await fetch(url, options);
             if (!response.ok) {
-                const errorData = await response.json().catch(() => ({ detail: `Error HTTP ${response.status}` }));
-                throw new Error(errorData.mensaje || errorData.detail || `Error al procesar ${entityName}`);
+                let errorDetail = `Error HTTP ${response.status}`;
+                try {
+                    const errorData = await response.json();
+                    errorDetail = errorData.mensaje || errorData.detail || JSON.stringify(errorData);
+                } catch (e) { /* No es JSON, usar el status text o el errorDetail original */ 
+                    errorDetail = response.statusText || errorDetail;
+                }
+                throw new Error(errorDetail);
             }
             if (response.status === 204) return null; 
             return await response.json();
         } catch (error) {
-            console.error(`Excepción en fetchAPI para ${entityName}:`, error);
+            console.error(`Excepción en fetchAPI para ${entityName} (${url}):`, error);
             Swal.fire('Error de Carga', `No se pudieron cargar ${entityName}: ${error.message}`, 'error');
             throw error;
         }
     }
-    function populateSelect(selectElement, opciones, valorKey, textoKey, placeholderTexto = "Seleccionar...", currentValue = null, disabled = false) { /* ... (sin cambios) ... */ 
+
+    function populateSelect(selectElement, opciones, valorKey, textoKey, placeholderTexto = "Seleccionar...", currentValue = null, disabled = false) {
         selectElement.innerHTML = `<option value="" ${!currentValue ? 'selected' : ''} disabled>${placeholderTexto}</option>`;
+        if (!opciones || opciones.length === 0) {
+             selectElement.innerHTML += `<option value="" disabled>No hay opciones disponibles</option>`;
+             selectElement.disabled = true;
+             return;
+        }
         opciones.forEach(opcion => {
             const optionEl = document.createElement('option');
             optionEl.value = opcion[valorKey];
@@ -101,7 +114,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         selectElement.disabled = disabled;
     }
 
-    // --- CARGA INICIAL DE DATOS BASE (Tiempos de comida y Alimentos) ---
     async function cargarDatosBase() {
         try {
             [ALL_TIEMPOS_COMIDA_DATA, ALL_ALIMENTOS_DATA] = await Promise.all([
@@ -109,14 +121,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                 fetchAPI('https://nutrilinkapi-production.up.railway.app/api_nutrilink/alimento/alimentos', 'alimentos')
             ]);
         } catch (error) {
-            // El error ya se maneja en fetchAPI. Deshabilitar botones si falla la carga base.
             if (btnAnadirTiempoComida) btnAnadirTiempoComida.disabled = true;
             if (btnGuardarRegistroCompleto) btnGuardarRegistroCompleto.disabled = true;
-            throw error; // Re-lanzar para que la inicialización principal sepa que falló.
+            throw error;
         }
     }
     
-    function actualizarValoresNutricionalesFilaAlimento(filaAlimento, alimentoData, porciones) { /* ... (sin cambios) ... */ 
+    function actualizarValoresNutricionalesFilaAlimento(filaAlimento, alimentoData, porciones) {
         const numPorciones = parseFloat(porciones) || 0;
         const inputs = {
             medidaEquiv: filaAlimento.querySelector('.input-medida-equiv'),
@@ -136,7 +147,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             sodio: filaAlimento.querySelector('.input-sodio'),
         };
 
-        if (alimentoData) {
+        if (alimentoData && inputs.medidaEquiv) { // Asegurarse que los inputs existen
             inputs.medidaEquiv.value = `${parseFloat(alimentoData.numero_medida).toFixed(2)} ${alimentoData.medida}`;
             const camposBase = {
                 gramos: alimentoData.masa, kcal: alimentoData.kcal, proteinas: alimentoData.proteinas_gr,
@@ -152,15 +163,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                     inputs[key].readOnly = true;
                 }
             }
-            inputs.gramos.readOnly = true;
-            inputs.kcal.readOnly = true;
+            if(inputs.gramos) inputs.gramos.readOnly = true;
+            if(inputs.kcal) inputs.kcal.readOnly = true;
+
         } else {
-            inputs.medidaEquiv.value = '';
+            if(inputs.medidaEquiv) inputs.medidaEquiv.value = '';
             Object.values(inputs).forEach(input => {
                 if (input && input !== inputs.medidaEquiv) input.value = '';
             });
-            inputs.gramos.readOnly = false;
-            inputs.kcal.readOnly = false;
+            if(inputs.gramos) inputs.gramos.readOnly = false;
+            if(inputs.kcal) inputs.kcal.readOnly = false;
             Object.entries(inputs).forEach(([key, input]) => {
                 if (input && key !== 'medidaEquiv' && key !== 'gramos' && key !== 'kcal') {
                     input.readOnly = true;
@@ -169,14 +181,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
     
-    // --- LÓGICA PARA CREAR Y POBLAR LA UI ---
     function createMealTimeBlock(tiempoComidaIdPreselect = null, horaPreselect = "", alimentosPreselect = []) {
         const blockId = `mtb-${mealTimeBlockCounter++}`;
         const blockDiv = document.createElement('div');
         blockDiv.classList.add('tiempo-comida-block');
         blockDiv.dataset.blockId = blockId;
-        blockDiv.dataset.tiempoId = tiempoComidaIdPreselect || ''; // Guardar ID para referencia
-        blockDiv.dataset.hora = horaPreselect || ''; // Guardar hora para referencia
+        blockDiv.dataset.tiempoId = tiempoComidaIdPreselect || ''; 
+        blockDiv.dataset.hora = horaPreselect || ''; 
 
         const headerDiv = document.createElement('div');
         headerDiv.classList.add('tiempo-comida-header');
@@ -184,26 +195,22 @@ document.addEventListener('DOMContentLoaded', async () => {
         const selectTiempoComida = document.createElement('select');
         selectTiempoComida.classList.add('select-tabla', 'select-tiempo-comida-block');
         selectTiempoComida.name = `tiempo_comida_block_${blockId}`;
-        // Se poblará después de añadir al DOM via updateAllMealTimeSelects,
-        // pero preseleccionar si viene valor.
-        if (tiempoComidaIdPreselect) selectTiempoComida.value = tiempoComidaIdPreselect;
-
-
+        
         const inputHora = document.createElement('input');
         inputHora.type = 'time';
         inputHora.classList.add('input-tabla', 'input-hora-block');
         inputHora.name = `hora_block_${blockId}`;
         inputHora.value = horaPreselect;
+
         inputHora.addEventListener('change', () => {
-            blockDiv.dataset.hora = inputHora.value; // Actualizar dataset
+            blockDiv.dataset.hora = inputHora.value; 
             reorderMealTimeBlocksByTime();
         });
         
         selectTiempoComida.addEventListener('change', () => {
-            blockDiv.dataset.tiempoId = selectTiempoComida.value; // Actualizar dataset
+            blockDiv.dataset.tiempoId = selectTiempoComida.value; 
             updateAllMealTimeSelects();
         });
-
 
         const btnEliminarBloque = document.createElement('button');
         btnEliminarBloque.type = 'button';
@@ -236,11 +243,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         if (alimentosPreselect && alimentosPreselect.length > 0) {
             alimentosPreselect.forEach(alimento => {
-                // La API de detalles_dieta da `alimento_id_alimento` y `numero_porciones_dieta`
                 addFoodRowToMealTimeBlock(tbodyAlimentos, blockId, alimento.alimento_id_alimento, parseFloat(alimento.numero_porciones_dieta));
             });
         } else {
-            addFoodRowToMealTimeBlock(tbodyAlimentos, blockId); // Añadir una fila vacía si no hay preseleccionados
+            addFoodRowToMealTimeBlock(tbodyAlimentos, blockId); 
         }
 
         const accionesBloqueDiv = document.createElement('div');
@@ -254,13 +260,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         blockDiv.appendChild(accionesBloqueDiv);
         
         tiemposComidaContainer.appendChild(blockDiv);
-        // Poblar el select AHORA que está en el DOM y tiene valor preseleccionado (si aplica)
         populateSelect(selectTiempoComida, ALL_TIEMPOS_COMIDA_DATA, 'id_tiempo_comida', 'descripcion', 'Seleccionar Tiempo...', tiempoComidaIdPreselect);
 
         return blockDiv;
     }
 
-    function addFoodRowToMealTimeBlock(tbodyAlimentos, blockId, alimentoIdPreselect = null, porcionesPreselect = 1) { /* ... (sin cambios) ... */ 
+    function addFoodRowToMealTimeBlock(tbodyAlimentos, blockId, alimentoIdPreselect = null, porcionesPreselect = 1) {
         const foodRowId = `food-${blockId}-${tbodyAlimentos.rows.length}`;
         const nuevaFilaAlimento = tbodyAlimentos.insertRow();
         nuevaFilaAlimento.dataset.foodRowId = foodRowId;
@@ -294,7 +299,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 datosAlimentoPorFilaDOM.set(nuevaFilaAlimento, alimentoData);
                 actualizarValoresNutricionalesFilaAlimento(nuevaFilaAlimento, alimentoData, porcionesPreselect);
             } else {
-                 console.warn(`Alimento ID ${alimentoIdPreselect} no encontrado en ALL_ALIMENTOS_DATA. Fila ${foodRowId}`);
                 actualizarValoresNutricionalesFilaAlimento(nuevaFilaAlimento, null, porcionesPreselect);
             }
         } else {
@@ -302,43 +306,57 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    function getSelectedMealTimeIdsDOM() { /* ... (sin cambios) ... */ 
+    function getSelectedMealTimeIdsDOM() {
         const selected = [];
         tiemposComidaContainer.querySelectorAll('.select-tiempo-comida-block').forEach(select => {
-            // Considerar solo los que tienen un valor y no son el placeholder
             if (select.value && select.value !== "") selected.push(parseInt(select.value));
         });
         return selected;
     }
-    function getAvailableMealTimes() { /* ... (sin cambios) ... */ 
-         if (!ALL_TIEMPOS_COMIDA_DATA) return [];
-        const selectedIds = getSelectedMealTimeIdsDOM();
-        return ALL_TIEMPOS_COMIDA_DATA.filter(time => !selectedIds.includes(time.id_tiempo_comida));
-    }
+
     function updateAllMealTimeSelects() {
         const allBlockSelects = tiemposComidaContainer.querySelectorAll('.select-tiempo-comida-block');
-        const overallSelectedIds = getSelectedMealTimeIdsDOM(); // Obtiene IDs ya seleccionados en *otros* bloques
+        const overallSelectedIds = getSelectedMealTimeIdsDOM(); 
 
         allBlockSelects.forEach(currentSelect => {
             const blockDiv = currentSelect.closest('.tiempo-comida-block');
             const currentValueForThisSelect = blockDiv.dataset.tiempoId ? parseInt(blockDiv.dataset.tiempoId) : null;
-
-            // Un tiempo está disponible si es el actualmente seleccionado para ESTE select,
-            // O si no está seleccionado en NINGÚN OTRO select.
+            
             const availableForThisSelect = ALL_TIEMPOS_COMIDA_DATA.filter(time => {
                 return time.id_tiempo_comida === currentValueForThisSelect || 
                        !overallSelectedIds.some(id => id === time.id_tiempo_comida && id !== currentValueForThisSelect);
             });
+            
+            const currentlySelectedValueInDOM = currentSelect.value; // Guardar el valor actual del DOM
             populateSelect(currentSelect, availableForThisSelect, 'id_tiempo_comida', 'descripcion', 'Seleccionar Tiempo...', currentValueForThisSelect);
-             if (currentValueForThisSelect) { // Re-asegurar que el valor pre-existente (del dataset) se mantenga si es válido
-                currentSelect.value = currentValueForThisSelect;
+            
+            // Re-establecer el valor si el dataset.tiempoId no estaba en las opciones disponibles pero sí estaba seleccionado en el DOM
+            // Esto es para cuando se carga la página y un tiempo ya estaba seleccionado pero aún no se había filtrado por overallSelectedIds
+            if (currentValueForThisSelect && currentSelect.value !== currentValueForThisSelect.toString()) {
+                 if (availableForThisSelect.some(opt => opt.id_tiempo_comida === currentValueForThisSelect)) {
+                    currentSelect.value = currentValueForThisSelect;
+                 } else if (currentlySelectedValueInDOM && availableForThisSelect.some(opt => opt.id_tiempo_comida.toString() === currentlySelectedValueInDOM)) {
+                    // Si el dataset.tiempoId ya no es válido (porque otro bloque lo tomó),
+                    // pero el valor que *tenía* el select antes de repopular sigue siendo válido, usar ese.
+                    currentSelect.value = currentlySelectedValueInDOM;
+                    blockDiv.dataset.tiempoId = currentlySelectedValueInDOM; // Actualizar el dataset
+                 } else {
+                    // Si ni el dataset.tiempoId ni el valor anterior del DOM son válidos,
+                    // el select quedará en el placeholder (primera opción disabled).
+                    // Y el dataset.tiempoId debería limpiarse o el usuario elegir uno nuevo.
+                    blockDiv.dataset.tiempoId = ""; 
+                 }
+            } else if (!currentValueForThisSelect && currentSelect.value !== "") {
+                // Si el dataset no tenía valor pero el select sí, actualizar el dataset.
+                blockDiv.dataset.tiempoId = currentSelect.value;
             }
+
         });
         updateAddMealButtonState();
     }
-    function updateAddMealButtonState() { /* ... (sin cambios) ... */ 
+
+    function updateAddMealButtonState() {
         if (!btnAnadirTiempoComida || !ALL_TIEMPOS_COMIDA_DATA) return;
-        // Habilitar si hay tiempos de comida disponibles globalmente Y no hemos alcanzado el máximo de bloques
         const numBloquesActuales = tiemposComidaContainer.querySelectorAll('.tiempo-comida-block').length;
         const numTotalTiemposComida = ALL_TIEMPOS_COMIDA_DATA.length;
         
@@ -350,7 +368,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             btnAnadirTiempoComida.disabled = true;
         }
     }
-    async function handleDeleteMealTimeBlock(blockDiv) { /* ... (sin cambios) ... */ 
+
+    async function handleDeleteMealTimeBlock(blockDiv) {
         const result = await Swal.fire({
             title: '¿Eliminar Tiempo de Comida?',
             text: "Esto quitará este tiempo de comida y todos sus alimentos del registro actual. Los cambios se reflejarán al guardar.",
@@ -371,7 +390,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             reorderMealTimeBlocksByTime(); 
         }
     }
-    function handleDeleteFoodRow(foodRowElement) { /* ... (sin cambios) ... */ 
+
+    function handleDeleteFoodRow(foodRowElement) {
         const tbody = foodRowElement.closest('tbody');
         if (tbody && tbody.rows.length > 1) {
             datosAlimentoPorFilaDOM.delete(foodRowElement);
@@ -383,12 +403,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             datosAlimentoPorFilaDOM.delete(foodRowElement);
         }
     }
-    function reorderMealTimeBlocksByTime() { /* ... (sin cambios) ... */ 
+
+    function reorderMealTimeBlocksByTime() {
         const blocks = Array.from(tiemposComidaContainer.querySelectorAll('.tiempo-comida-block'));
         if (blocks.length <= 1) return;
 
         blocks.sort((a, b) => {
-            const timeA = a.dataset.hora; // Usar el dataset que se actualiza
+            const timeA = a.dataset.hora; 
             const timeB = b.dataset.hora;
             if (!timeA && !timeB) return 0;
             if (!timeA) return -1; 
@@ -399,22 +420,22 @@ document.addEventListener('DOMContentLoaded', async () => {
         blocks.forEach(block => tiemposComidaContainer.appendChild(block));
     }
 
-    tiemposComidaContainer.addEventListener('change', (event) => { /* ... (sin cambios en la lógica interna) ... */ 
+    tiemposComidaContainer.addEventListener('change', (event) => {
         const target = event.target;
         const foodRow = target.closest('tr[data-food-row-id]');
         const blockDiv = target.closest('.tiempo-comida-block');
 
         if (target.classList.contains('select-tiempo-comida-block') && blockDiv) {
-            blockDiv.dataset.tiempoId = target.value; // Actualizar dataset
+            blockDiv.dataset.tiempoId = target.value; 
             updateAllMealTimeSelects();
         } else if (target.classList.contains('input-hora-block') && blockDiv) {
-            blockDiv.dataset.hora = target.value; // Actualizar dataset
+            blockDiv.dataset.hora = target.value; 
              reorderMealTimeBlocksByTime();
         } else if (target.classList.contains('select-alimento') && foodRow) {
             const alimentoId = target.value;
             const porcionesInput = foodRow.querySelector('.input-porciones');
             
-            if (alimentoId) {
+            if (alimentoId && ALL_ALIMENTOS_DATA) { // Asegurar que ALL_ALIMENTOS_DATA esté cargado
                 const alimentoSeleccionado = ALL_ALIMENTOS_DATA.find(a => a.id_alimento.toString() === alimentoId);
                 datosAlimentoPorFilaDOM.set(foodRow, alimentoSeleccionado);
                 if (!porcionesInput.value) porcionesInput.value = "1";
@@ -425,7 +446,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         }
     });
-    tiemposComidaContainer.addEventListener('input', (event) => { /* ... (sin cambios) ... */ 
+
+    tiemposComidaContainer.addEventListener('input', (event) => {
         const target = event.target;
         const foodRow = target.closest('tr[data-food-row-id]');
         if (target.classList.contains('input-porciones') && foodRow) {
@@ -436,7 +458,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         }
     });
-    tiemposComidaContainer.addEventListener('click', (event) => { /* ... (sin cambios) ... */ 
+    
+    tiemposComidaContainer.addEventListener('click', (event) => {
         if (event.target.classList.contains('button-eliminar-alimento')) {
             const foodRow = event.target.closest('tr[data-food-row-id]');
             if (foodRow) {
@@ -448,14 +471,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (btnAnadirTiempoComida) {
         btnAnadirTiempoComida.addEventListener('click', () => {
             const newBlock = createMealTimeBlock();
-            updateAllMealTimeSelects(); // Asegura que el nuevo select se popule correctamente
+            updateAllMealTimeSelects(); 
             reorderMealTimeBlocksByTime();
         });
     }
     
-    if (btnGuardarRegistroCompleto) { /* ... (sin cambios en la lógica de guardado) ... */ 
+    if (btnGuardarRegistroCompleto) {
         btnGuardarRegistroCompleto.addEventListener('click', async () => {
-            const notasGenerales = notasGeneralesTextarea.value;
+            const notasAGuardar = notasGeneralesTextarea.value;
             const detallesAGuardar = [];
             let esValidoGeneral = true;
 
@@ -475,18 +498,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                     horaInput.style.borderColor = '';
                 }
 
+                let alimentosEnBloque = 0;
                 blockDiv.querySelectorAll('tbody tr[data-food-row-id]').forEach(foodRow => {
                     const alimentoSelect = foodRow.querySelector('.select-alimento');
                     const porcionesInput = foodRow.querySelector('.input-porciones');
                     const alimentoId = alimentoSelect.value;
                     const porciones = parseFloat(porcionesInput.value);
                     
-                    let filaValida = false;
                     if (alimentoId && !isNaN(porciones) && porciones > 0) {
-                        filaValida = true;
-                    }
-
-                    if (filaValida) {
+                        alimentosEnBloque++;
                         alimentoSelect.style.borderColor = '';
                         porcionesInput.style.borderColor = '';
                         detallesAGuardar.push({
@@ -495,7 +515,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                             tiempoComidaId: parseInt(tiempoComidaId),
                             numeroPorciones: porciones,
                             alimentoId: parseInt(alimentoId),
-                            notas: notasGenerales
+                            notas: notasAGuardar // Enviando la nota general con cada detalle
                         });
                     } else if (alimentoId || (porcionesInput.value && porcionesInput.value !== "1")) { 
                         esValidoGeneral = false;
@@ -503,14 +523,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                         porcionesInput.style.borderColor = (isNaN(porciones) || porciones <= 0) ? 'red' : '';
                     }
                 });
+                 
             });
 
             if (!esValidoGeneral) {
                 Swal.fire('Campos incompletos', 'Por favor, complete todos los campos obligatorios (Tiempo, Hora, Alimento, Porciones > 0) en cada registro.', 'warning');
-                return;
-            }
-            if (detallesAGuardar.length === 0) {
-                Swal.fire('Sin datos', 'No hay registros de comida completos para guardar.', 'info');
                 return;
             }
 
@@ -521,24 +538,49 @@ document.addEventListener('DOMContentLoaded', async () => {
                 didOpen: () => { Swal.showLoading(); }
             });
 
-            const promesasGuardado = detallesAGuardar.map(detalle =>
-                fetchAPI('https://nutrilinkapi-production.up.railway.app/api_nutrilink/dieta/guardar_detalle_dieta', 'detalle de dieta', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': csrfToken
-                    },
-                    body: JSON.stringify(detalle)
-                }).catch(error => ({ error: true, message: error.message, detalle }))
-            );
+            // Para que el guardado de notas sea más explícito si no hay alimentos:
+            let promesasGuardado = [];
+            if (detallesAGuardar.length > 0) {
+                promesasGuardado = detallesAGuardar.map(detalle =>
+                    fetchAPI('https://nutrilinkapi-production.up.railway.app/api_nutrilink/dieta/guardar_detalle_dieta', 'detalle de dieta', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                        body: JSON.stringify(detalle)
+                    }).catch(error => ({ error: true, message: error.message, detalle }))
+                );
+            } else if (notasAGuardar.trim()) {
+                
+                const payloadSoloNotas = {
+                    pacienteId: parseInt(pacienteId),
+                    notas: notasAGuardar,
+                };
+                console.warn("Intentando guardar solo notas. El backend debe estar preparado para esto o se necesita un endpoint dedicado.");
+                promesasGuardado.push(
+                     fetchAPI('https://nutrilinkapi-production.up.railway.app/api_nutrilink/dieta/guardar_detalle_dieta', 'notas de dieta', { // Ajustar nombre entidad
+                        method: 'POST', // O PUT si es a un recurso de dieta existente
+                        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                        body: JSON.stringify(payloadSoloNotas) // Backend debe saber qué hacer con esto
+                    }).catch(error => ({ error: true, message: error.message, detalle: { notas: notasAGuardar } }))
+                );
+            }
+
+
+            if (promesasGuardado.length === 0 && !notasAGuardar.trim()) {
+                 Swal.fire('Sin datos', 'No hay registros de comida ni notas para guardar.', 'info');
+                 return;
+            }
+
 
             try {
                 const resultados = await Promise.all(promesasGuardado);
                 const errores = resultados.filter(r => r.error);
 
                 if (errores.length > 0) {
-                    const mensajesError = errores.map(e => `Alimento/Tiempo: ${e.detalle.alimentoId || 'N/A'} - ${e.message}`).join('<br>');
-                    Swal.fire('Error al Guardar', `Algunos registros no se pudieron guardar:<br>${mensajesError}`, 'error');
+                    const mensajesError = errores.map(e => {
+                        const tipo = e.detalle.alimentoId ? `Alimento ID ${e.detalle.alimentoId}` : (e.detalle.notas ? "Notas generales" : "Registro");
+                        return `${tipo}: ${e.message}`;
+                    }).join('<br>');
+                    Swal.fire('Error al Guardar', `Algunos datos no se pudieron guardar:<br>${mensajesError}`, 'error');
                 } else {
                     Swal.fire('¡Guardado!', 'El registro dietario ha sido guardado exitosamente.', 'success');
                     await cargarYMostrarResumenNutricionalYDetalles(); 
@@ -549,7 +591,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    // --- FUNCIÓN PARA CARGAR Y MOSTRAR RESUMEN Y DETALLES ---
     async function cargarYMostrarResumenNutricionalYDetalles() {
         if (!pacienteId) {
             adecuacionStatusDiv.textContent = "ID de paciente no disponible.";
@@ -563,6 +604,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         mealTimeBlockCounter = 0; 
         datosAlimentoPorFilaDOM.clear(); 
         tablaAdecuacionCuerpo.querySelectorAll('td[data-consumido], td[data-adecuacion]').forEach(td => td.textContent = '-');
+        notasGeneralesTextarea.value = ''; // Limpiar notas antes de cargar
 
         try {
             // 1. Obtener el resumen nutricional para la tabla de adecuación
@@ -590,10 +632,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 adecuacionStatusDiv.className = 'success';
             } else if (resumenResponse.status === "not_found" || !resumenResponse.data || (resumenResponse.data.detalles_por_tiempo_comida && resumenResponse.data.detalles_por_tiempo_comida.length === 0 && !resumenResponse.data.totales_consumidos)) {
                  adecuacionStatusDiv.textContent = "No hay datos de adecuación para este paciente aún.";
-                 // No limpiar mensaje de éxito si no hay datos para adecuación pero la llamada fue 'ok'
                  if (adecuacionStatusDiv.className !== 'success') adecuacionStatusDiv.className = 'info';
             } else {
-                 // No sobrescribir el mensaje de éxito si solo falló la adecuación
                 if (adecuacionStatusDiv.className !== 'success') {
                     adecuacionStatusDiv.textContent = `Advertencia: ${resumenResponse.mensaje || "No se pudo obtener adecuación."}`;
                     adecuacionStatusDiv.className = 'warning';
@@ -601,55 +641,59 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
 
             // 2. Obtener los detalles de la dieta para poblar la UI editable
+            // USA EL NUEVO ENDPOINT Y ESTRUCTURA DE RESPUESTA
             const urlDetalles = `https://nutrilinkapi-production.up.railway.app/api_nutrilink/dieta/detalles_dieta?pacienteId=${pacienteId}`;
             const detallesResponse = await fetchAPI(urlDetalles, 'detalles de dieta');
 
-            if (detallesResponse.status === "success" && detallesResponse.data && detallesResponse.data.length > 0) {
-                const detallesAgrupados = detallesResponse.data.reduce((acc, detalle) => {
-                    const key = `${detalle.id_tiempo_comida}-${detalle.hora_tiempo_comida}`;
-                    if (!acc[key]) {
-                        acc[key] = {
-                            id_tiempo_comida: detalle.id_tiempo_comida,
-                            hora_tiempo_comida: detalle.hora_tiempo_comida,
-                            alimentos: []
-                        };
-                    }
-                    acc[key].alimentos.push({
-                        alimento_id_alimento: detalle.alimento_id_alimento,
-                        numero_porciones_dieta: detalle.numero_porciones_dieta
-                    });
-                    return acc;
-                }, {});
-
-                Object.values(detallesAgrupados).forEach(grupo => {
-                    createMealTimeBlock(grupo.id_tiempo_comida, grupo.hora_tiempo_comida, grupo.alimentos);
-                });
-                
-                // Si el status de adecuación era success, lo mantenemos, sino, podemos poner uno genérico de carga de UI
-                if (adecuacionStatusDiv.className !== 'success' && adecuacionStatusDiv.className !== 'warning') {
-                     adecuacionStatusDiv.textContent = "Registro cargado para edición.";
-                     adecuacionStatusDiv.className = 'info'; // O success si prefieres
+            if (detallesResponse.status === "success" && detallesResponse.data) {
+                const datosDieta = detallesResponse.data;
+                if (datosDieta.notas) {
+                    notasGeneralesTextarea.value = datosDieta.notas;
                 }
 
-            } else if (detallesResponse.status === "success" && (!detallesResponse.data || detallesResponse.data.length === 0)) {
-                 if (adecuacionStatusDiv.className !== 'success' && adecuacionStatusDiv.className !== 'warning') {
-                    adecuacionStatusDiv.textContent = "No hay alimentos registrados. Puede empezar a añadir.";
-                    adecuacionStatusDiv.className = 'info';
-                 }
-            } else {
-                 // Si falla la carga de detalles pero el resumen funcionó, no sobrescribir con error total.
+                if (datosDieta.detalles && datosDieta.detalles.length > 0) {
+                    const detallesAgrupados = datosDieta.detalles.reduce((acc, detalle) => {
+                        const key = `${detalle.id_tiempo_comida}-${detalle.hora_tiempo_comida}`; // Agrupar por tiempo Y hora
+                        if (!acc[key]) {
+                            acc[key] = {
+                                id_tiempo_comida: detalle.id_tiempo_comida,
+                                hora_tiempo_comida: detalle.hora_tiempo_comida,
+                                alimentos: []
+                            };
+                        }
+                        acc[key].alimentos.push({
+                            alimento_id_alimento: detalle.alimento_id_alimento, 
+                            numero_porciones_dieta: detalle.numero_porciones_dieta 
+                        });
+                        return acc;
+                    }, {});
+
+                    Object.values(detallesAgrupados).forEach(grupo => {
+                        createMealTimeBlock(grupo.id_tiempo_comida, grupo.hora_tiempo_comida, grupo.alimentos);
+                    });
+                    
+                    if (adecuacionStatusDiv.className !== 'success' && adecuacionStatusDiv.className !== 'warning') {
+                         adecuacionStatusDiv.textContent = "Registro cargado para edición.";
+                         adecuacionStatusDiv.className = 'info'; 
+                    }
+                } else { // No hay detalles de alimentos, pero pueden haber notas
+                     if (adecuacionStatusDiv.className !== 'success' && adecuacionStatusDiv.className !== 'warning') {
+                        adecuacionStatusDiv.textContent = datosDieta.notas ? "Notas cargadas. No hay alimentos registrados." : "No hay alimentos registrados. Puede empezar a añadir.";
+                        adecuacionStatusDiv.className = 'info';
+                     }
+                }
+            } else { 
                 if (adecuacionStatusDiv.className !== 'success' && adecuacionStatusDiv.className !== 'warning') {
-                    adecuacionStatusDiv.textContent = `Error al cargar detalles para edición: ${detallesResponse.mensaje}`;
+                    adecuacionStatusDiv.textContent = `Error al cargar detalles para edición: ${detallesResponse.mensaje || 'Respuesta inesperada.'}`;
                     adecuacionStatusDiv.className = 'error';
                 } else {
-                    console.warn(`Error al cargar detalles para edición: ${detallesResponse.mensaje}, pero resumen/adecuación se mostró.`);
+                    console.warn(`Error al cargar detalles para edición: ${detallesResponse.mensaje || 'Respuesta inesperada.'}, pero resumen/adecuacion se mostró.`);
                 }
             }
             
-            // Si después de todo no hay bloques, añadir uno vacío para empezar (si hay tiempos de comida base)
-            if (tiemposComidaContainer.children.length === 0 && ALL_TIEMPOS_COMIDA_DATA.length > 0) {
-                const newBlock = createMealTimeBlock(); // Crea y añade al DOM
-                 updateAllMealTimeSelects(); // Asegura que el select del nuevo bloque se popule bien
+            if (tiemposComidaContainer.children.length === 0 && ALL_TIEMPOS_COMIDA_DATA && ALL_TIEMPOS_COMIDA_DATA.length > 0) {
+                const newBlock = createMealTimeBlock(); 
+                 updateAllMealTimeSelects(); 
                  reorderMealTimeBlocksByTime();
                  if (adecuacionStatusDiv.className !== 'success' && adecuacionStatusDiv.className !== 'warning' && adecuacionStatusDiv.className !== 'error') {
                     adecuacionStatusDiv.textContent = "Listo para añadir registros.";
@@ -657,44 +701,34 @@ document.addEventListener('DOMContentLoaded', async () => {
                  }
             }
 
-
         } catch (error) {
             console.error("Error al cargar resumen y/o detalles:", error);
             adecuacionStatusDiv.textContent = `Error general al cargar datos: ${error.message}`;
             adecuacionStatusDiv.className = 'error';
-            // Asegurar que el usuario pueda empezar si todo falla pero los datos base cargaron
-            if (tiemposComidaContainer.children.length === 0 && ALL_TIEMPOS_COMIDA_DATA.length > 0) {
+            if (tiemposComidaContainer.children.length === 0 && ALL_TIEMPOS_COMIDA_DATA && ALL_TIEMPOS_COMIDA_DATA.length > 0) {
                 const newBlock = createMealTimeBlock();
                 updateAllMealTimeSelects();
                 reorderMealTimeBlocksByTime();
             }
         } finally {
-            updateAllMealTimeSelects(); // Muy importante para asegurar la consistencia de los selects
-            reorderMealTimeBlocksByTime(); // Reordenar bloques cargados
+            updateAllMealTimeSelects(); 
+            reorderMealTimeBlocksByTime(); 
             updateAddMealButtonState();
-            // Esconder mensaje de status después de un tiempo si es de éxito o info
             setTimeout(() => {
                 if (adecuacionStatusDiv.className === 'success' || adecuacionStatusDiv.className === 'info') {
-                    // Podrías optar por dejar un mensaje más permanente como "Datos actualizados."
-                    // o limpiarlo. Por ahora, no lo limpio.
+                    
                 }
             }, 4000);
         }
     }
 
-    // --- INICIALIZACIÓN DE LA PÁGINA ---
     async function initializePage() {
         adecuacionStatusDiv.textContent = "Cargando datos base...";
         adecuacionStatusDiv.className = 'loading';
         try {
-            await cargarDatosBase(); // Cargar tiempos de comida y alimentos
-            // Una vez cargados los datos base, cargar el estado del registro del paciente
+            await cargarDatosBase(); 
             await cargarYMostrarResumenNutricionalYDetalles();
         } catch (error) {
-            // El error ya fue manejado y mostrado por las funciones internas.
-            // Si cargarDatosBase falla, `cargarYMostrarResumenNutricionalYDetalles` no se llamará.
-            // Si `cargarDatosBase` tiene éxito pero `cargarYMostrarResumenNutricionalYDetalles` falla,
-            // el usuario verá el error específico de esa función.
             adecuacionStatusDiv.textContent = "Error al inicializar la página. Intente recargar.";
             adecuacionStatusDiv.className = 'error';
         }
