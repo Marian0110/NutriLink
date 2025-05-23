@@ -241,11 +241,15 @@ async function cargarResumenCitas(id_nutricionista) {
                         backgroundClass = 'bg-info bg-opacity-25';
                         break;
                     case 'Cancelada':
-                    case 'Cancelada por Nutricionista':
-                    case 'Cancelada por Paciente':
                         borderClass = 'border-danger';
                         badgeClass = 'bg-danger';
                         backgroundClass = 'bg-danger bg-opacity-25';
+                        break;
+                    case 'Cancelada por Nutricionista':
+                    case 'Cancelada por Paciente':
+                        borderClass = 'border-burdeo';
+                        badgeClass = 'badge-burdeo';
+                        backgroundClass = 'bg-burdeo';
                         break;
                 }
 
@@ -434,5 +438,68 @@ document.addEventListener('DOMContentLoaded', function () {
         cargarResumenAgenda(parseInt(id_nutricionista));
         console.log('Antes de la función cargar Nutri :', id_nutricionista);
         cargarResumenCitas(parseInt(id_nutricionista));
+        verificarCancelacionesPendientesNutricionista(parseInt(id_nutricionista));
     }
 });
+
+async function verificarCancelacionesPendientesNutricionista(id_nutricionista) {
+    try {
+        const response = await fetch(`https://nutrilinkapi-production.up.railway.app/api_nutrilink/agenda/citas_nutricionista/${id_nutricionista}`);
+        const result = await response.json();
+
+        if (!response.ok || result.status !== 'ok') {
+            throw new Error(result.mensaje || 'Error al verificar cancelaciones.');
+        }
+
+        const citas = result.citas || [];
+
+        for (const cita of citas) {
+            if (cita.estado === 'Cancelada por Paciente') {
+                const [anio, mes, dia] = cita.fecha.split('-');
+                const fechaObj = new Date(parseInt(anio), parseInt(mes) - 1, parseInt(dia));
+                const fecha = fechaObj.toLocaleDateString('es-CL', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+                const hora = cita.hora?.substring(0, 5) ?? '--:--';
+
+                const alerta = await Swal.fire({
+                    title: 'Cita cancelada',
+                    text: `El paciente ${cita.primer_nombre} ${cita.apellido_paterno} canceló su cita del ${fecha} a las ${hora}.`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Confirmar',
+                    cancelButtonText: 'Ver más tarde'
+                });
+
+                if (alerta.isConfirmed) {
+                    const confirmar = await fetch('https://nutrilinkapi-production.up.railway.app/api_nutrilink/agenda/confirmar_notificacion_cancelacion', {
+                        method: 'PATCH',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            id_paciente: cita.id_paciente,
+                            id_nutricionista: id_nutricionista,
+                            fecha_hora: `${cita.fecha}T${cita.hora}`,
+                            rol: 'nutricionista'
+                        })
+                    });
+
+                    const resConfirmacion = await confirmar.json();
+                    if (resConfirmacion.status === 'ok') {
+                        await Swal.fire('Notificación confirmada', 'El estado de la cita ha sido actualizado.', 'success');
+                    } else {
+                        throw new Error(resConfirmacion.mensaje);
+                    }
+                }
+
+                await new Promise(resolve => setTimeout(resolve, 200)); // espera para evitar colapso visual
+            }
+        }
+    } catch (error) {
+        console.error('Error al verificar cancelaciones:', error);
+    }
+}
