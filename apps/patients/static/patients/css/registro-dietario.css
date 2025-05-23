@@ -271,3 +271,83 @@
     max-width: 280px; /* Para que no ocupe todo el ancho en pantallas muy chicas pero sí sea grande */
   }
 }
+
+.tiempo-comida-block {
+      background-color: var(--white);
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px var(--shadow);
+      margin-bottom: 25px;
+      border: 1px solid var(--border-color);
+    }
+    .tiempo-comida-header {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      margin-bottom: 15px;
+      flex-wrap: wrap; /* Para responsividad */
+    }
+    .tiempo-comida-header label {
+      font-weight: 500;
+      color: var(--secondary-color);
+    }
+    .select-tiempo-comida-block, .input-hora-block {
+      padding: 8px 10px;
+      border: 1px solid var(--input-border);
+      border-radius: 4px;
+      background-color: var(--input-background);
+    }
+    .select-tiempo-comida-block { min-width: 180px; }
+    .input-hora-block { min-width: 120px; }
+
+    .alimentos-tabla-block { /* La tabla de alimentos dentro de un bloque */
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 15px;
+    }
+    .alimentos-tabla-block th, .alimentos-tabla-block td {
+      border: 1px solid var(--border-color);
+      padding: 10px 8px;
+      text-align: left;
+      font-size: 0.9rem;
+      vertical-align: middle;
+    }
+    .alimentos-tabla-block th {
+      background-color: #f8f9fa;
+      color: var(--secondary-color);
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .acciones-bloque {
+        margin-top: 10px;
+        display: flex;
+        gap: 10px;
+    }
+    .adecuacion-table {
+        width: 100%;
+        max-width: 700px; /* O el ancho que prefieras */
+        border-collapse: collapse;
+        margin-bottom: 10px;
+        font-size: 0.9rem; 
+    }
+    .adecuacion-table th, .adecuacion-table td {
+        border: 1px solid var(--border-color);
+        padding: 8px 10px;
+        text-align: left;
+    }
+    .adecuacion-table th {
+        background-color: #f8f9fa;
+        color: var(--secondary-color);
+        font-weight: 600;
+    }
+    .adecuacion-table td:nth-child(2), 
+    .adecuacion-table td:nth-child(3) { 
+        text-align: right;
+        font-weight: 500;
+    }
+    #adecuacion-status {
+        font-style: italic;
+        margin-top: 5px;
+        font-size: 0.9em;
+        color: var(--light-text);
+    }
