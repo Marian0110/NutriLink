@@ -75,7 +75,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     let ALL_TIEMPOS_COMIDA_DATA = [];
     let ALL_ALIMENTOS_DATA = [];
-    const datosAlimentoPorFilaDOM = new Map();
+    const datosAlimentoPorFilaDOM = new Map(); // Sigue siendo útil para obtener el alimentoData original para UI
     let mealTimeBlockCounter = 0;
 
     async function fetchAPI(url, entityName, options = {}) { /* ... sin cambios ... */ 
@@ -412,7 +412,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
     
-    document.addEventListener('click', (e) => {
+    document.addEventListener('click', (e) => { /* ... sin cambios ... */ 
         const openPanels = document.querySelectorAll('.alimento-dropdown-panel.visible');
         openPanels.forEach(panel => {
             const dropdownContainer = panel.closest('.alimento-searchable-dropdown');
@@ -474,14 +474,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             btnAnadirTiempoComida.disabled = true;
         }
     }
-
-    async function handleDeleteMealTimeBlock(blockDiv) {
+    async function handleDeleteMealTimeBlock(blockDiv) { /* ... sin cambios ... */ 
         const tiempoComidaId = blockDiv.dataset.tiempoId;
         const nombreTiempoComida = ALL_TIEMPOS_COMIDA_DATA.find(tc => tc.id_tiempo_comida.toString() === tiempoComidaId)?.descripcion || `ID ${tiempoComidaId}`;
 
         if (!tiempoComidaId) {
-            // Si el bloque no tiene un tiempo de comida seleccionado (ej. recién añadido y no configurado),
-            // simplemente eliminarlo del DOM sin llamar a la API.
             blockDiv.remove();
             updateAllMealTimeSelects();
             reorderMealTimeBlocksByTime();
@@ -524,9 +521,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     blockDiv.remove();
                     updateAllMealTimeSelects(); 
                     reorderMealTimeBlocksByTime();
-                    
-                    // Volver a cargar el resumen nutricional para actualizar la tabla de adecuación
-                    await cargarYMostrarResumenNutricionalYDetalles(); // O solo la parte de adecuación si es más eficiente
+                    await cargarYMostrarResumenNutricionalYDetalles(); 
                 } else {
                     throw new Error(response.mensaje || `No se pudo eliminar ${nombreTiempoComida}.`);
                 }
@@ -536,34 +531,98 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    function handleDeleteFoodRow(foodRowElement) { /* ... sin cambios ... */ 
-        const tbody = foodRowElement.closest('tbody');
-        if (tbody && tbody.rows.length > 1) {
-            datosAlimentoPorFilaDOM.delete(foodRowElement);
-            foodRowElement.remove();
-        } else { 
-            const dropdownContainer = foodRowElement.querySelector('.alimento-searchable-dropdown');
-            if (dropdownContainer) {
-                dropdownContainer.querySelector('.alimento-dropdown-button').textContent = 'Seleccione alimento...';
-                dropdownContainer.querySelector('.input-filtro-alimento-panel').value = "";
-                const hiddenSelect = dropdownContainer.querySelector('.select-alimento-hidden');
-                hiddenSelect.value = "";
-                const optionsList = dropdownContainer.querySelector('.alimento-options-list');
-                optionsList.innerHTML = ''; 
-                ALL_ALIMENTOS_DATA.forEach(alimento => {
-                     const li = document.createElement('li');
-                     li.classList.add('alimento-option-item');
-                     li.textContent = alimento.nombre_alimento;
-                     li.dataset.value = alimento.id_alimento;
-                     li.addEventListener('click', () => { /* Re-asignar evento si es necesario o confiar en la lógica de populateOptionsList */ });
-                     optionsList.appendChild(li);
-                });
+    async function handleDeleteFoodRow(foodRowElement) {
+        const hiddenAlimentoSelect = foodRowElement.querySelector('.select-alimento-hidden');
+        const alimentoId = hiddenAlimentoSelect ? hiddenAlimentoSelect.value : null;
+        const alimentoData = alimentoId ? ALL_ALIMENTOS_DATA.find(a => a.id_alimento.toString() === alimentoId) : null;
+        const nombreAlimento = alimentoData ? alimentoData.nombre_alimento : 'este alimento';
+
+        const mealTimeBlock = foodRowElement.closest('.tiempo-comida-block');
+        const tiempoComidaId = mealTimeBlock ? mealTimeBlock.dataset.tiempoId : null;
+
+        // Si no hay alimentoId o tiempoComidaId, el alimento no está guardado en el backend aún.
+        // O si el tiempo de comida es nuevo y aún no tiene un ID asignado.
+        if (!alimentoId || !tiempoComidaId) {
+            const tbody = foodRowElement.closest('tbody');
+            if (tbody && tbody.rows.length > 1) {
+                datosAlimentoPorFilaDOM.delete(foodRowElement);
+                foodRowElement.remove();
+            } else {
+                // Limpiar la única fila en lugar de eliminarla
+                const dropdownContainer = foodRowElement.querySelector('.alimento-searchable-dropdown');
+                if (dropdownContainer) {
+                    dropdownContainer.querySelector('.alimento-dropdown-button').textContent = 'Seleccione alimento...';
+                    dropdownContainer.querySelector('.input-filtro-alimento-panel').value = "";
+                    const hiddenSelect = dropdownContainer.querySelector('.select-alimento-hidden');
+                    if(hiddenSelect) hiddenSelect.value = "";
+                }
+                foodRowElement.querySelector('.input-porciones').value = "1";
+                actualizarValoresNutricionalesFilaAlimento(foodRowElement, null, 1);
+                datosAlimentoPorFilaDOM.delete(foodRowElement);
             }
-            foodRowElement.querySelector('.input-porciones').value = "1";
-            actualizarValoresNutricionalesFilaAlimento(foodRowElement, null, 1);
-            datosAlimentoPorFilaDOM.delete(foodRowElement);
+            // No es necesario mostrar SweetAlert si solo se elimina del DOM localmente.
+            // Podrías añadir un mensaje sutil si lo deseas.
+            return; 
+        }
+
+        const result = await Swal.fire({
+            title: `¿Eliminar "${nombreAlimento}"?`,
+            text: `Se eliminará ${nombreAlimento} de este tiempo de comida en la base de datos.`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar'
+        });
+
+        if (result.isConfirmed) {
+             Swal.fire({
+                title: 'Eliminando...',
+                text: `Eliminando ${nombreAlimento}.`,
+                allowOutsideClick: false,
+                didOpen: () => { Swal.showLoading(); }
+            });
+
+            try {
+                const url = `https://nutrilinkapi-production.up.railway.app/api_nutrilink/dieta/borrar_alimento_detalle_dieta?pacienteId=${pacienteId}&alimentoId=${alimentoId}&tiempoComidaId=${tiempoComidaId}`;
+                const response = await fetchAPI(url, `alimento ${nombreAlimento}`, {
+                    method: 'DELETE',
+                    headers: { 'X-CSRFToken': csrfToken }
+                });
+
+                if (response && response.status === 'success') {
+                    Swal.fire('¡Eliminado!', response.mensaje || `${nombreAlimento} ha sido eliminado.`, 'success');
+                    
+                    // Actualizar UI después de eliminar del backend
+                    const tbody = foodRowElement.closest('tbody');
+                    if (tbody && tbody.rows.length > 1) {
+                        datosAlimentoPorFilaDOM.delete(foodRowElement);
+                        foodRowElement.remove();
+                    } else { // Era la última fila, limpiarla
+                        const dropdownContainer = foodRowElement.querySelector('.alimento-searchable-dropdown');
+                        if (dropdownContainer) {
+                            dropdownContainer.querySelector('.alimento-dropdown-button').textContent = 'Seleccione alimento...';
+                            dropdownContainer.querySelector('.input-filtro-alimento-panel').value = "";
+                            const hiddenSelect = dropdownContainer.querySelector('.select-alimento-hidden');
+                            if(hiddenSelect) hiddenSelect.value = "";
+                        }
+                        foodRowElement.querySelector('.input-porciones').value = "1";
+                        actualizarValoresNutricionalesFilaAlimento(foodRowElement, null, 1);
+                        datosAlimentoPorFilaDOM.delete(foodRowElement);
+                    }
+                    // Recargar el resumen para actualizar la tabla de adecuación
+                    await cargarYMostrarResumenNutricionalYDetalles();
+                } else {
+                    throw new Error(response.mensaje || `No se pudo eliminar ${nombreAlimento}.`);
+                }
+
+            } catch (error) {
+                 Swal.fire('Error', `Error al eliminar ${nombreAlimento}: ${error.message}`, 'error');
+            }
         }
     }
+
     function reorderMealTimeBlocksByTime() { /* ... sin cambios ... */ 
         const blocks = Array.from(tiemposComidaContainer.querySelectorAll('.tiempo-comida-block'));
         if (blocks.length <= 1) return;
@@ -580,7 +639,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         blocks.forEach(block => tiemposComidaContainer.appendChild(block));
     }
 
-    tiemposComidaContainer.addEventListener('change', (event) => { /* ... sin cambios, pero asegura que select-alimento-hidden se maneje ... */ 
+    tiemposComidaContainer.addEventListener('change', (event) => { /* ... sin cambios ... */ 
         const target = event.target;
         const foodRow = target.closest('tr[data-food-row-id]');
         const blockDiv = target.closest('.tiempo-comida-block');
@@ -623,7 +682,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (event.target.classList.contains('button-eliminar-alimento')) {
             const foodRow = event.target.closest('tr[data-food-row-id]');
             if (foodRow) {
-                handleDeleteFoodRow(foodRow);
+                handleDeleteFoodRow(foodRow); // Llamada a la función ahora es async
             }
         }
     });
@@ -636,7 +695,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
     
-    if (btnGuardarRegistroCompleto) { /* ... sin cambios significativos, ya usa el select oculto para alimentoId ... */ 
+    if (btnGuardarRegistroCompleto) { /* ... sin cambios ... */ 
         btnGuardarRegistroCompleto.addEventListener('click', async () => {
             const notasAGuardar = notasGeneralesTextarea.value;
             const detallesAGuardar = [];
