@@ -149,14 +149,20 @@
     <!-- Formulario de búsqueda -->
     <div class="metrica-card w-100 mb-4">
       <div class="card-body">
-        <h3 class="card-title mb-3">Buscar Diagnósticos por Fecha</h3>
+        <h3 class="card-title mb-3">Buscar diagnósticos</h3>
         <form method="get" action="" id="form-diagnosticos">
           {% csrf_token %}
           <div class="row align-items-end">
-            <!-- Fecha -->
             <div class="col-md-8 mb-3">
-              <label for="id_fecha" class="form-label">Seleccionar fecha de medición</label>
-              <input type="date" class="form-control" id="id_fecha" name="fecha" value="{{ fecha_seleccionada }}" required>
+              <label for="id_fecha_select" class="form-label">Visualiza los diagnósticos antropométricos por fecha</label>
+              <select class="form-select" id="id_fecha_select" name="fecha" required>
+                <option value="">-- Selecciona una fecha --</option>
+                {% for fecha in fechas_disponibles %}
+                  <option value="{{ fecha }}" {% if fecha_seleccionada == fecha %}selected{% endif %}>
+                    {{ fecha }}
+                  </option>
+                {% endfor %}
+              </select>
             </div>
             <!-- Botón -->
             <div class="col-md-4 mb-3">
@@ -180,7 +186,7 @@
         <div class="fecha-card">
           <div class="fecha-header">
             <div class="emoji-tag">📋</div>
-            <h5 class="text-muted mb-0">{{ diagnosticos_data.fecha|date:"d/m/Y" }}</h5>
+            <h5 class="mb-0">{{ diagnosticos_data.fecha }}</h5>
           </div>
           
           <!-- IMC -->

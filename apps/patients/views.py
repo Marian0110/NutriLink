@@ -87,7 +87,8 @@ def metricas(request, id_paciente):
     paciente = get_paciente_data(id_paciente)
     historial = get_historial_antropometrico(id_paciente)
     
-    # Obtener fecha del request
+    fechas_disponibles = [registro['fecha'] for registro in historial if 'fecha' in registro]
+    
     fecha_seleccionada = request.GET.get('fecha')
     diagnosticos = None
     
@@ -99,6 +100,7 @@ def metricas(request, id_paciente):
         'historial_antropometrico': historial,
         'diagnosticos_data': diagnosticos,
         'fecha_seleccionada': fecha_seleccionada,
+        'fechas_disponibles': fechas_disponibles,
         'section': 'metricas'
     })
     
