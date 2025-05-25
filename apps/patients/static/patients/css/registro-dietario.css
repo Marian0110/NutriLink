@@ -162,8 +162,6 @@
 .button-eliminar-fila {
   background-color: var(--danger-color);
   color: var(--white);
-  padding: 6px 12px;
-  font-size: 0.85rem;
 }
 .button-eliminar-fila:hover:not(:disabled) {
   background-color: var(--danger-hover-color);
@@ -270,4 +268,185 @@
     width: 100%;
     max-width: 280px; /* Para que no ocupe todo el ancho en pantallas muy chicas pero sí sea grande */
   }
+}
+
+.tiempo-comida-block {
+      background-color: var(--white);
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px var(--shadow);
+      margin-bottom: 25px;
+      border: 1px solid var(--border-color);
+    }
+.tiempo-comida-header {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 15px;
+  flex-wrap: wrap; /* Para responsividad */
+}
+.tiempo-comida-header label {
+  font-weight: 500;
+  color: var(--secondary-color);
+}
+.select-tiempo-comida-block, .input-hora-block {
+  padding: 8px 10px;
+  border: 1px solid var(--input-border);
+  border-radius: 4px;
+  background-color: var(--input-background);
+}
+.select-tiempo-comida-block { min-width: 180px; }
+.input-hora-block { min-width: 120px; }
+
+.alimentos-tabla-block { /* La tabla de alimentos dentro de un bloque */
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 15px;
+}
+.alimentos-tabla-block th, .alimentos-tabla-block td {
+  border: 1px solid var(--border-color);
+  padding: 10px 8px;
+  text-align: left;
+  font-size: 0.9rem;
+  vertical-align: middle;
+}
+.alimentos-tabla-block th {
+  background-color: #f8f9fa;
+  color: var(--secondary-color);
+  font-weight: 600;
+  white-space: nowrap;
+}
+.acciones-bloque {
+    margin-top: 10px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+.adecuacion-table {
+    width: 100%;
+    max-width: 700px; /* O el ancho que prefieras */
+    border-collapse: collapse;
+    margin-bottom: 10px;
+    font-size: 0.9rem; 
+}
+.adecuacion-table th, .adecuacion-table td {
+    border: 1px solid var(--border-color);
+    padding: 8px 10px;
+    text-align: left;
+}
+.adecuacion-table th {
+    background-color: #f8f9fa;
+    color: var(--secondary-color);
+    font-weight: 600;
+}
+.adecuacion-table td:nth-child(2), 
+.adecuacion-table td:nth-child(3) { 
+    text-align: right;
+    font-weight: 500;
+}
+#adecuacion-status {
+    font-style: italic;
+    margin-top: 5px;
+    font-size: 0.9em;
+    color: var(--light-text);
+}
+
+.alimentos-tabla-block td:first-child { 
+}
+
+.input-filtro-alimento {
+    width: 100%; /* Ocupa el ancho de la celda */
+    margin-bottom: 4px; /* Espacio entre el filtro y el select */
+    box-sizing: border-box; /* Para que el padding no afecte el ancho total */
+}
+
+.select-alimento {
+    width: 100%; /* Ocupa el ancho de la celda */
+    box-sizing: border-box;
+}
+
+.cell-alimento-filterable {
+    /* Esta clase se añade a la <td> que contiene el filtro y el select */
+    /* Podrías querer usar display: flex; flex-direction: column; si los quieres uno encima del otro */
+    min-width: 200px; /* O el ancho que necesites para el buscador y select */
+}
+
+.alimento-searchable-dropdown {
+    position: relative; /* Para posicionar el panel desplegable */
+    display: inline-block; /* O block, según tu layout */
+    width: 200px; /* O un ancho específico */
+}
+
+.alimento-dropdown-button {
+    /* Estilo para que parezca un select o botón */
+    padding: 8px 10px;
+    border: 1px solid var(--input-border);
+    border-radius: 4px;
+    background-color: var(--input-background);
+    color: var(--text-color);
+    font-size: 0.85rem; /* Ajusta según .select-tabla */
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
+    display: flex; /* Para alinear texto y posible ícono de flecha */
+    justify-content: space-between;
+    align-items: center;
+    box-sizing: border-box;
+}
+.alimento-dropdown-button::after { /* Flecha del dropdown */
+    content: '▼'; /* O un SVG */
+    font-size: 0.7em;
+    margin-left: 5px;
+}
+
+
+.alimento-dropdown-panel {
+    display: none; /* Oculto por defecto */
+    position: absolute;
+    background-color: white;
+    border: 1px solid #ccc;
+    border-top: none; /* Si el botón ya tiene borde */
+    z-index: 1000; /* Para que esté sobre otros elementos */
+    width: 100%; /* Que coincida con el botón */
+    max-height: 250px; /* Altura máxima con scroll */
+    overflow-y: auto;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    padding: 8px;
+    box-sizing: border-box;
+}
+
+.alimento-dropdown-panel.visible {
+    display: block;
+}
+
+.alimento-dropdown-panel .input-filtro-alimento-panel {
+    width: calc(100% - 16px); /* Ajustar por padding del panel */
+    margin-bottom: 8px;
+    box-sizing: border-box;
+    /* Hereda de .input-tabla o define aquí */
+    padding: 6px 8px;
+    border: 1px solid var(--input-border);
+    border-radius: 3px;
+}
+
+.alimento-dropdown-panel .alimento-options-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.alimento-dropdown-panel .alimento-option-item {
+    padding: 6px 8px;
+    cursor: pointer;
+    font-size: 0.85rem;
+}
+
+.alimento-dropdown-panel .alimento-option-item:hover,
+.alimento-dropdown-panel .alimento-option-item.selected-item {
+    background-color: #f0f0f0; /* O tu color de hover/selección */
+}
+.alimento-dropdown-panel .no-results {
+    padding: 6px 8px;
+    font-style: italic;
+    color: #777;
 }

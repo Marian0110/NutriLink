@@ -1,410 +1,970 @@
+<!-- ... (El HTML de la plantilla permanece igual que en tu última versión) ... -->
 {% extends 'basePerfil.html' %}
 {% load static %}
 {% block title %}Registro Dietario 24 Horas{% endblock %}
 
 {% block head_extra %}
   <link rel="stylesheet" href="{% static 'css/registro-dietario.css' %}">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 {% endblock %}
 
 {% block perfilcontent %}
 <div class="registro-dietario-content patient-content">
   <h2>Registro de 24 horas</h2>
 
-  <div class="registro-tabla-container">
-    <table id="tabla-registro-comidas" class="registro-tabla">
-      <thead>
-        <tr>
-          <th>Hora</th>
-          <th>Tiempo de Comida</th>
-          <th>Alimento</th>
-          <th>Medida Equiv. (1 porción)</th>
-          <th>Porciones</th>
-          <th>Gr (Masa Total)</th>
-          <th>Kcal (Total)</th>
-          <th>Proteínas (gr)</th>
-          <th>Carbs (gr)</th>
-          <th>Lípidos (gr)</th>
-          <th>Omega 3 (gr)</th>
-          <th>Vit. A (mcg)</th>
-          <th>Vit. B12 (mcg)</th>
-          <th>Ca (mg)</th>
-          <th>Fe (mg)</th>
-          <th>Se (mcg)</th>
-          <th>Zn (mg)</th>
-          <th>K (mg)</th>
-          <th>Na (mg)</th>
-          <th>Acciones</th>
-        </tr>
-      </thead>
-      <tbody id="cuerpo-tabla-registro">
-        <!-- Fila inicial (se llenará dinámicamente) -->
-        <tr>
-          <td><input type="time" class="input-tabla input-hora" name="hora_0"></td>
-          <td>
-            <select name="tiempo_comida_0" class="select-tabla select-tiempo-comida">
-              <option value="" selected disabled>Cargando...</option>
-            </select>
-          </td>
-          <td>
-            <select name="alimento_0" class="select-tabla select-alimento">
-              <option value="" selected disabled>Cargando...</option>
-            </select>
-          </td>
-          <td><input type="text" class="input-tabla input-medida-equiv" name="medida_equiv_0" readonly></td>
-          <td><input type="number" class="input-tabla input-numero input-porciones" name="porciones_0" min="0" step="0.1" value="1"></td>
-          <td><input type="number" class="input-tabla input-numero input-gramos" name="gramos_0" readonly></td>
-          <td><input type="number" class="input-tabla input-numero input-kcal" name="kcal_0" readonly></td>
-          <td><input type="number" class="input-tabla input-numero input-proteinas" name="proteinas_0" readonly></td>
-          <td><input type="number" class="input-tabla input-numero input-carbohidratos" name="carbohidratos_0" readonly></td>
-          <td><input type="number" class="input-tabla input-numero input-lipidos" name="lipidos_0" readonly></td>
-          <td><input type="number" class="input-tabla input-numero input-n3" name="n3_0" readonly></td>
-          <td><input type="number" class="input-tabla input-numero input-vit_a" name="vit_a_0" readonly></td>
-          <td><input type="number" class="input-tabla input-numero input-vit_b12" name="vit_b12_0" readonly></td>
-          <td><input type="number" class="input-tabla input-numero input-calcio" name="calcio_0" readonly></td>
-          <td><input type="number" class="input-tabla input-numero input-hierro" name="hierro_0" readonly></td>
-          <td><input type="number" class="input-tabla input-numero input-selenio" name="selenio_0" readonly></td>
-          <td><input type="number" class="input-tabla input-numero input-zinc" name="zinc_0" readonly></td>
-          <td><input type="number" class="input-tabla input-numero input-potasio" name="potasio_0" readonly></td>
-          <td><input type="number" class="input-tabla input-numero input-sodio" name="sodio_0" readonly></td>
-          <td><button type="button" class="button-eliminar-fila">Eliminar</button></td>
-        </tr>
-      </tbody>
+  <input type="hidden" id="paciente-id" value="{{ paciente.id_paciente }}">
+  {% csrf_token %}
+
+  <div id="adecuacion-registro-section" style="margin-bottom: 25px;">
+    <h3>Resumen Nutricional y Adecuación</h3>
+    <table id="tabla-adecuacion-registro" class="adecuacion-table">
+        <thead>
+            <tr>
+                <th>Nutriente</th>
+                <th>Total Consumido</th>
+                <th>% Adecuación (vs Req.)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td>Energía (Kcal)</td><td data-consumido="dieta_calorias">-</td><td data-adecuacion="porc_adecuacion_calorico">- %</td></tr>
+            <tr><td>Proteínas (g)</td><td data-consumido="dieta_proteinas">-</td><td data-adecuacion="porc_adec_proteinas">- %</td></tr>
+            <tr><td>Carbohidratos (g)</td><td data-consumido="dieta_carbohidratos">-</td><td data-adecuacion="porc_adec_carbohidratos">- %</td></tr>
+            <tr><td>Lípidos (g)</td><td data-consumido="dieta_lipidos">-</td><td data-adecuacion="porc_adec_lipidos">- %</td></tr>
+            <tr><td>Omega 3 (g)</td><td data-consumido="dieta_n3">-</td><td data-adecuacion="porc_adec_n3">- %</td></tr>
+            <tr><td>Vitamina A (µg RE)</td><td data-consumido="dieta_vita">-</td><td data-adecuacion="porc_adec_vita">- %</td></tr>
+            <tr><td>Vitamina B12 (µg)</td><td data-consumido="dieta_b12">-</td><td data-adecuacion="porc_adec_b12">- %</td></tr>
+            <tr><td>Calcio (mg)</td><td data-consumido="dieta_calcio">-</td><td data-adecuacion="porc_adec_calcio">- %</td></tr>
+            <tr><td>Hierro (mg)</td><td data-consumido="dieta_hierro">-</td><td data-adecuacion="porc_adec_hierro">- %</td></tr>
+            <tr><td>Selenio (µg)</td><td data-consumido="dieta_selenio">-</td><td data-adecuacion="porc_adec_selenio">- %</td></tr>
+            <tr><td>Zinc (mg)</td><td data-consumido="dieta_zinc">-</td><td data-adecuacion="porc_adec_zinc">- %</td></tr>
+            <tr><td>Potasio (mg)</td><td data-consumido="dieta_potasio">-</td><td data-adecuacion="porc_adec_potasio">- %</td></tr>
+            <tr><td>Sodio (mg)</td><td data-consumido="dieta_sodio">-</td><td data-adecuacion="porc_adec_sodio">- %</td></tr>
+        </tbody>
     </table>
+    <div id="adecuacion-status">Los cálculos de adecuación aparecerán aquí una vez guardado el registro.</div>
   </div>
 
-  <div class="acciones-tabla">
-    <button type="button" id="btn-anadir-fila" class="button-secondary">Añadir Registro de Comida</button>
+  <div id="tiempos-comida-container">
+    <!-- Los bloques de tiempo de comida se añadirán aquí dinámicamente -->
+  </div>
+
+  <div class="acciones-pagina" style="margin-top: 20px; margin-bottom: 25px; display: flex; gap: 10px;">
+    <button type="button" id="btn-anadir-tiempo-comida" class="button-secondary">Añadir Tiempo de Comida</button>
+    <button type="button" id="btn-guardar-registro-completo" class="button-primary">Guardar y Calcular Adecuación</button>
   </div>
 
   <div class="notas-registro-container">
     <h3>Notas</h3>
-    <textarea id="notas-adicionales" name="notas_adicionales" class="textarea-notas" rows="4" placeholder="Suplementos / agua consumida / etc."></textarea>
-  </div>
-
-  <div class="adecuacion-dieta-registro-container">
-    <h3>Adecuación de la dieta</h3>
-    <p style="font-style: italic; color: var(--light-text);">Los cálculos de adecuación aparecerán aquí una vez guardado el registro.</p>
-  </div>
-
-  <div class="acciones-pagina" style="margin-top: 30px; text-align: right;">
-      <button type="button" id="btn-guardar-registro" class="button-primary">Guardar Registro de 24h</button>
+    <textarea id="notas-generales-registro" name="notas_generales_registro" class="textarea-notas" rows="4" placeholder="Suplementos / agua consumida / etc."></textarea>
   </div>
 
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 document.addEventListener('DOMContentLoaded', async () => {
-    const btnAnadirFila = document.getElementById('btn-anadir-fila');
-    const cuerpoTabla = document.getElementById('cuerpo-tabla-registro');
-    const btnGuardarRegistro = document.getElementById('btn-guardar-registro');
-    let contadorFilas = 1;
-    
-    let listaTiemposComida = [];
-    let listaAlimentosCompleta = []; // Almacenará todos los datos de los alimentos
-    const datosAlimentoPorFila = new Map(); // Para asociar datos base del alimento a una fila
+    const pacienteId = document.getElementById('paciente-id').value;
+    const csrfToken = document.querySelector('input[name="csrfmiddlewaretoken"]').value;
 
-    // --- FUNCIÓN GENÉRICA PARA FETCH ---
-    async function fetchAPI(url, nombreEntidad) {
+    const tiemposComidaContainer = document.getElementById('tiempos-comida-container');
+    const btnAnadirTiempoComida = document.getElementById('btn-anadir-tiempo-comida');
+    const btnGuardarRegistroCompleto = document.getElementById('btn-guardar-registro-completo');
+    const notasGeneralesTextarea = document.getElementById('notas-generales-registro');
+    const adecuacionStatusDiv = document.getElementById('adecuacion-status');
+    const tablaAdecuacionCuerpo = document.getElementById('tabla-adecuacion-registro').querySelector('tbody');
+
+    let ALL_TIEMPOS_COMIDA_DATA = [];
+    let ALL_ALIMENTOS_DATA = [];
+    const datosAlimentoPorFilaDOM = new Map(); // Sigue siendo útil para obtener el alimentoData original para UI
+    let mealTimeBlockCounter = 0;
+
+    async function fetchAPI(url, entityName, options = {}) { /* ... sin cambios ... */ 
         try {
-            const response = await fetch(url);
+            const response = await fetch(url, options);
             if (!response.ok) {
-                throw new Error(`Error HTTP ${response.status} al obtener ${nombreEntidad}`);
+                let errorDetail = `Error HTTP ${response.status}`;
+                try {
+                    const errorData = await response.json();
+                    errorDetail = errorData.mensaje || errorData.detail || JSON.stringify(errorData);
+                } catch (e) { 
+                    errorDetail = response.statusText || errorDetail;
+                }
+                throw new Error(errorDetail);
             }
+            if (response.status === 204) return null; 
             return await response.json();
         } catch (error) {
-            console.error(`Error al cargar ${nombreEntidad}:`, error);
-            // Marcar selects como erróneos si es relevante
-            const selects = document.querySelectorAll(nombreEntidad === 'tiempos de comida' ? '.select-tiempo-comida' : '.select-alimento');
-            selects.forEach(select => {
-                if (select.innerHTML.includes("Cargando...")) { // Solo si no ha sido poblado ya
-                    select.innerHTML = `<option value="" disabled selected>Error al cargar ${nombreEntidad}</option>`;
-                }
-            });
-            return [];
+            console.error(`Excepción en fetchAPI para ${entityName} (${url}):`, error);
+            Swal.fire('Error de Carga', `No se pudieron cargar ${entityName}: ${error.message}`, 'error');
+            throw error;
         }
     }
-
-    // --- FUNCIÓN GENÉRICA PARA POBLAR SELECTS ---
-    function populateSelect(selectElement, opciones, valorKey, textoKey, placeholderTexto = "Seleccionar...") {
-        if (!selectElement || !opciones) {
-            if(selectElement) selectElement.innerHTML = `<option value="" disabled selected>No hay opciones</option>`;
-            return;
+    
+    function populateSelect(selectElement, opciones, valorKey, textoKey, placeholderTexto = "Seleccionar...", currentValue = null, disabled = false) { /* ... sin cambios ... */
+        const valorSeleccionadoAntes = currentValue !== null ? currentValue : selectElement.value;
+        selectElement.innerHTML = `<option value="" ${!valorSeleccionadoAntes ? 'selected' : ''} disabled>${placeholderTexto}</option>`;
+        
+        if (!opciones || opciones.length === 0) {
+             selectElement.innerHTML += `<option value="" disabled>No hay opciones</option>`;
+             return;
         }
-        // Guardar el valor seleccionado si existe y el select ya tiene opciones (ej. al repoblar)
-        const valorSeleccionadoActual = selectElement.options.length > 1 ? selectElement.value : null;
-
-        selectElement.innerHTML = `<option value="" selected disabled>${placeholderTexto}</option>`;
         opciones.forEach(opcion => {
             const optionEl = document.createElement('option');
             optionEl.value = opcion[valorKey];
             optionEl.textContent = opcion[textoKey];
             selectElement.appendChild(optionEl);
         });
-        // Restaurar selección si existía
-        if (valorSeleccionadoActual && selectElement.querySelector(`option[value="${valorSeleccionadoActual}"]`)) {
-            selectElement.value = valorSeleccionadoActual;
+        
+        if (valorSeleccionadoAntes && selectElement.querySelector(`option[value="${valorSeleccionadoAntes}"]`)) {
+            selectElement.value = valorSeleccionadoAntes;
+        } else if (selectElement.options.length > 1 && !selectElement.value) { 
+             selectElement.selectedIndex = 0;
+        }
+        selectElement.disabled = disabled;
+    }
+
+    async function cargarDatosBase() { /* ... sin cambios ... */ 
+        try {
+            [ALL_TIEMPOS_COMIDA_DATA, ALL_ALIMENTOS_DATA] = await Promise.all([
+                fetchAPI('https://nutrilinkapi-production.up.railway.app/api_nutrilink/minuta/obtener_tiempos_comida_con_id', 'tiempos de comida'),
+                fetchAPI('https://nutrilinkapi-production.up.railway.app/api_nutrilink/alimento/alimentos', 'alimentos')
+            ]);
+            if (ALL_ALIMENTOS_DATA) {
+                ALL_ALIMENTOS_DATA.sort((a, b) => a.nombre_alimento.localeCompare(b.nombre_alimento));
+            }
+        } catch (error) {
+            if (btnAnadirTiempoComida) btnAnadirTiempoComida.disabled = true;
+            if (btnGuardarRegistroCompleto) btnGuardarRegistroCompleto.disabled = true;
+            throw error;
         }
     }
-
-    // --- CARGA INICIAL DE DATOS ---
-    listaTiemposComida = await fetchAPI('https://nutrilinkapi-production.up.railway.app/api_nutrilink/minuta/obtener_tiempos_comida_con_id', 'tiempos de comida');
-    listaAlimentosCompleta = await fetchAPI('https://nutrilinkapi-production.up.railway.app/api_nutrilink/alimento/alimentos', 'alimentos');
-
-    // Poblar selects de la fila inicial
-    const filaInicial = cuerpoTabla.querySelector('tr:first-child');
-    if (filaInicial) {
-        populateSelect(filaInicial.querySelector('.select-tiempo-comida'), listaTiemposComida, 'id_tiempo_comida', 'descripcion');
-        populateSelect(filaInicial.querySelector('.select-alimento'), listaAlimentosCompleta, 'id_alimento', 'nombre_alimento', 'Seleccione alimento...');
-    }
-
-    // --- LÓGICA PARA ACTUALIZAR CAMPOS BASADA EN ALIMENTO Y PORCIONES ---
-    function actualizarValoresNutricionalesFila(fila, alimentoData, porciones) {
+    
+    function actualizarValoresNutricionalesFilaAlimento(filaAlimento, alimentoData, porciones) { /* ... sin cambios ... */ 
         const numPorciones = parseFloat(porciones) || 0;
+        const inputs = {
+            medidaEquiv: filaAlimento.querySelector('.input-medida-equiv'),
+            gramos: filaAlimento.querySelector('.input-gramos'),
+            kcal: filaAlimento.querySelector('.input-kcal'),
+            proteinas: filaAlimento.querySelector('.input-proteinas'),
+            carbohidratos: filaAlimento.querySelector('.input-carbohidratos'),
+            lipidos: filaAlimento.querySelector('.input-lipidos'),
+            n3: filaAlimento.querySelector('.input-n3'),
+            vitA: filaAlimento.querySelector('.input-vit_a'),
+            vitB12: filaAlimento.querySelector('.input-vit_b12'),
+            calcio: filaAlimento.querySelector('.input-calcio'),
+            hierro: filaAlimento.querySelector('.input-hierro'),
+            selenio: filaAlimento.querySelector('.input-selenio'),
+            zinc: filaAlimento.querySelector('.input-zinc'),
+            potasio: filaAlimento.querySelector('.input-potasio'),
+            sodio: filaAlimento.querySelector('.input-sodio'),
+        };
 
-        if (alimentoData) {
-            fila.querySelector('.input-medida-equiv').value = `${parseFloat(alimentoData.numero_medida).toFixed(2)} ${alimentoData.medida}`;
-            
-            const camposNutrientes = {
-                '.input-gramos': alimentoData.masa,
-                '.input-kcal': alimentoData.kcal,
-                '.input-proteinas': alimentoData.proteinas_gr,
-                '.input-carbohidratos': alimentoData.carbohidratos_gr,
-                '.input-lipidos': alimentoData.lipidos_gr,
-                '.input-n3': alimentoData.n3_gr,
-                '.input-vit_a': alimentoData.vit_a_mcg,
-                '.input-vit_b12': alimentoData.vit_b12_mcg,
-                '.input-calcio': alimentoData.calcio_mg,
-                '.input-hierro': alimentoData.hierro_mg,
-                '.input-selenio': alimentoData.selenio_mcg,
-                '.input-zinc': alimentoData.zinc_mg,
-                '.input-potasio': alimentoData.potasio_mg,
-                '.input-sodio': alimentoData.sodio_mg,
+        if (alimentoData && inputs.medidaEquiv) { 
+            inputs.medidaEquiv.value = `${parseFloat(alimentoData.numero_medida).toFixed(2)} ${alimentoData.medida}`;
+            const camposBase = {
+                gramos: alimentoData.masa, kcal: alimentoData.kcal, proteinas: alimentoData.proteinas_gr,
+                carbohidratos: alimentoData.carbohidratos_gr, lipidos: alimentoData.lipidos_gr, n3: alimentoData.n3_gr,
+                vitA: alimentoData.vit_a_mcg, vitB12: alimentoData.vit_b12_mcg, calcio: alimentoData.calcio_mg,
+                hierro: alimentoData.hierro_mg, selenio: alimentoData.selenio_mcg, zinc: alimentoData.zinc_mg,
+                potasio: alimentoData.potasio_mg, sodio: alimentoData.sodio_mg,
             };
-
-            for (const selector in camposNutrientes) {
-                const input = fila.querySelector(selector);
-                const valorBase = parseFloat(camposNutrientes[selector]) || 0;
-                input.value = (valorBase * numPorciones).toFixed(2); // Ajustar decimales según necesidad
-                input.readOnly = true;
+            for (const key in camposBase) {
+                if (inputs[key]) {
+                    const valorBase = parseFloat(camposBase[key]) || 0;
+                    inputs[key].value = (valorBase * numPorciones).toFixed(2);
+                    inputs[key].readOnly = true;
+                }
             }
-             // Campos Gramos y Kcal también son readonly si hay alimento seleccionado
-            fila.querySelector('.input-gramos').readOnly = true;
-            fila.querySelector('.input-kcal').readOnly = true;
+            if(inputs.gramos) inputs.gramos.readOnly = true;
+            if(inputs.kcal) inputs.kcal.readOnly = true;
 
-        } else { // No hay alimento seleccionado
-            fila.querySelector('.input-medida-equiv').value = '';
-            const camposLimpiar = [
-                '.input-gramos', '.input-kcal', '.input-proteinas', '.input-carbohidratos', 
-                '.input-lipidos', '.input-n3', '.input-vit_a', '.input-vit_b12', 
-                '.input-calcio', '.input-hierro', '.input-selenio', '.input-zinc', 
-                '.input-potasio', '.input-sodio'
-            ];
-            camposLimpiar.forEach(selector => {
-                const input = fila.querySelector(selector);
-                input.value = '';
-                if (selector === '.input-gramos' || selector === '.input-kcal') {
-                    input.readOnly = false; // Gramos y Kcal editables si no hay alimento
-                } else {
-                    input.readOnly = true; // Otros nutrientes siempre readonly y vacíos sin alimento
+        } else {
+            if(inputs.medidaEquiv) inputs.medidaEquiv.value = '';
+            Object.values(inputs).forEach(input => {
+                if (input && input !== inputs.medidaEquiv) input.value = '';
+            });
+            if(inputs.gramos) inputs.gramos.readOnly = false;
+            if(inputs.kcal) inputs.kcal.readOnly = false;
+            Object.entries(inputs).forEach(([key, input]) => {
+                if (input && key !== 'medidaEquiv' && key !== 'gramos' && key !== 'kcal') {
+                    input.readOnly = true;
                 }
             });
         }
     }
+    
+    function createMealTimeBlock(tiempoComidaIdPreselect = null, horaPreselect = "", alimentosPreselect = []) {
+        const blockId = `mtb-${mealTimeBlockCounter++}`;
+        const blockDiv = document.createElement('div');
+        blockDiv.classList.add('tiempo-comida-block');
+        blockDiv.dataset.blockId = blockId;
+        blockDiv.dataset.tiempoId = tiempoComidaIdPreselect || ''; 
+        blockDiv.dataset.hora = horaPreselect || ''; 
 
-    // --- MANEJADORES DE EVENTOS ---
-    cuerpoTabla.addEventListener('change', (event) => {
-        const target = event.target;
-        const fila = target.closest('tr');
-        if (!fila) return;
+        const headerDiv = document.createElement('div');
+        headerDiv.classList.add('tiempo-comida-header');
 
-        if (target.classList.contains('select-alimento')) {
-            const alimentoId = target.value;
-            const porcionesInput = fila.querySelector('.input-porciones');
-            const porciones = parseFloat(porcionesInput.value) || 1; // Default a 1 si no hay valor o es inválido
+        const selectTiempoComida = document.createElement('select');
+        selectTiempoComida.classList.add('select-tabla', 'select-tiempo-comida-block');
+        selectTiempoComida.name = `tiempo_comida_block_${blockId}`;
+        
+        const inputHora = document.createElement('input');
+        inputHora.type = 'time';
+        inputHora.classList.add('input-tabla', 'input-hora-block');
+        inputHora.name = `hora_block_${blockId}`;
+        inputHora.value = horaPreselect;
 
-            if (alimentoId) {
-                const alimentoSeleccionado = listaAlimentosCompleta.find(a => a.id_alimento.toString() === alimentoId);
-                datosAlimentoPorFila.set(fila, alimentoSeleccionado); // Guardar datos base
-                if (!porcionesInput.value) porcionesInput.value = "1"; // Poner 1 porción por defecto
-                actualizarValoresNutricionalesFila(fila, alimentoSeleccionado, porcionesInput.value || "1");
-            } else {
-                datosAlimentoPorFila.delete(fila); // Eliminar datos base
-                actualizarValoresNutricionalesFila(fila, null, 0); // Limpiar campos
-            }
-        }
-    });
-
-    cuerpoTabla.addEventListener('input', (event) => {
-        const target = event.target;
-        const fila = target.closest('tr');
-        if (!fila) return;
-
-        if (target.classList.contains('input-porciones')) {
-            const alimentoData = datosAlimentoPorFila.get(fila);
-            const porciones = parseFloat(target.value);
-            if (alimentoData) { // Solo recalcular si hay un alimento base seleccionado
-                 actualizarValoresNutricionalesFila(fila, alimentoData, isNaN(porciones) ? 0 : porciones);
-            } else if (!isNaN(porciones) && porciones > 0) {
-                // Si el usuario pone porciones pero no ha seleccionado alimento,
-                // podría alertar o simplemente no hacer nada con los nutrientes.
-                // Por ahora, los campos Gramos y Kcal son editables si no hay alimento.
-            }
-        }
-    });
-
-
-    if (btnAnadirFila) {
-        btnAnadirFila.addEventListener('click', () => {
-            const nuevaFila = document.createElement('tr');
-            const suffix = contadorFilas;
-            nuevaFila.innerHTML = `
-                <td><input type="time" class="input-tabla input-hora" name="hora_${suffix}"></td>
-                <td><select name="tiempo_comida_${suffix}" class="select-tabla select-tiempo-comida"><option value="" selected disabled>Seleccionar...</option></select></td>
-                <td><select name="alimento_${suffix}" class="select-tabla select-alimento"><option value="" selected disabled>Seleccione alimento...</option></select></td>
-                <td><input type="text" class="input-tabla input-medida-equiv" name="medida_equiv_${suffix}" readonly></td>
-                <td><input type="number" class="input-tabla input-numero input-porciones" name="porciones_${suffix}" min="0" step="0.1" value="1"></td>
-                <td><input type="number" class="input-tabla input-numero input-gramos" name="gramos_${suffix}" readonly></td>
-                <td><input type="number" class="input-tabla input-numero input-kcal" name="kcal_${suffix}" readonly></td>
-                <td><input type="number" class="input-tabla input-numero input-proteinas" name="proteinas_${suffix}" readonly></td>
-                <td><input type="number" class="input-tabla input-numero input-carbohidratos" name="carbohidratos_${suffix}" readonly></td>
-                <td><input type="number" class="input-tabla input-numero input-lipidos" name="lipidos_${suffix}" readonly></td>
-                <td><input type="number" class="input-tabla input-numero input-n3" name="n3_${suffix}" readonly></td>
-                <td><input type="number" class="input-tabla input-numero input-vit_a" name="vit_a_${suffix}" readonly></td>
-                <td><input type="number" class="input-tabla input-numero input-vit_b12" name="vit_b12_${suffix}" readonly></td>
-                <td><input type="number" class="input-tabla input-numero input-calcio" name="calcio_${suffix}" readonly></td>
-                <td><input type="number" class="input-tabla input-numero input-hierro" name="hierro_${suffix}" readonly></td>
-                <td><input type="number" class="input-tabla input-numero input-selenio" name="selenio_${suffix}" readonly></td>
-                <td><input type="number" class="input-tabla input-numero input-zinc" name="zinc_${suffix}" readonly></td>
-                <td><input type="number" class="input-tabla input-numero input-potasio" name="potasio_${suffix}" readonly></td>
-                <td><input type="number" class="input-tabla input-numero input-sodio" name="sodio_${suffix}" readonly></td>
-                <td><button type="button" class="button-eliminar-fila">Eliminar</button></td>
-            `;
-            cuerpoTabla.appendChild(nuevaFila);
-            populateSelect(nuevaFila.querySelector('.select-tiempo-comida'), listaTiemposComida, 'id_tiempo_comida', 'descripcion');
-            populateSelect(nuevaFila.querySelector('.select-alimento'), listaAlimentosCompleta, 'id_alimento', 'nombre_alimento', 'Seleccione alimento...');
-            
-            // Asegurar que los campos de la nueva fila estén correctamente readonly/editable al inicio
-            actualizarValoresNutricionalesFila(nuevaFila, null, 0);
-            
-            contadorFilas++;
+        inputHora.addEventListener('change', () => {
+            blockDiv.dataset.hora = inputHora.value; 
+            reorderMealTimeBlocksByTime();
         });
+        
+        selectTiempoComida.addEventListener('change', () => {
+            blockDiv.dataset.tiempoId = selectTiempoComida.value; 
+            updateAllMealTimeSelects();
+        });
+
+        headerDiv.appendChild(document.createTextNode('Tiempo: '));
+        headerDiv.appendChild(selectTiempoComida);
+        headerDiv.appendChild(document.createTextNode(' Hora: '));
+        headerDiv.appendChild(inputHora);
+        blockDiv.appendChild(headerDiv);
+
+        const tablaAlimentos = document.createElement('table');
+        tablaAlimentos.classList.add('alimentos-tabla-block', 'registro-tabla');
+        tablaAlimentos.innerHTML = `
+            <thead>
+                <tr>
+                    <th>Alimento</th><th>Acciones</th><th>Medida Equiv.</th><th>Porciones</th><th>Gr</th><th>Kcal</th>
+                    <th>Prot.</th><th>Carbs</th><th>Lip.</th><th>N-3</th><th>Vit.A</th><th>Vit.B12</th>
+                    <th>Ca</th><th>Fe</th><th>Se</th><th>Zn</th><th>K</th><th>Na</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        `;
+        blockDiv.appendChild(tablaAlimentos);
+        const tbodyAlimentos = tablaAlimentos.querySelector('tbody');
+
+        if (alimentosPreselect && alimentosPreselect.length > 0) {
+            alimentosPreselect.forEach(alimento => {
+                addFoodRowToMealTimeBlock(tbodyAlimentos, blockId, alimento.alimento_id_alimento, parseFloat(alimento.numero_porciones_dieta));
+            });
+        } else {
+            addFoodRowToMealTimeBlock(tbodyAlimentos, blockId); 
+        }
+
+        const accionesBloqueDiv = document.createElement('div');
+        accionesBloqueDiv.classList.add('acciones-bloque');
+        
+        // Botón Añadir Alimento
+        const btnAnadirAlimento = document.createElement('button');
+        btnAnadirAlimento.type = 'button';
+        btnAnadirAlimento.classList.add('button-secondary');
+        btnAnadirAlimento.textContent = 'Añadir Alimento a este Tiempo';
+        btnAnadirAlimento.addEventListener('click', () => addFoodRowToMealTimeBlock(tbodyAlimentos, blockId));
+        
+        // Botón Eliminar Tiempo
+        const btnEliminarBloque = document.createElement('button');
+        btnEliminarBloque.type = 'button';
+        btnEliminarBloque.classList.add('button-eliminar-fila');
+        btnEliminarBloque.textContent = 'Eliminar Tiempo';
+        btnEliminarBloque.addEventListener('click', () => handleDeleteMealTimeBlock(blockDiv));
+        
+        // Agregar ambos botones al div de acciones
+        accionesBloqueDiv.appendChild(btnAnadirAlimento);
+        accionesBloqueDiv.appendChild(btnEliminarBloque);
+        
+        blockDiv.appendChild(accionesBloqueDiv);
+        
+        tiemposComidaContainer.appendChild(blockDiv);
+        populateSelect(selectTiempoComida, ALL_TIEMPOS_COMIDA_DATA, 'id_tiempo_comida', 'descripcion', 'Seleccionar Tiempo...', tiempoComidaIdPreselect);
+
+        return blockDiv;
     }
 
-    if (cuerpoTabla) {
-        cuerpoTabla.addEventListener('click', (event) => {
-            if (event.target.classList.contains('button-eliminar-fila')) {
-                const filaAEliminar = event.target.closest('tr');
-                if (cuerpoTabla.rows.length > 1) {
-                    datosAlimentoPorFila.delete(filaAEliminar); // Limpiar datos asociados
-                    filaAEliminar.remove();
-                } else {
-                    // Limpiar la última fila en lugar de eliminarla
-                    filaAEliminar.querySelectorAll('input[type="time"], input[type="text"], input[type="number"]').forEach(input => input.value = '');
-                    filaAEliminar.querySelectorAll('select').forEach(select => select.selectedIndex = 0);
-                    filaAEliminar.querySelector('.input-porciones').value = "1"; // Reset porciones
-                    datosAlimentoPorFila.delete(filaAEliminar);
-                    actualizarValoresNutricionalesFila(filaAEliminar, null, 0); // Resetear estado readonly/editable y valores
+    function addFoodRowToMealTimeBlock(tbodyAlimentos, blockId, alimentoIdPreselect = null, porcionesPreselect = 1) {
+        const foodRowId = `food-${blockId}-${tbodyAlimentos.rows.length}`;
+        const nuevaFilaAlimento = tbodyAlimentos.insertRow();
+        nuevaFilaAlimento.dataset.foodRowId = foodRowId;
+
+        // 1. Celda Alimento (con dropdown)
+        const cellAlimento = nuevaFilaAlimento.insertCell();
+        cellAlimento.classList.add('cell-alimento-dropdown-container');
+
+        const dropdownContainer = document.createElement('div');
+        dropdownContainer.classList.add('alimento-searchable-dropdown');
+
+        const dropdownButton = document.createElement('button');
+        dropdownButton.type = 'button';
+        dropdownButton.classList.add('alimento-dropdown-button');
+        dropdownButton.textContent = 'Seleccione alimento...';
+
+        const dropdownPanel = document.createElement('div');
+        dropdownPanel.classList.add('alimento-dropdown-panel');
+
+        const inputFiltroPanel = document.createElement('input');
+        inputFiltroPanel.type = 'text';
+        inputFiltroPanel.classList.add('input-tabla', 'input-filtro-alimento-panel');
+        inputFiltroPanel.placeholder = 'Buscar...';
+
+        const optionsList = document.createElement('ul');
+        optionsList.classList.add('alimento-options-list');
+
+        dropdownPanel.appendChild(inputFiltroPanel);
+        dropdownPanel.appendChild(optionsList);
+
+        const hiddenSelect = document.createElement('select');
+        hiddenSelect.name = `alimento_${foodRowId}`;
+        hiddenSelect.style.display = 'none';
+        hiddenSelect.classList.add('select-alimento-hidden');
+
+        dropdownContainer.appendChild(dropdownButton);
+        dropdownContainer.appendChild(dropdownPanel);
+        dropdownContainer.appendChild(hiddenSelect);
+        cellAlimento.appendChild(dropdownContainer);
+
+        function populateOptionsList(alimentosToShow, selectedValue) {
+            optionsList.innerHTML = '';
+            if (alimentosToShow.length === 0) {
+                const noResultsLi = document.createElement('li');
+                noResultsLi.classList.add('no-results');
+                noResultsLi.textContent = 'No se encontraron alimentos.';
+                optionsList.appendChild(noResultsLi);
+                return;
+            }
+            alimentosToShow.forEach(alimento => {
+                const li = document.createElement('li');
+                li.classList.add('alimento-option-item');
+                li.textContent = alimento.nombre_alimento;
+                li.dataset.value = alimento.id_alimento;
+                if (alimento.id_alimento.toString() === selectedValue) {
+                    li.classList.add('selected-item');
                 }
+                li.addEventListener('click', () => {
+                    hiddenSelect.value = alimento.id_alimento;
+                    dropdownButton.textContent = alimento.nombre_alimento;
+                    inputFiltroPanel.value = alimento.nombre_alimento;
+                    dropdownPanel.classList.remove('visible');
+                    hiddenSelect.dispatchEvent(new Event('change', { bubbles: true }));
+                });
+                optionsList.appendChild(li);
+            });
+        }
+
+        inputFiltroPanel.addEventListener('input', () => {
+            const filtro = inputFiltroPanel.value.toLowerCase().trim();
+            const alimentosFiltrados = ALL_ALIMENTOS_DATA.filter(alimento =>
+                alimento.nombre_alimento.toLowerCase().includes(filtro)
+            );
+            populateOptionsList(alimentosFiltrados, hiddenSelect.value);
+        });
+
+        dropdownButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            document.querySelectorAll('.alimento-dropdown-panel.visible').forEach(panel => {
+                if (panel !== dropdownPanel) panel.classList.remove('visible');
+            });
+            dropdownPanel.classList.toggle('visible');
+            if (dropdownPanel.classList.contains('visible')) {
+                inputFiltroPanel.focus();
+                const filtroActual = inputFiltroPanel.value.toLowerCase().trim();
+                const alimentosAMostrar = filtroActual ?
+                    ALL_ALIMENTOS_DATA.filter(a => a.nombre_alimento.toLowerCase().includes(filtroActual)) :
+                    ALL_ALIMENTOS_DATA;
+                populateOptionsList(alimentosAMostrar, hiddenSelect.value);
             }
         });
+
+        // 2. Celda Acciones (con botón Eliminar) - MOVIDA AQUÍ
+        const cellAcciones = nuevaFilaAlimento.insertCell();
+        const btnEliminarAlimentoRow = document.createElement('button'); // Renombrado para evitar conflicto con variable de otro scope si existiera
+        btnEliminarAlimentoRow.type = 'button';
+        btnEliminarAlimentoRow.classList.add('button-eliminar-fila', 'button-eliminar-alimento');
+        btnEliminarAlimentoRow.textContent = 'Eliminar';
+        // El event listener para eliminar se maneja por delegación en `tiemposComidaContainer.addEventListener('click', ...)`
+        cellAcciones.appendChild(btnEliminarAlimentoRow);
+
+        // 3. Resto de las celdas de nutrientes
+        const otherCellsHTML = `
+            <td><input type="text" class="input-tabla input-medida-equiv" name="medida_equiv_${foodRowId}" readonly></td>
+            <td><input type="number" class="input-tabla input-numero input-porciones" name="porciones_${foodRowId}" min="0" step="0.1" value="${porcionesPreselect}"></td>
+            <td><input type="number" class="input-tabla input-numero input-gramos" name="gramos_${foodRowId}" readonly></td>
+            <td><input type="number" class="input-tabla input-numero input-kcal" name="kcal_${foodRowId}" readonly></td>
+            <td><input type="number" class="input-tabla input-numero input-proteinas" name="proteinas_${foodRowId}" readonly></td>
+            <td><input type="number" class="input-tabla input-numero input-carbohidratos" name="carbohidratos_${foodRowId}" readonly></td>
+            <td><input type="number" class="input-tabla input-numero input-lipidos" name="lipidos_${foodRowId}" readonly></td>
+            <td><input type="number" class="input-tabla input-numero input-n3" name="n3_${foodRowId}" readonly></td>
+            <td><input type="number" class="input-tabla input-numero input-vit_a" name="vit_a_${foodRowId}" readonly></td>
+            <td><input type="number" class="input-tabla input-numero input-vit_b12" name="vit_b12_${foodRowId}" readonly></td>
+            <td><input type="number" class="input-tabla input-numero input-calcio" name="calcio_${foodRowId}" readonly></td>
+            <td><input type="number" class="input-tabla input-numero input-hierro" name="hierro_${foodRowId}" readonly></td>
+            <td><input type="number" class="input-tabla input-numero input-selenio" name="selenio_${foodRowId}" readonly></td>
+            <td><input type="number" class="input-tabla input-numero input-zinc" name="zinc_${foodRowId}" readonly></td>
+            <td><input type="number" class="input-tabla input-numero input-potasio" name="potasio_${foodRowId}" readonly></td>
+            <td><input type="number" class="input-tabla input-numero input-sodio" name="sodio_${foodRowId}" readonly></td>
+        `; // La celda de acciones ha sido eliminada de este string HTML
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = `<table><tr>${otherCellsHTML}</tr></table>`;
+        Array.from(tempDiv.querySelector('tr').cells).forEach(cell => {
+            nuevaFilaAlimento.appendChild(cell);
+        });
+
+        // Lógica para poblar el select oculto y actualizar valores nutricionales (sin cambios)
+        populateSelect(hiddenSelect, ALL_ALIMENTOS_DATA, 'id_alimento', 'nombre_alimento', 'Seleccione alimento...', alimentoIdPreselect);
+
+        if (alimentoIdPreselect) {
+            const alimentoData = ALL_ALIMENTOS_DATA.find(a => a.id_alimento.toString() === alimentoIdPreselect.toString());
+            if (alimentoData) {
+                dropdownButton.textContent = alimentoData.nombre_alimento;
+                inputFiltroPanel.value = alimentoData.nombre_alimento;
+                hiddenSelect.value = alimentoIdPreselect;
+                datosAlimentoPorFilaDOM.set(nuevaFilaAlimento, alimentoData);
+                actualizarValoresNutricionalesFilaAlimento(nuevaFilaAlimento, alimentoData, porcionesPreselect);
+            } else {
+                actualizarValoresNutricionalesFilaAlimento(nuevaFilaAlimento, null, porcionesPreselect);
+            }
+        } else {
+            actualizarValoresNutricionalesFilaAlimento(nuevaFilaAlimento, null, porcionesPreselect);
+        }
+    }
+    
+    document.addEventListener('click', (e) => { /* ... sin cambios ... */ 
+        const openPanels = document.querySelectorAll('.alimento-dropdown-panel.visible');
+        openPanels.forEach(panel => {
+            const dropdownContainer = panel.closest('.alimento-searchable-dropdown');
+            if (dropdownContainer && !dropdownContainer.contains(e.target)) {
+                panel.classList.remove('visible');
+            }
+        });
+    });
+
+    function getSelectedMealTimeIdsDOM() { /* ... sin cambios ... */ 
+        const selected = [];
+        tiemposComidaContainer.querySelectorAll('.select-tiempo-comida-block').forEach(select => {
+            if (select.value && select.value !== "") selected.push(parseInt(select.value));
+        });
+        return selected;
+    }
+    function updateAllMealTimeSelects() { /* ... sin cambios ... */ 
+        const allBlockSelects = tiemposComidaContainer.querySelectorAll('.select-tiempo-comida-block');
+        const overallSelectedIds = getSelectedMealTimeIdsDOM(); 
+
+        allBlockSelects.forEach(currentSelect => {
+            const blockDiv = currentSelect.closest('.tiempo-comida-block');
+            const currentValueForThisSelect = blockDiv.dataset.tiempoId ? parseInt(blockDiv.dataset.tiempoId) : null;
+            
+            const availableForThisSelect = ALL_TIEMPOS_COMIDA_DATA.filter(time => {
+                return time.id_tiempo_comida === currentValueForThisSelect || 
+                       !overallSelectedIds.some(id => id === time.id_tiempo_comida && id !== currentValueForThisSelect);
+            });
+            
+            const currentlySelectedValueInDOM = currentSelect.value; 
+            populateSelect(currentSelect, availableForThisSelect, 'id_tiempo_comida', 'descripcion', 'Seleccionar Tiempo...', currentValueForThisSelect);
+            
+            if (currentValueForThisSelect && currentSelect.value != currentValueForThisSelect) { 
+                 if (availableForThisSelect.some(opt => opt.id_tiempo_comida == currentValueForThisSelect)) {
+                    currentSelect.value = currentValueForThisSelect;
+                 } else if (currentlySelectedValueInDOM && availableForThisSelect.some(opt => opt.id_tiempo_comida.toString() === currentlySelectedValueInDOM)) {
+                    currentSelect.value = currentlySelectedValueInDOM;
+                    blockDiv.dataset.tiempoId = currentlySelectedValueInDOM; 
+                 } else {
+                    blockDiv.dataset.tiempoId = ""; 
+                    if (currentSelect.options.length > 0) currentSelect.selectedIndex = 0; 
+                 }
+            } else if (!currentValueForThisSelect && currentSelect.value !== "") {
+                blockDiv.dataset.tiempoId = currentSelect.value;
+            }
+        });
+        updateAddMealButtonState();
+    }
+    function updateAddMealButtonState() { /* ... sin cambios ... */ 
+        if (!btnAnadirTiempoComida || !ALL_TIEMPOS_COMIDA_DATA) return;
+        const numBloquesActuales = tiemposComidaContainer.querySelectorAll('.tiempo-comida-block').length;
+        const numTotalTiemposComida = ALL_TIEMPOS_COMIDA_DATA.length;
+        
+        if (ALL_TIEMPOS_COMIDA_DATA.length > 0 && numBloquesActuales < numTotalTiemposComida) {
+            btnAnadirTiempoComida.style.display = 'inline-block';
+            btnAnadirTiempoComida.disabled = false;
+        } else {
+            btnAnadirTiempoComida.style.display = 'none';
+            btnAnadirTiempoComida.disabled = true;
+        }
+    }
+    async function handleDeleteMealTimeBlock(blockDiv) { /* ... sin cambios ... */ 
+        const tiempoComidaId = blockDiv.dataset.tiempoId;
+        const nombreTiempoComida = ALL_TIEMPOS_COMIDA_DATA.find(tc => tc.id_tiempo_comida.toString() === tiempoComidaId)?.descripcion || `ID ${tiempoComidaId}`;
+
+        if (!tiempoComidaId) {
+            blockDiv.remove();
+            updateAllMealTimeSelects();
+            reorderMealTimeBlocksByTime();
+            Swal.fire('Eliminado localmente', 'El tiempo de comida (aún no guardado) se ha quitado de la vista.', 'info');
+            return;
+        }
+
+        const result = await Swal.fire({
+            title: `¿Eliminar "${nombreTiempoComida}"?`,
+            text: "Se eliminarán todos los alimentos registrados para este tiempo de comida en la base de datos. Esta acción no se puede deshacer.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Sí, eliminarlo',
+            cancelButtonText: 'Cancelar'
+        });
+
+        if (result.isConfirmed) {
+            Swal.fire({
+                title: 'Eliminando...',
+                text: `Eliminando todos los registros para ${nombreTiempoComida}.`,
+                allowOutsideClick: false,
+                didOpen: () => { Swal.showLoading(); }
+            });
+
+            try {
+                const url = `https://nutrilinkapi-production.up.railway.app/api_nutrilink/dieta/borrar_detalle_tiempo_comida?pacienteId=${pacienteId}&tiempoComidaId=${tiempoComidaId}`;
+                const response = await fetchAPI(url, `registros de ${nombreTiempoComida}`, {
+                    method: 'DELETE',
+                    headers: { 'X-CSRFToken': csrfToken }
+                });
+
+                if (response && response.status === 'success') {
+                    Swal.fire('¡Eliminado!', response.mensaje || `${nombreTiempoComida} y sus alimentos han sido eliminados.`, 'success');
+                    
+                    blockDiv.querySelectorAll('tr[data-food-row-id]').forEach(foodRow => {
+                        datosAlimentoPorFilaDOM.delete(foodRow);
+                    });
+                    blockDiv.remove();
+                    updateAllMealTimeSelects(); 
+                    reorderMealTimeBlocksByTime();
+                    await cargarYMostrarResumenNutricionalYDetalles(); 
+                } else {
+                    throw new Error(response.mensaje || `No se pudo eliminar ${nombreTiempoComida}.`);
+                }
+            } catch (error) {
+                Swal.fire('Error', `Error al eliminar ${nombreTiempoComida}: ${error.message}`, 'error');
+            }
+        }
     }
 
-    if (btnGuardarRegistro) {
-        btnGuardarRegistro.addEventListener('click', () => {
-            console.log("Guardando registro...");
-            const filasData = [];
+    async function handleDeleteFoodRow(foodRowElement) {
+        const hiddenAlimentoSelect = foodRowElement.querySelector('.select-alimento-hidden');
+        const alimentoId = hiddenAlimentoSelect ? hiddenAlimentoSelect.value : null;
+        const alimentoData = alimentoId ? ALL_ALIMENTOS_DATA.find(a => a.id_alimento.toString() === alimentoId) : null;
+        const nombreAlimento = alimentoData ? alimentoData.nombre_alimento : 'este alimento';
+
+        const mealTimeBlock = foodRowElement.closest('.tiempo-comida-block');
+        const tiempoComidaId = mealTimeBlock ? mealTimeBlock.dataset.tiempoId : null;
+
+        // Si no hay alimentoId o tiempoComidaId, el alimento no está guardado en el backend aún.
+        // O si el tiempo de comida es nuevo y aún no tiene un ID asignado.
+        if (!alimentoId || !tiempoComidaId) {
+            const tbody = foodRowElement.closest('tbody');
+            if (tbody && tbody.rows.length > 1) {
+                datosAlimentoPorFilaDOM.delete(foodRowElement);
+                foodRowElement.remove();
+            } else {
+                // Limpiar la única fila en lugar de eliminarla
+                const dropdownContainer = foodRowElement.querySelector('.alimento-searchable-dropdown');
+                if (dropdownContainer) {
+                    dropdownContainer.querySelector('.alimento-dropdown-button').textContent = 'Seleccione alimento...';
+                    dropdownContainer.querySelector('.input-filtro-alimento-panel').value = "";
+                    const hiddenSelect = dropdownContainer.querySelector('.select-alimento-hidden');
+                    if(hiddenSelect) hiddenSelect.value = "";
+                }
+                foodRowElement.querySelector('.input-porciones').value = "1";
+                actualizarValoresNutricionalesFilaAlimento(foodRowElement, null, 1);
+                datosAlimentoPorFilaDOM.delete(foodRowElement);
+            }
+            // No es necesario mostrar SweetAlert si solo se elimina del DOM localmente.
+            // Podrías añadir un mensaje sutil si lo deseas.
+            return; 
+        }
+
+        const result = await Swal.fire({
+            title: `¿Eliminar "${nombreAlimento}"?`,
+            text: `Se eliminará ${nombreAlimento} de este tiempo de comida en la base de datos.`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar'
+        });
+
+        if (result.isConfirmed) {
+             Swal.fire({
+                title: 'Eliminando...',
+                text: `Eliminando ${nombreAlimento}.`,
+                allowOutsideClick: false,
+                didOpen: () => { Swal.showLoading(); }
+            });
+
+            try {
+                const url = `https://nutrilinkapi-production.up.railway.app/api_nutrilink/dieta/borrar_alimento_detalle_dieta?pacienteId=${pacienteId}&alimentoId=${alimentoId}&tiempoComidaId=${tiempoComidaId}`;
+                const response = await fetchAPI(url, `alimento ${nombreAlimento}`, {
+                    method: 'DELETE',
+                    headers: { 'X-CSRFToken': csrfToken }
+                });
+
+                if (response && response.status === 'success') {
+                    Swal.fire('¡Eliminado!', response.mensaje || `${nombreAlimento} ha sido eliminado.`, 'success');
+                    
+                    // Actualizar UI después de eliminar del backend
+                    const tbody = foodRowElement.closest('tbody');
+                    if (tbody && tbody.rows.length > 1) {
+                        datosAlimentoPorFilaDOM.delete(foodRowElement);
+                        foodRowElement.remove();
+                    } else { // Era la última fila, limpiarla
+                        const dropdownContainer = foodRowElement.querySelector('.alimento-searchable-dropdown');
+                        if (dropdownContainer) {
+                            dropdownContainer.querySelector('.alimento-dropdown-button').textContent = 'Seleccione alimento...';
+                            dropdownContainer.querySelector('.input-filtro-alimento-panel').value = "";
+                            const hiddenSelect = dropdownContainer.querySelector('.select-alimento-hidden');
+                            if(hiddenSelect) hiddenSelect.value = "";
+                        }
+                        foodRowElement.querySelector('.input-porciones').value = "1";
+                        actualizarValoresNutricionalesFilaAlimento(foodRowElement, null, 1);
+                        datosAlimentoPorFilaDOM.delete(foodRowElement);
+                    }
+                    // Recargar el resumen para actualizar la tabla de adecuación
+                    await cargarYMostrarResumenNutricionalYDetalles();
+                } else {
+                    throw new Error(response.mensaje || `No se pudo eliminar ${nombreAlimento}.`);
+                }
+
+            } catch (error) {
+                 Swal.fire('Error', `Error al eliminar ${nombreAlimento}: ${error.message}`, 'error');
+            }
+        }
+    }
+
+    function reorderMealTimeBlocksByTime() { /* ... sin cambios ... */ 
+        const blocks = Array.from(tiemposComidaContainer.querySelectorAll('.tiempo-comida-block'));
+        if (blocks.length <= 1) return;
+
+        blocks.sort((a, b) => {
+            const timeA = a.dataset.hora; 
+            const timeB = b.dataset.hora;
+            if (!timeA && !timeB) return 0;
+            if (!timeA) return -1; 
+            if (!timeB) return 1;  
+            return timeA.localeCompare(timeB);
+        });
+
+        blocks.forEach(block => tiemposComidaContainer.appendChild(block));
+    }
+
+    tiemposComidaContainer.addEventListener('change', (event) => { /* ... sin cambios ... */ 
+        const target = event.target;
+        const foodRow = target.closest('tr[data-food-row-id]');
+        const blockDiv = target.closest('.tiempo-comida-block');
+
+        if (target.classList.contains('select-tiempo-comida-block') && blockDiv) {
+            blockDiv.dataset.tiempoId = target.value; 
+            updateAllMealTimeSelects();
+        } else if (target.classList.contains('input-hora-block') && blockDiv) {
+            blockDiv.dataset.hora = target.value; 
+             reorderMealTimeBlocksByTime();
+        } else if (target.classList.contains('select-alimento-hidden') && foodRow) { 
+            const alimentoId = target.value; 
+            const porcionesInput = foodRow.querySelector('.input-porciones');
+            
+            if (alimentoId && ALL_ALIMENTOS_DATA) { 
+                const alimentoSeleccionado = ALL_ALIMENTOS_DATA.find(a => a.id_alimento.toString() === alimentoId);
+                datosAlimentoPorFilaDOM.set(foodRow, alimentoSeleccionado);
+                if (!porcionesInput.value) porcionesInput.value = "1";
+                actualizarValoresNutricionalesFilaAlimento(foodRow, alimentoSeleccionado, porcionesInput.value || "1");
+            } else {
+                datosAlimentoPorFilaDOM.delete(foodRow);
+                actualizarValoresNutricionalesFilaAlimento(foodRow, null, 0);
+                const dropdownButton = foodRow.querySelector('.alimento-dropdown-button');
+                if(dropdownButton) dropdownButton.textContent = 'Seleccione alimento...';
+            }
+        }
+    });
+    tiemposComidaContainer.addEventListener('input', (event) => { /* ... sin cambios ... */ 
+        const target = event.target;
+        const foodRow = target.closest('tr[data-food-row-id]');
+        if (target.classList.contains('input-porciones') && foodRow) {
+            const alimentoData = datosAlimentoPorFilaDOM.get(foodRow);
+            const porciones = parseFloat(target.value);
+            if (alimentoData) {
+                actualizarValoresNutricionalesFilaAlimento(foodRow, alimentoData, isNaN(porciones) ? 0 : porciones);
+            }
+        }
+    });
+    tiemposComidaContainer.addEventListener('click', (event) => { /* ... sin cambios ... */ 
+        if (event.target.classList.contains('button-eliminar-alimento')) {
+            const foodRow = event.target.closest('tr[data-food-row-id]');
+            if (foodRow) {
+                handleDeleteFoodRow(foodRow); // Llamada a la función ahora es async
+            }
+        }
+    });
+
+    if (btnAnadirTiempoComida) { /* ... sin cambios ... */ 
+        btnAnadirTiempoComida.addEventListener('click', () => {
+            const newBlock = createMealTimeBlock();
+            updateAllMealTimeSelects(); 
+            reorderMealTimeBlocksByTime();
+        });
+    }
+    
+    if (btnGuardarRegistroCompleto) { /* ... sin cambios ... */ 
+        btnGuardarRegistroCompleto.addEventListener('click', async () => {
+            const notasAGuardar = notasGeneralesTextarea.value;
+            const detallesAGuardar = [];
             let esValidoGeneral = true;
 
-            cuerpoTabla.querySelectorAll('tr').forEach(fila => {
-                const horaInput = fila.querySelector('.input-hora');
-                const tiempoComidaSelect = fila.querySelector('.select-tiempo-comida');
-                const alimentoSelect = fila.querySelector('.select-alimento');
-                // Solo procesar filas que tengan al menos hora y tiempo de comida.
-                // Si se seleccionó un alimento, también debería estar presente.
-                // O si se ingresaron gramos/kcal manualmente (en caso de no seleccionar alimento).
-                
-                let filaTieneDatosMinimos = false;
-                if (horaInput.value && tiempoComidaSelect.value) {
-                    if (alimentoSelect.value) { // Si hay alimento, es dato mínimo
-                        filaTieneDatosMinimos = true;
-                    } else { // Si no hay alimento, verificar si hay Gr o Kcal manuales
-                        const grManual = fila.querySelector('.input-gramos').value;
-                        const kcalManual = fila.querySelector('.input-kcal').value;
-                        if (grManual || kcalManual) {
-                            filaTieneDatosMinimos = true;
-                        }
-                    }
+            tiemposComidaContainer.querySelectorAll('.tiempo-comida-block').forEach(blockDiv => {
+                const tiempoComidaSelect = blockDiv.querySelector('.select-tiempo-comida-block');
+                const horaInput = blockDiv.querySelector('.input-hora-block');
+                const tiempoComidaId = tiempoComidaSelect.value;
+                const horaTiempoComida = horaInput.value;
+
+                if (!tiempoComidaId || !horaTiempoComida) {
+                    esValidoGeneral = false;
+                    tiempoComidaSelect.style.borderColor = !tiempoComidaId ? 'red' : '';
+                    horaInput.style.borderColor = !horaTiempoComida ? 'red' : '';
+                    return; 
+                } else {
+                    tiempoComidaSelect.style.borderColor = '';
+                    horaInput.style.borderColor = '';
                 }
 
-
-                if (filaTieneDatosMinimos) {
-                    let filaValidaLocal = true;
-                    [horaInput, tiempoComidaSelect].forEach(el => {
-                        if (!el.value) {
-                            el.style.borderColor = 'red';
-                            filaValidaLocal = false;
-                            esValidoGeneral = false;
-                        } else {
-                            el.style.borderColor = '';
+                blockDiv.querySelectorAll('tbody tr[data-food-row-id]').forEach(foodRow => {
+                    const hiddenAlimentoSelect = foodRow.querySelector('.select-alimento-hidden'); 
+                    const dropdownButton = foodRow.querySelector('.alimento-dropdown-button'); 
+                    const porcionesInput = foodRow.querySelector('.input-porciones');
+                    const alimentoId = hiddenAlimentoSelect.value;
+                    const porciones = parseFloat(porcionesInput.value);
+                    
+                    if (alimentoId && !isNaN(porciones) && porciones > 0) {
+                        if(dropdownButton) dropdownButton.style.borderColor = ''; 
+                        porcionesInput.style.borderColor = '';
+                        detallesAGuardar.push({
+                            pacienteId: parseInt(pacienteId),
+                            horaTiempoComida: horaTiempoComida,
+                            tiempoComidaId: parseInt(tiempoComidaId),
+                            numeroPorciones: porciones,
+                            alimentoId: parseInt(alimentoId),
+                            notas: notasAGuardar 
+                        });
+                    } else if (alimentoId || (porcionesInput.value && porcionesInput.value !== "1")) { 
+                        esValidoGeneral = false;
+                        if (!alimentoId && dropdownButton) {
+                            dropdownButton.style.borderColor = 'red';
+                        } else if (dropdownButton) {
+                             dropdownButton.style.borderColor = '';
                         }
-                    });
-                     // Si no hay alimento seleccionado, pero sí hora y tiempo, es válido si hay Gr/Kcal.
-                    if (!alimentoSelect.value && !(fila.querySelector('.input-gramos').value || fila.querySelector('.input-kcal').value)) {
-                        // No es error si el usuario aún no ha completado, pero no se guarda esta parte
-                        // Opcionalmente marcar alimentoSelect si se considera obligatorio siempre.
-                        // Por ahora, lo permitimos si hay gr/kcal manuales.
+                        porcionesInput.style.borderColor = (isNaN(porciones) || porciones <= 0) ? 'red' : '';
                     }
-
-
-                    if (filaValidaLocal) {
-                        const filaData = {
-                            hora: horaInput.value,
-                            id_tiempo_comida: tiempoComidaSelect.value,
-                            tiempo_comida_descripcion: tiempoComidaSelect.selectedOptions[0]?.text || '',
-                            id_alimento: alimentoSelect.value,
-                            alimento_descripcion: alimentoSelect.selectedOptions[0]?.text || '',
-                            medida_equiv_api: fila.querySelector('.input-medida-equiv').value,
-                            porciones: fila.querySelector('.input-porciones').value,
-                            gramos_total: fila.querySelector('.input-gramos').value,
-                            kcal_total: fila.querySelector('.input-kcal').value,
-                            proteinas_total: fila.querySelector('.input-proteinas').value,
-                            carbohidratos_total: fila.querySelector('.input-carbohidratos').value,
-                            lipidos_total: fila.querySelector('.input-lipidos').value,
-                            n3_total: fila.querySelector('.input-n3').value,
-                            vit_a_total: fila.querySelector('.input-vit_a').value,
-                            vit_b12_total: fila.querySelector('.input-vit_b12').value,
-                            calcio_total: fila.querySelector('.input-calcio').value,
-                            hierro_total: fila.querySelector('.input-hierro').value,
-                            selenio_total: fila.querySelector('.input-selenio').value,
-                            zinc_total: fila.querySelector('.input-zinc').value,
-                            potasio_total: fila.querySelector('.input-potasio').value,
-                            sodio_total: fila.querySelector('.input-sodio').value,
-                        };
-                        filasData.push(filaData);
-                    }
-                }
+                });
             });
 
             if (!esValidoGeneral) {
-                alert("Por favor, complete los campos obligatorios (Hora, Tiempo de Comida) en todas las filas con datos.");
-                return;
-            }
-            if (filasData.length === 0) {
-                alert("No hay registros de comida completos para guardar.");
+                Swal.fire('Campos incompletos', 'Por favor, complete todos los campos obligatorios (Tiempo, Hora, Alimento, Porciones > 0) en cada registro.', 'warning');
                 return;
             }
 
-            const notas = document.getElementById('notas-adicionales').value;
-            const payload = {
-                registros: filasData,
-                notas: notas
-                // paciente_id: TU_PACIENTE_ID // Si es necesario
-            };
-            console.log("Payload a enviar:", JSON.stringify(payload, null, 2));
-            alert("Datos listos para enviar (ver consola). Implementar el fetch al backend aquí.");
-            // Implementar fetch POST aquí
+            Swal.fire({
+                title: 'Guardando Registro',
+                text: 'Por favor, espere...',
+                allowOutsideClick: false,
+                didOpen: () => { Swal.showLoading(); }
+            });
+
+            let promesasGuardado = [];
+            if (detallesAGuardar.length > 0) {
+                promesasGuardado = detallesAGuardar.map(detalle =>
+                    fetchAPI('https://nutrilinkapi-production.up.railway.app/api_nutrilink/dieta/guardar_detalle_dieta', 'detalle de dieta', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                        body: JSON.stringify(detalle)
+                    }).catch(error => ({ error: true, message: error.message, detalle }))
+                );
+            } else if (notasAGuardar.trim()) {
+                const payloadSoloNotas = {
+                    pacienteId: parseInt(pacienteId),
+                    notas: notasAGuardar,
+                };
+                console.warn("Intentando guardar solo notas con el endpoint de detalle. El backend debe estar preparado para esto.");
+                promesasGuardado.push(
+                     fetchAPI('https://nutrilinkapi-production.up.railway.app/api_nutrilink/dieta/guardar_detalle_dieta', 'notas de dieta', {
+                        method: 'POST', 
+                        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                        body: JSON.stringify(payloadSoloNotas) 
+                    }).catch(error => ({ error: true, message: error.message, detalle: { notas: notasAGuardar } }))
+                );
+            }
+
+            if (promesasGuardado.length === 0 && !notasAGuardar.trim()) {
+                 Swal.fire('Sin datos', 'No hay registros de comida ni notas para guardar.', 'info');
+                 return;
+            }
+
+            try {
+                const resultados = await Promise.all(promesasGuardado);
+                const errores = resultados.filter(r => r.error);
+
+                if (errores.length > 0) {
+                    const mensajesError = errores.map(e => {
+                        const tipo = e.detalle.alimentoId ? `Alimento ID ${e.detalle.alimentoId}` : (e.detalle.notas ? "Notas generales" : "Registro");
+                        return `${tipo}: ${e.message}`;
+                    }).join('<br>');
+                    Swal.fire('Error al Guardar', `Algunos datos no se pudieron guardar:<br>${mensajesError}`, 'error');
+                } else {
+                    Swal.fire('¡Guardado!', 'El registro dietario ha sido guardado exitosamente.', 'success');
+                    await cargarYMostrarResumenNutricionalYDetalles(); 
+                }
+            } catch (errorGeneral) { 
+                Swal.fire('Error Crítico', `Ocurrió un error inesperado al procesar los guardados: ${errorGeneral.message}`, 'error');
+            }
         });
     }
+
+    async function cargarYMostrarResumenNutricionalYDetalles() { /* ... sin cambios ... */ 
+        if (!pacienteId) {
+            adecuacionStatusDiv.textContent = "ID de paciente no disponible.";
+            adecuacionStatusDiv.className = 'info';
+            return;
+        }
+        adecuacionStatusDiv.textContent = "Cargando datos del registro...";
+        adecuacionStatusDiv.className = 'loading';
+        
+        tiemposComidaContainer.innerHTML = ''; 
+        mealTimeBlockCounter = 0; 
+        datosAlimentoPorFilaDOM.clear(); 
+        tablaAdecuacionCuerpo.querySelectorAll('td[data-consumido], td[data-adecuacion]').forEach(td => td.textContent = '-');
+        notasGeneralesTextarea.value = ''; 
+
+        try {
+            const urlResumen = `https://nutrilinkapi-production.up.railway.app/api_nutrilink/dieta/obtener_resumen_nutricional?pacienteId=${pacienteId}`;
+            const resumenResponse = await fetchAPI(urlResumen, 'resumen nutricional');
+
+            if (resumenResponse.status === "success" && resumenResponse.data) {
+                const resumenData = resumenResponse.data;
+                if (resumenData.adecuacion) {
+                    for (const key in resumenData.adecuacion) {
+                        const tdAdecuacion = tablaAdecuacionCuerpo.querySelector(`td[data-adecuacion="${key}"]`);
+                        if (tdAdecuacion) tdAdecuacion.textContent = `${parseFloat(resumenData.adecuacion[key] || 0).toFixed(1)} %`;
+                    }
+                }
+                if (resumenData.totales_consumidos) {
+                     for (const key in resumenData.totales_consumidos) {
+                        const tdConsumido = tablaAdecuacionCuerpo.querySelector(`td[data-consumido="${key}"]`);
+                        if (tdConsumido) {
+                            const valor = parseFloat(resumenData.totales_consumidos[key] || 0);
+                            tdConsumido.textContent = key === 'dieta_calorias' ? valor.toFixed(0) : valor.toFixed(1);
+                        }
+                    }
+                }
+                adecuacionStatusDiv.textContent = "Resumen y adecuación actualizados.";
+                adecuacionStatusDiv.className = 'success';
+            } else if (resumenResponse.status === "not_found" || !resumenResponse.data || (resumenResponse.data && resumenResponse.data.detalles_por_tiempo_comida && resumenResponse.data.detalles_por_tiempo_comida.length === 0 && !resumenResponse.data.totales_consumidos)) {
+                 adecuacionStatusDiv.textContent = "No hay datos de adecuación para este paciente aún.";
+                 if (adecuacionStatusDiv.className !== 'success') adecuacionStatusDiv.className = 'info';
+            } else {
+                if (adecuacionStatusDiv.className !== 'success') {
+                    adecuacionStatusDiv.textContent = `Advertencia: ${resumenResponse.mensaje || "No se pudo obtener adecuación."}`;
+                    adecuacionStatusDiv.className = 'warning';
+                }
+            }
+
+            const urlDetalles = `https://nutrilinkapi-production.up.railway.app/api_nutrilink/dieta/detalles_dieta?pacienteId=${pacienteId}`;
+            const detallesResponse = await fetchAPI(urlDetalles, 'detalles de dieta');
+
+            if (detallesResponse.status === "success" && detallesResponse.data) {
+                const datosDieta = detallesResponse.data;
+                if (datosDieta.notas) {
+                    notasGeneralesTextarea.value = datosDieta.notas;
+                }
+
+                if (datosDieta.detalles && datosDieta.detalles.length > 0) {
+                    const detallesAgrupados = datosDieta.detalles.reduce((acc, detalle) => {
+                        const key = `${detalle.id_tiempo_comida}-${detalle.hora_tiempo_comida}`; 
+                        if (!acc[key]) {
+                            acc[key] = {
+                                id_tiempo_comida: detalle.id_tiempo_comida,
+                                hora_tiempo_comida: detalle.hora_tiempo_comida,
+                                alimentos: []
+                            };
+                        }
+                        acc[key].alimentos.push({
+                            alimento_id_alimento: detalle.alimento_id_alimento, 
+                            numero_porciones_dieta: detalle.numero_porciones_dieta 
+                        });
+                        return acc;
+                    }, {});
+
+                    Object.values(detallesAgrupados).forEach(grupo => {
+                        createMealTimeBlock(grupo.id_tiempo_comida, grupo.hora_tiempo_comida, grupo.alimentos);
+                    });
+                    
+                    if (adecuacionStatusDiv.className !== 'success' && adecuacionStatusDiv.className !== 'warning') {
+                         adecuacionStatusDiv.textContent = "Registro cargado para edición.";
+                         adecuacionStatusDiv.className = 'info'; 
+                    }
+                } else { 
+                     if (adecuacionStatusDiv.className !== 'success' && adecuacionStatusDiv.className !== 'warning') {
+                        adecuacionStatusDiv.textContent = datosDieta.notas ? "Notas cargadas. No hay alimentos registrados." : "No hay alimentos registrados. Puede empezar a añadir.";
+                        adecuacionStatusDiv.className = 'info';
+                     }
+                }
+            } else { 
+                if (adecuacionStatusDiv.className !== 'success' && adecuacionStatusDiv.className !== 'warning') {
+                    adecuacionStatusDiv.textContent = `Error al cargar detalles para edición: ${detallesResponse.mensaje || 'Respuesta inesperada.'}`;
+                    adecuacionStatusDiv.className = 'error';
+                } else {
+                    console.warn(`Error al cargar detalles para edición: ${detallesResponse.mensaje || 'Respuesta inesperada.'}, pero resumen/adecuacion se mostró.`);
+                }
+            }
+            
+            if (tiemposComidaContainer.children.length === 0 && ALL_TIEMPOS_COMIDA_DATA && ALL_TIEMPOS_COMIDA_DATA.length > 0) {
+                const newBlock = createMealTimeBlock(); 
+                 updateAllMealTimeSelects(); 
+                 reorderMealTimeBlocksByTime();
+                 if (adecuacionStatusDiv.className !== 'success' && adecuacionStatusDiv.className !== 'warning' && adecuacionStatusDiv.className !== 'error') {
+                    adecuacionStatusDiv.textContent = "Listo para añadir registros.";
+                    adecuacionStatusDiv.className = 'info';
+                 }
+            }
+
+        } catch (error) {
+            console.error("Error al cargar resumen y/o detalles:", error);
+            adecuacionStatusDiv.textContent = `Error general al cargar datos: ${error.message}`;
+            adecuacionStatusDiv.className = 'error';
+            if (tiemposComidaContainer.children.length === 0 && ALL_TIEMPOS_COMIDA_DATA && ALL_TIEMPOS_COMIDA_DATA.length > 0) {
+                const newBlock = createMealTimeBlock();
+                updateAllMealTimeSelects();
+                reorderMealTimeBlocksByTime();
+            }
+        } finally {
+            updateAllMealTimeSelects(); 
+            reorderMealTimeBlocksByTime(); 
+            updateAddMealButtonState();
+            setTimeout(() => {
+                if (adecuacionStatusDiv.className === 'success' || adecuacionStatusDiv.className === 'info') {
+                    // No limpiar
+                }
+            }, 4000);
+        }
+    }
+
+    async function initializePage() {
+        adecuacionStatusDiv.textContent = "Cargando datos base...";
+        adecuacionStatusDiv.className = 'loading';
+        try {
+            await cargarDatosBase(); 
+            await cargarYMostrarResumenNutricionalYDetalles();
+        } catch (error) {
+            adecuacionStatusDiv.textContent = "Error al inicializar la página. Intente recargar.";
+            adecuacionStatusDiv.className = 'error';
+        }
+    }
+
+    initializePage();
 });
 </script>
 {% endblock %}
