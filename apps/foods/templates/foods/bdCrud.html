@@ -86,32 +86,67 @@
             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
-            <form id="alimentoForm{{ alimento.id_alimento }}">
-              <input type="hidden" id="alimentoId{{ alimento.id_alimento }}" value="{{ alimento.id_alimento }}" >
+            <form id="alimentoForm{{ alimento.id_alimento }}" class="editable-form">
+               <input type="hidden" id="alimentoId{{ alimento.id_alimento }}" name="id_alimento" value="{{ alimento.id_alimento }}" >
+              {% csrf_token %}
               
               <fieldset class="info-basica-section mb-4">
                 <legend class="section-title">Información del Alimento</legend>
                 <div class="row g-3">
                   <div class="col-md-6">
                     <label class="form-label">Nombre:</label>
-                    <input type="text" class="form-control colorBg " value="{{ alimento.nombre_alimento }}" disabled>
+                    <input type="text" class="form-control colorBg " name="nombre_alimento" value="{{ alimento.nombre_alimento }}">
                   </div>
                   <div class="col-md-6">
-                    <label class="form-label">Origen:</label>
-                    <input type="text" class="form-control" value="{{ alimento.origen|default:'USDA' }}" disabled>
+                    <label class="form-label">Origen (ej: USDA, Envase):</label>
+                    <input type="text" class="form-control" name="origen" value="{{ alimento.origen|default:'USDA' }}">
                   </div>
                   <div class="col-md-6">
-                    <label class="form-label">Categoría:</label>
-                    <input type="text" class="form-control" value="{{ alimento.nombre_grupo_alimenticio|default:'' }}" disabled>
+                    <label class="form-label">Grupo:</label>
+                          
+                    <select class="form-select select-grupo-alimento-modal" name="id_grupo_alimenticio">
+                        <option value="">Seleccione un grupo...</option>
+
+                        {% for grupo_obj in grupos_modal %}
+                            <option value="{{ grupo_obj.id_grupo_alimenticio }}"
+                                    {% comment %}
+                                    Ahora alimento.id_grupo_alimenticio existe y es un número (o None).
+                                    grupo_obj.id_grupo_alimenticio también es un número.
+                                    La comparación directa es más limpia si los tipos son consistentes.
+                                    Si hay duda, stringformat es más seguro.
+                                    {% endcomment %}
+                                    {% if alimento.id_grupo_alimenticio is not None and grupo_obj.id_grupo_alimenticio == alimento.id_grupo_alimenticio %}
+                                        selected
+                                    {% endif %}>
+                                {{ grupo_obj.descripcion }}
+                            </option>
+                        {% endfor %}
+
+                        {% comment %}
+                        Este bloque ahora solo se activará si alimento.id_grupo_alimenticio es None
+                        Y alimento.nombre_grupo_alimenticio existe. Esto significa que el alimento
+                        tiene un nombre de grupo que NO PUDO SER MAPEADO a un ID (un grupo "huérfano" o incorrecto).
+                        {% endcomment %}
+                        {% if alimento.id_grupo_alimenticio is None and alimento.nombre_grupo_alimenticio %}
+                            <option value="" disabled selected style="font-style: italic;">
+                                Grupo actual: {{ alimento.nombre_grupo_alimenticio }} (ID no encontrado o grupo no válido)
+                            </option>
+                        {% endif %}
+                    </select>
+    
                   </div>
                   <div class="col-md-3">
-                    <label class="form-label">Medida:</label> <!-- Combinado Medida y N° Medida -->
-                    <input type="text" class="form-control" value="{{ alimento.numero_medida|default:'1' }} {{ alimento.medida|default:'' }}" disabled>
+                    <label class="form-label">Medida (ej: tazas):</label>
+                    <input type="text" class="form-control" name="medida" value="{{ alimento.medida|default:'taza' }}">
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label">N° medidas por porción:</label>
+                    <input type="number" step="0.01" class="form-control" name="numero_medida" value="{{ alimento.numero_medida|default:'1' }}">
                   </div>
                   <div class="col-md-3">
                     <label class="form-label">Masa (porción):</label>
                     <div class="input-group">
-                      <input type="text" class="form-control" value="{{ alimento.masa|default:'' }}" disabled>
+                      <input type="number" step="0.01" class="form-control" name="masa" value="{{ alimento.masa|default:'100' }}">
                       <span class="input-group-text">gr/ml</span>
                     </div>
                   </div>
@@ -119,70 +154,76 @@
               </fieldset>
               
               <fieldset class="macronutrientes-section mb-4">
-                <legend class="section-title">Macronutrientes (porción)</legend> <!-- Aclarar si es porción o 100g -->
+                <legend class="section-title">Macronutrientes (porción)</legend> 
                 <div class="row g-3">
                   <div class="col-md-3">
                     <label class="form-label">Lípidos (g):</label>
-                    <input type="text" class="form-control" value="{{ alimento.lipidos_gr|default_if_none:'0' }}" disabled>
+                    <input type="number" step="0.01" class="form-control" name="lipidos_gr" value="{{ alimento.lipidos_gr|default_if_none:'0' }}">
                   </div>
                   <div class="col-md-3">
                     <label class="form-label">Proteínas (g):</label>
-                    <input type="text" class="form-control" value="{{ alimento.proteinas_gr|default_if_none:'0' }}" disabled>
+                    <input type="number" step="0.01" class="form-control" name="proteinas_gr" value="{{ alimento.proteinas_gr|default_if_none:'0' }}">
                   </div>
                   <div class="col-md-3">
                     <label class="form-label">Carbohidratos (g):</label>
-                    <input type="text" class="form-control" value="{{ alimento.carbohidratos_gr|default_if_none:'0' }}" disabled>
+                    <input type="number" step="0.01" class="form-control" name="carbohidratos_gr" value="{{ alimento.carbohidratos_gr|default_if_none:'0' }}">
                   </div>
                   <div class="col-md-3">
                     <label class="form-label">Calorías (kcal):</label>
-                    <input type="text" class="form-control" value="{{ alimento.kcal|default_if_none:'0' }}" disabled>
+                    <input type="number" step="0.01" class="form-control" name="kcal" value="{{ alimento.kcal|default_if_none:'0' }}">
                   </div>
                 </div>
               </fieldset>
               
               <fieldset class="micronutrientes-section mb-4">
-                <legend class="section-title">Micronutrientes (porción)</legend> <!-- Aclarar si es porción o 100g -->
+                <legend class="section-title">Micronutrientes (porción)</legend>
                 <div class="row g-3">
                   <div class="col-md-4">
                     <label class="form-label">Omega 3 (g):</label>
-                    <input type="text" class="form-control" value="{{ alimento.n3_gr|default_if_none:'0' }}" disabled>
+                    <input type="number" step="0.01" class="form-control" name="n3_gr" value="{{ alimento.n3_gr|default_if_none:'0' }}">
                   </div>
                   <div class="col-md-4">
-                    <label class="form-label">Vitamina A (µg RE):</label>
-                    <input type="text" class="form-control" value="{{ alimento.vit_a_mcg|default_if_none:'0' }}" disabled>
+                    <label class="form-label">Vitamina A (µg):</label>
+                    <input type="number" step="0.01" class="form-control" name="vit_a_mcg" value="{{ alimento.vit_a_mcg|default_if_none:'0' }}">
                   </div>
                   <div class="col-md-4">
                     <label class="form-label">Vitamina B12 (µg):</label>
-                    <input type="text" class="form-control" value="{{ alimento.vit_b12_mcg|default_if_none:'0' }}" disabled>
+                    <input type="number" step="0.01" class="form-control" name="vit_b12_mcg" value="{{ alimento.vit_b12_mcg|default_if_none:'0' }}">
                   </div>
                   <div class="col-md-4">
                     <label class="form-label">Calcio (mg):</label>
-                    <input type="text" class="form-control" value="{{ alimento.calcio_mg|default_if_none:'0' }}" disabled>
+                    <input type="number" step="0.01" class="form-control" name="calcio_mg" value="{{ alimento.calcio_mg|default_if_none:'0' }}">
                   </div>
                   <div class="col-md-4">
                     <label class="form-label">Hierro (mg):</label>
-                    <input type="text" class="form-control" value="{{ alimento.hierro_mg|default_if_none:'0' }}" disabled>
+                    <input type="number" step="0.01" class="form-control" name="hierro_mg" value="{{ alimento.hierro_mg|default_if_none:'0' }}">
                   </div>
                   <div class="col-md-4">
                     <label class="form-label">Selenio (µg):</label>
-                    <input type="text" class="form-control" value="{{ alimento.selenio_mcg|default_if_none:'0' }}" disabled>
+                    <input type="number" step="0.01" class="form-control" name="selenio_mcg" value="{{ alimento.selenio_mcg|default_if_none:'0' }}">
                   </div>
                   <div class="col-md-4">
                     <label class="form-label">Zinc (mg):</label>
-                    <input type="text" class="form-control" value="{{ alimento.zinc_mg|default_if_none:'0' }}" disabled>
+                    <input type="number" step="0.01" class="form-control" name="zinc_mg" value="{{ alimento.zinc_mg|default_if_none:'0' }}">
                   </div>
                   <div class="col-md-4">
                     <label class="form-label">Potasio (mg):</label>
-                    <input type="text" class="form-control" value="{{ alimento.potasio_mg|default_if_none:'0' }}" disabled>
+                    <input type="number" step="0.01" class="form-control" name="potasio_mg" value="{{ alimento.potasio_mg|default_if_none:'0' }}">
                   </div>
                   <div class="col-md-4">
                     <label class="form-label">Sodio (mg):</label>
-                    <input type="text" class="form-control" value="{{ alimento.sodio_mg|default_if_none:'0' }}" disabled>
+                    <input type="number" step="0.01" class="form-control" name="sodio_mg" value="{{ alimento.sodio_mg|default_if_none:'0' }}">
                   </div>
                 </div>
               </fieldset>
-              
+                    
               <div class="d-flex justify-content-end gap-2 mt-4">
+                <button type="button" class="btn btn-danger btn-eliminar-alimento" data-alimento-id="{{ alimento.id_alimento }}">
+                  <i class="fas fa-trash-alt me-2"></i>Eliminar
+                </button>
+                <button type="submit" class="btn btn-primary btn-guardar">
+                  <i class="fas fa-save me-2"></i>Guardar
+                </button>
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                   <i class="fas fa-times me-2"></i>Cerrar
                 </button>
@@ -266,18 +307,18 @@
                   </label>
                   <select class="form-select" name="id_grupo_alimenticio" required>
                     <option value="">Seleccionar grupo</option>
-                    {% for grupo_obj in grupos_modal %} {# grupos_modal ahora viene de la API de grupos #}
+                    {% for grupo_obj in grupos_modal %} 
                       <option value="{{ grupo_obj.id_grupo_alimenticio }}">{{ grupo_obj.descripcion }}</option>
                     {% endfor %}
                   </select>
                 </div>
                 <div class="col-md-4">
-                  <label class="form-label">Origen:</label>
+                  <label class="form-label">Origen (ej: USDA, Envase):</label>
                   <input type="text" class="form-control" name="origen" value="Personalizado">
                 </div>
                 <div class="col-md-4">
                   <label class="form-label">
-                    Medida: <span class="text-danger">*</span>
+                    Medida (ej: tazas): <span class="text-danger">*</span>
                   </label>
                   <input type="text" class="form-control" name="medida" required>
                 </div>
@@ -427,88 +468,108 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    const nuevoAlimentoForm = document.getElementById('nuevoAlimentoForm');
-    const numberInputs = nuevoAlimentoForm.querySelectorAll('input[type="number"]');
+    const API_GRUPOS_URL = 'https://nutrilinkapi-production.up.railway.app/api_nutrilink/alimento/obtener_grupos_alimenticios_con_id';
+    // URL para CREAR nuevos alimentos (POST)
+    const API_CREAR_ALIMENTO_URL = 'https://nutrilinkapi-production.up.railway.app/api_nutrilink/alimento/guardar_alimento';
+    // URL BASE para ACTUALIZAR alimentos existentes (PUT)
+    const API_ACTUALIZAR_ALIMENTO_URL_BASE = 'https://nutrilinkapi-production.up.railway.app/api_nutrilink/alimento/actualizar_alimento/';
+    // URL BASE para ELIMINAR alimentos existentes (DELETE)
+    const API_ELIMINAR_ALIMENTO_URL_BASE = 'https://nutrilinkapi-production.up.railway.app/api_nutrilink/alimento/eliminar_alimento/';
+    
+    let todosLosGruposAlimenticiosAPI = [];
 
-    numberInputs.forEach(input => {
-        // El atributo min="0" ya está en el HTML, pero esto es un refuerzo
-        input.addEventListener('input', () => {
-            if (input.value !== '' && parseFloat(input.value) < 0) {
-                input.value = '0';
+    async function cargarGruposDesdeAPI() {
+        try {
+            const response = await fetch(API_GRUPOS_URL);
+            if (!response.ok) {
+                throw new Error(`Error HTTP ${response.status} al cargar grupos.`);
             }
-        });
-        input.addEventListener('blur', () => { // Para asegurar que no se quede vacío si es requerido
-            if (input.required && input.value === '') {
-                // Puedes añadir una clase de error o dejar que la validación HTML lo maneje
+            todosLosGruposAlimenticiosAPI = await response.json();
+
+            if (!todosLosGruposAlimenticiosAPI || todosLosGruposAlimenticiosAPI.length === 0) {
+                console.warn('No se recibieron grupos alimenticios de la API o la lista está vacía.');
+                return;
             }
-        });
-    });
+            
+            // Poblar select en el modal de "Nuevo Alimento" (ya se hace con Django, pero esto es un ejemplo si fuera dinámico)
+            // const nuevoGrupoSelect = document.querySelector('#agregarAlimentoModal select[name="id_grupo_alimenticio"]');
+            // if (nuevoGrupoSelect && nuevoGrupoSelect.options.length <=1) { // Solo si no está ya poblado por Django
+            //     // Lógica para poblarlo...
+            // }
 
-    if (nuevoAlimentoForm) {
-        nuevoAlimentoForm.addEventListener('submit', async function(event) {
-            event.preventDefault(); // Prevenir el envío tradicional
+        } catch (error) {
+            console.error('Error al cargar grupos alimenticios desde API:', error);
+        }
+    }
 
-            // Validación simple de campos requeridos antes de enviar
-            let formIsValid = true;
-            nuevoAlimentoForm.querySelectorAll('[required]').forEach(input => {
-                if (!input.value.trim()) {
-                    formIsValid = false;
-                    // Opcional: Marcar campos inválidos
-                    input.classList.add('is-invalid'); 
-                } else {
-                    input.classList.remove('is-invalid');
-                }
-            });
 
-            if (!formIsValid) {
-                if (typeof Swal !== 'undefined') {
-                    Swal.fire('Campos incompletos', 'Por favor, complete todos los campos marcados con *.', 'warning');
-                } else {
-                    alert('Por favor, complete todos los campos marcados con *.');
-                }
-                return; // Detener si no es válido
+    // --- MANEJAR EL GUARDADO (ACTUALIZACIÓN) DE ALIMENTOS EDITADOS ---
+    document.querySelectorAll('.editable-form').forEach(form => {
+        form.addEventListener('submit', async function(event) {
+            event.preventDefault();
+            
+            const alimentoIdInput = form.querySelector('input[name="id_alimento"]');
+            if (!alimentoIdInput || !alimentoIdInput.value) {
+                console.error("No se encontró el ID del alimento en el formulario.");
+                Swal.fire('Error Interno', 'No se pudo identificar el alimento a guardar.', 'error');
+                return;
             }
+            const alimentoId = alimentoIdInput.value;
 
+            // Construir la URL completa para la actualización
+            const urlActualizar = API_ACTUALIZAR_ALIMENTO_URL_BASE + alimentoId;
 
-            const submitButton = nuevoAlimentoForm.querySelector('button[type="submit"]');
+            const submitButton = form.querySelector('.btn-guardar');
             const originalButtonText = submitButton.innerHTML;
             submitButton.disabled = true;
             submitButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Guardando...';
 
-            const formData = new FormData(nuevoAlimentoForm);
+            const formData = new FormData(form);
             const csrfToken = formData.get('csrfmiddlewaretoken');
 
             const parseFloatOrNull = (value) => {
-                if (value === null || value.trim() === '') return null;
+                if (value === null || String(value).trim() === '') return null;
                 const num = parseFloat(value);
+                return isNaN(num) ? null : num;
+            };
+            
+            const parseIntOrNull = (value) => {
+                if (value === null || String(value).trim() === '') return null;
+                const num = parseInt(value, 10);
                 return isNaN(num) ? null : num;
             };
 
             const data = {
+                // id_alimento no es estrictamente necesario en el cuerpo para PUT si ya está en la URL,
+                // pero algunas APIs lo aceptan o incluso lo usan para validación.
+                // Lo incluimos por si tu API lo espera, pero puedes probar quitándolo si no es necesario.
+                // id_alimento: parseInt(alimentoId),
                 nombre_alimento: formData.get('nombre_alimento'),
+                origen: formData.get('origen'),
+                id_grupo_alimenticio: parseIntOrNull(formData.get('id_grupo_alimenticio')),
                 medida: formData.get('medida'),
                 numero_medida: parseFloatOrNull(formData.get('numero_medida')),
-                masa: parseFloatOrNull(formData.get('cantidad_porcion')),
+                masa: parseFloatOrNull(formData.get('masa')),
                 kcal: parseFloatOrNull(formData.get('kcal')),
                 proteinas_gr: parseFloatOrNull(formData.get('proteinas_gr')),
                 carbohidratos_gr: parseFloatOrNull(formData.get('carbohidratos_gr')),
                 lipidos_gr: parseFloatOrNull(formData.get('lipidos_gr')),
-                n3_gr: parseFloatOrNull(formData.get('omega_gr')),
-                vit_a_mcg: parseFloatOrNull(formData.get('vitamina_a_mcg')),
-                vit_b12_mcg: parseFloatOrNull(formData.get('vitamina_b12_mcg')),
+                n3_gr: parseFloatOrNull(formData.get('n3_gr')),
+                vit_a_mcg: parseFloatOrNull(formData.get('vit_a_mcg')),
+                vit_b12_mcg: parseFloatOrNull(formData.get('vit_b12_mcg')),
                 calcio_mg: parseFloatOrNull(formData.get('calcio_mg')),
                 hierro_mg: parseFloatOrNull(formData.get('hierro_mg')),
                 selenio_mcg: parseFloatOrNull(formData.get('selenio_mcg')),
                 zinc_mg: parseFloatOrNull(formData.get('zinc_mg')),
                 potasio_mg: parseFloatOrNull(formData.get('potasio_mg')),
                 sodio_mg: parseFloatOrNull(formData.get('sodio_mg')),
-                id_grupo_alimenticio: formData.get('id_grupo_alimenticio') ? parseInt(formData.get('id_grupo_alimenticio')) : null,
-                origen: formData.get('origen')
             };
 
+            console.log("Enviando datos para actualizar a:", urlActualizar, " Payload:", data);
+
             try {
-                const response = await fetch('https://nutrilinkapi-production.up.railway.app/api_nutrilink/alimento/guardar_alimento', {
-                    method: 'PUT',
+                const response = await fetch(urlActualizar, { // Usar la nueva URL
+                    method: 'PUT', // Método PUT para actualizar el recurso completo
                     headers: {
                         'Content-Type': 'application/json',
                         'X-CSRFToken': csrfToken
@@ -519,76 +580,239 @@ document.addEventListener('DOMContentLoaded', function () {
                 const result = await response.json();
 
                 if (response.ok && result.status === "success") {
-                    if (typeof Swal !== 'undefined') {
-                        Swal.fire({
-                            icon: 'success',
-                            title: '¡Guardado!',
-                            text: result.mensaje || 'Alimento guardado correctamente.',
-                            timer: 2000,
-                            showConfirmButton: false
-                        });
-                    } else {
-                        alert(result.mensaje || 'Alimento guardado correctamente.');
+                    Swal.fire({
+                        icon: 'success',
+                        title: '¡Actualizado!',
+                        text: result.mensaje || 'Alimento actualizado correctamente.',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                    
+                    const modalElement = form.closest('.modal');
+                    if (modalElement) {
+                        const modalInstance = bootstrap.Modal.getInstance(modalElement);
+                        if (modalInstance) {
+                            modalInstance.hide();
+                        }
                     }
                     
-                    const modalElement = document.getElementById('agregarAlimentoModal');
-                    const modalInstance = bootstrap.Modal.getInstance(modalElement);
-                    if (modalInstance) {
-                        modalInstance.hide();
-                    }
-                    // Limpiar el formulario después de ocultar el modal
-                    modalElement.addEventListener('hidden.bs.modal', function () {
-                        nuevoAlimentoForm.reset();
-                        nuevoAlimentoForm.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
-                        // Recargar la página para ver el nuevo alimento
+                    setTimeout(() => {
                         location.reload(); 
-                    }, { once: true });
-
+                    }, 1500);
 
                 } else {
-                    let errorMessage = 'Error al guardar el alimento.';
+                    let errorMessage = 'Error al actualizar el alimento.';
                     if (result && result.mensaje) {
                         errorMessage = result.mensaje;
-                    } else if (result && result.errors && typeof result.errors === 'object') { // Asumiendo que la API puede devolver 'errors'
-                        let errors = [];
-                        for (const key in result.errors) {
-                            errors.push(`<b>${key}</b>: ${result.errors[key].join(', ')}`);
-                        }
-                        errorMessage = errors.join('<br>');
-                    } else if (result && result.error && typeof result.error === 'string') {
-                         errorMessage = result.error;
+                    } else if (result && result.errors) { 
+                        errorMessage = Object.entries(result.errors).map(([key, val]) => `${key}: ${val.join ? val.join(', ') : val}`).join('<br>');
+                    } else if (result && result.detail) { // A veces DRF usa 'detail' para errores
+                        errorMessage = result.detail;
                     } else if (response.statusText) {
                         errorMessage = `Error ${response.status}: ${response.statusText}`;
                     }
-
-                    if (typeof Swal !== 'undefined') {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Error al Guardar',
-                            html: errorMessage
-                        });
-                    } else {
-                        alert(errorMessage.replace(/<br>/g, '\n').replace(/<b>/g, '').replace(/<\/b>/g, ''));
-                    }
+                    
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error al Guardar',
+                        html: errorMessage
+                    });
                 }
             } catch (error) {
                 console.error('Error en la petición fetch:', error);
-                const errorMsg = 'No se pudo conectar con el servidor o hubo un error inesperado. Inténtalo más tarde.';
-                if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error de Conexión',
+                    text: 'No se pudo conectar con el servidor. Inténtalo más tarde.'
+                });
+            } finally {
+                submitButton.disabled = false;
+                submitButton.innerHTML = originalButtonText;
+            }
+        });
+    });
+
+    // --- MANEJAR LA CREACIÓN DE NUEVOS ALIMENTOS ---
+    const nuevoAlimentoForm = document.getElementById('nuevoAlimentoForm');
+    if (nuevoAlimentoForm) {
+        nuevoAlimentoForm.addEventListener('submit', async function(event) {
+            event.preventDefault();
+            if (!this.checkValidity()) {
+                event.stopPropagation();
+                // Bootstrap se encargará de mostrar los mensajes de validación nativos
+                // Puedes añadir una alerta de Swal si quieres.
+                Swal.fire('Campos incompletos', 'Por favor, rellena todos los campos obligatorios.', 'warning');
+                return;
+            }
+
+            const submitButton = this.querySelector('button[type="submit"]');
+            const originalButtonText = submitButton.innerHTML;
+            submitButton.disabled = true;
+            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Guardando...';
+
+            const formData = new FormData(this);
+            const csrfToken = formData.get('csrfmiddlewaretoken');
+
+            const parseFloatOrNull = (value) => (value === null || String(value).trim() === '') ? null : (isNaN(parseFloat(value)) ? null : parseFloat(value));
+            const parseIntOrNull = (value) => (value === null || String(value).trim() === '') ? null : (isNaN(parseInt(value, 10)) ? null : parseInt(value, 10));
+
+            const data = {
+                nombre_alimento: formData.get('nombre_alimento'),
+                id_grupo_alimenticio: parseIntOrNull(formData.get('id_grupo_alimenticio')),
+                origen: formData.get('origen'),
+                medida: formData.get('medida'),
+                numero_medida: parseFloatOrNull(formData.get('numero_medida')),
+                masa: parseFloatOrNull(formData.get('cantidad_porcion')), // 'cantidad_porcion' es el name en el form
+                kcal: parseFloatOrNull(formData.get('kcal')),
+                proteinas_gr: parseFloatOrNull(formData.get('proteinas_gr')),
+                carbohidratos_gr: parseFloatOrNull(formData.get('carbohidratos_gr')),
+                lipidos_gr: parseFloatOrNull(formData.get('lipidos_gr')),
+                n3_gr: parseFloatOrNull(formData.get('omega_gr')), // 'omega_gr' es el name en el form
+                vit_a_mcg: parseFloatOrNull(formData.get('vitamina_a_mcg')),
+                vit_b12_mcg: parseFloatOrNull(formData.get('vitamina_b12_mcg')),
+                calcio_mg: parseFloatOrNull(formData.get('calcio_mg')),
+                hierro_mg: parseFloatOrNull(formData.get('hierro_mg')),
+                selenio_mcg: parseFloatOrNull(formData.get('selenio_mcg')),
+                zinc_mg: parseFloatOrNull(formData.get('zinc_mg')),
+                potasio_mg: parseFloatOrNull(formData.get('potasio_mg')),
+                sodio_mg: parseFloatOrNull(formData.get('sodio_mg')),
+            };
+
+            console.log("Enviando datos para crear nuevo alimento:", data, "a:", API_CREAR_ALIMENTO_URL);
+
+            try {
+                const response = await fetch(API_CREAR_ALIMENTO_URL, { // Usar API_CREAR_ALIMENTO_URL
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken
+                    },
+                    body: JSON.stringify(data)
+                });
+                const result = await response.json();
+
+                if (response.ok && result.status === "success") {
                     Swal.fire({
-                        icon: 'error',
-                        title: 'Error de Conexión',
-                        text: errorMsg
+                        icon: 'success',
+                        title: '¡Alimento Agregado!',
+                        text: result.mensaje || 'El nuevo alimento ha sido guardado correctamente.',
+                        timer: 2000,
+                        showConfirmButton: false
                     });
+                    const modalElement = this.closest('.modal');
+                    if (modalElement) {
+                        const modalInstance = bootstrap.Modal.getInstance(modalElement);
+                        if (modalInstance) modalInstance.hide();
+                        modalElement.querySelector('form').reset(); // Limpiar formulario
+                    }
+                    setTimeout(() => location.reload(), 1500);
                 } else {
-                    alert(errorMsg);
+                    let errorMessage = 'Error al agregar el alimento.';
+                    if (result && result.mensaje) errorMessage = result.mensaje;
+                    else if (result && result.errors) errorMessage = Object.entries(result.errors).map(([k, v]) => `${k}: ${v.join ? v.join(', ') : v}`).join('<br>');
+                    else if (result && result.detail) errorMessage = result.detail;
+                    else if (response.statusText) errorMessage = `Error ${response.status}: ${response.statusText}`;
+                    Swal.fire({ icon: 'error', title: 'Error al Guardar', html: errorMessage });
                 }
+            } catch (error) {
+                console.error('Error en la petición fetch para crear:', error);
+                Swal.fire({ icon: 'error', title: 'Error de Conexión', text: 'No se pudo conectar con el servidor.' });
             } finally {
                 submitButton.disabled = false;
                 submitButton.innerHTML = originalButtonText;
             }
         });
     }
+
+
+    // --- MANEJAR LA ELIMINACIÓN DE ALIMENTOS ---
+    document.querySelectorAll('.btn-eliminar-alimento').forEach(button => {
+        button.addEventListener('click', async function() {
+            const alimentoId = this.dataset.alimentoId;
+            if (!alimentoId) {
+                Swal.fire('Error Interno', 'No se pudo identificar el alimento a eliminar.', 'error');
+                return;
+            }
+
+            const modal = this.closest('.modal');
+            const form = modal ? modal.querySelector('form') : null;
+            const csrfTokenInput = form ? form.querySelector('input[name="csrfmiddlewaretoken"]') : document.querySelector('#nuevoAlimentoForm input[name="csrfmiddlewaretoken"]'); // Fallback al token del form de nuevo alimento si no está en el de edición
+            const csrfToken = csrfTokenInput ? csrfTokenInput.value : (document.querySelector('input[name="csrfmiddlewaretoken"]')?.value || '');
+
+
+            Swal.fire({
+                title: '¿Estás seguro?',
+                html: `Vas a eliminar el alimento (ID: <strong>${alimentoId}</strong>).<br>¡Esta acción no se puede revertir!`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Sí, ¡eliminar!',
+                cancelButtonText: 'Cancelar'
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    const eliminarUrl = API_ELIMINAR_ALIMENTO_URL_BASE + alimentoId;
+                    
+                    const swalLoading = Swal.fire({
+                        title: 'Eliminando...',
+                        text: 'Por favor espera.',
+                        allowOutsideClick: false,
+                        didOpen: () => { Swal.showLoading(); }
+                    });
+
+                    try {
+                        const response = await fetch(eliminarUrl, {
+                            method: 'DELETE',
+                            headers: {
+                                'Content-Type': 'application/json', 
+                                'X-CSRFToken': csrfToken 
+                            }
+                        });
+
+                        swalLoading.close(); 
+
+                        const apiResult = await response.json();
+
+                        if (response.ok && apiResult.status === "success") {
+                            Swal.fire({
+                                icon: 'success',
+                                title: '¡Eliminado!',
+                                text: apiResult.mensaje || 'Alimento eliminado correctamente.',
+                                timer: 2500,
+                                showConfirmButton: false
+                            });
+                            
+                            const modalElement = this.closest('.modal');
+                            if (modalElement) {
+                                const modalInstance = bootstrap.Modal.getInstance(modalElement);
+                                if (modalInstance) modalInstance.hide();
+                            }
+                            
+                            setTimeout(() => { location.reload(); }, 2000);
+
+                        } else {
+                            let errorMessage = 'Error al eliminar el alimento.';
+                            if (apiResult && apiResult.mensaje) errorMessage = apiResult.mensaje;
+                            else if (apiResult && apiResult.detail) errorMessage = apiResult.detail;
+                            else if (response.statusText) errorMessage = `Error ${response.status}: ${response.statusText}`;
+                            Swal.fire({ icon: 'error', title: 'Error al Eliminar', html: errorMessage });
+                        }
+                    } catch (error) {
+                        swalLoading.close(); 
+                        console.error('Error en la petición fetch de eliminación:', error);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error de Conexión',
+                            text: 'No se pudo conectar con el servidor para eliminar. Inténtalo más tarde.'
+                        });
+                    }
+                }
+            });
+        });
+    });
+
+    // --- INICIALIZACIÓN ---
+    // cargarGruposDesdeAPI(); // Descomentar si se necesita para poblar selects dinámicamente que no vengan de Django
 });
 </script>
 {% endblock %}
