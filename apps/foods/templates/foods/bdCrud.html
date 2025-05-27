@@ -21,175 +21,401 @@
     </button>
   </div>
   <div class="filtros">
-    <!-- Formulario de búsqueda -->
     <form method="get" class="d-flex flex-wrap justify-content-between w-100 gap-3">
         <div class="input-group" style="max-width: 500px;">
             <span class="input-group-text"><i class="fas fa-search"></i></span>
-            <input type="text" name="q" class="form-control" placeholder="Buscar alimento..." value="{{ request.GET.q }}">
+            <input type="text" name="q" class="form-control" placeholder="Buscar alimento..." value="{{ request_get_q }}">
             <button type="submit" class="btn btn-primary">Buscar</button>
         </div>
 
         <div class="ms-auto">
             <select name="grupo" class="form-select" onchange="this.form.submit()">
                 <option value="">Todos los grupos</option>
-                {% for grupo in grupos %}
-                    <option value="{{ grupo }}" {% if request.GET.grupo == grupo %}selected{% endif %}>
-                        {{ grupo }}
+                {% for grupo_nombre in grupos_filtro %} {# Usar grupos_filtro aquí #}
+                    <option value="{{ grupo_nombre }}" {% if request_get_grupo == grupo_nombre %}selected{% endif %}>
+                        {{ grupo_nombre }}
                     </option>
                 {% endfor %}
             </select>
         </div>
     </form>
   </div>
-  <!-- Loop de alimentos con paginación -->
+
   {% if page_obj %}
-  {% for alimento in page_obj %}
-  <div class="alimento-card">
-    <div class="alimento-info">
-      <div class="alimento-nombre">{{ alimento.nombre_alimento }}</div>
-      <div class="alimento-origen"></div>
-    </div>
-    <div class="alimento-derecha">
-      <div class="alimento-valores">
-        <div class="valor">
-            <span>{{ alimento.lipidos_gr }}g</span>
-            Lípidos
+    {% for alimento in page_obj %}
+    <div class="alimento-card">
+      <div class="alimento-info">
+        <div class="alimento-nombre">{{ alimento.nombre_alimento }}</div>
+        <div class="alimento-origen">{{ alimento.origen|default:"" }}</div>
+      </div>
+      <div class="alimento-derecha">
+        <div class="alimento-valores">
+          <div class="valor">
+              <span>{{ alimento.lipidos_gr|default_if_none:"0" }}g</span>
+              Lípidos
+          </div>
+          <div class="valor">
+              <span>{{ alimento.kcal|default_if_none:"0" }} kcal</span>
+              Calorías
+          </div>
+          <div class="valor">
+              <span>{{ alimento.proteinas_gr|default_if_none:"0" }}g</span>
+              Proteínas
+          </div>
+          <div class="valor">
+              <span>{{ alimento.carbohidratos_gr|default_if_none:"0" }}g</span>
+              CarboH
+          </div>
         </div>
-        <div class="valor">
-            <span>{{ alimento.kcal }} kcal</span>
-            Calorías
-        </div>
-        <div class="valor">
-            <span>{{ alimento.proteinas_gr }}g</span>
-            Proteínas
-        </div>
-        <div class="valor">
-            <span>{{ alimento.carbohidratos_gr }}g</span>
-            CarboH
+        <div class="expansor">
+          <button class="btn" type="button" data-bs-toggle="modal" data-bs-target="#detalleModal{{ alimento.id_alimento }}"> {# Usar alimento.id_alimento para un ID único #}
+            <i class="fas fa-expand"></i>
+          </button>
         </div>
       </div>
-      <div class="expansor">
-        <button class="btn" type="button" data-bs-toggle="modal" data-bs-target="#detalleModal{{ forloop.counter }}">
-          <i class="fas fa-expand"></i>
-        </button>
+    </div>
+    <!-- Modal de detalles del alimento -->
+    <div class="modal fade" id="detalleModal{{ alimento.id_alimento }}" tabindex="-1" aria-labelledby="detalleModalLabel{{ alimento.id_alimento }}" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+          <div class="modal-header background">
+            <h5 class="modal-title" id="detalleModalLabel{{ alimento.id_alimento }}">
+              <i class="fas fa-utensils me-2"></i>
+              Detalle nutricional de {{ alimento.nombre_alimento }}
+            </h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <form id="alimentoForm{{ alimento.id_alimento }}">
+              <input type="hidden" id="alimentoId{{ alimento.id_alimento }}" value="{{ alimento.id_alimento }}" >
+              
+              <fieldset class="info-basica-section mb-4">
+                <legend class="section-title">Información del Alimento</legend>
+                <div class="row g-3">
+                  <div class="col-md-6">
+                    <label class="form-label">Nombre:</label>
+                    <input type="text" class="form-control colorBg " value="{{ alimento.nombre_alimento }}" disabled>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Origen:</label>
+                    <input type="text" class="form-control" value="{{ alimento.origen|default:'USDA' }}" disabled>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Categoría:</label>
+                    <input type="text" class="form-control" value="{{ alimento.nombre_grupo_alimenticio|default:'' }}" disabled>
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label">Medida:</label> <!-- Combinado Medida y N° Medida -->
+                    <input type="text" class="form-control" value="{{ alimento.numero_medida|default:'1' }} {{ alimento.medida|default:'' }}" disabled>
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label">Masa (porción):</label>
+                    <div class="input-group">
+                      <input type="text" class="form-control" value="{{ alimento.masa|default:'' }}" disabled>
+                      <span class="input-group-text">gr/ml</span>
+                    </div>
+                  </div>
+                </div>
+              </fieldset>
+              
+              <fieldset class="macronutrientes-section mb-4">
+                <legend class="section-title">Macronutrientes (porción)</legend> <!-- Aclarar si es porción o 100g -->
+                <div class="row g-3">
+                  <div class="col-md-3">
+                    <label class="form-label">Lípidos (g):</label>
+                    <input type="text" class="form-control" value="{{ alimento.lipidos_gr|default_if_none:'0' }}" disabled>
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label">Proteínas (g):</label>
+                    <input type="text" class="form-control" value="{{ alimento.proteinas_gr|default_if_none:'0' }}" disabled>
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label">Carbohidratos (g):</label>
+                    <input type="text" class="form-control" value="{{ alimento.carbohidratos_gr|default_if_none:'0' }}" disabled>
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label">Calorías (kcal):</label>
+                    <input type="text" class="form-control" value="{{ alimento.kcal|default_if_none:'0' }}" disabled>
+                  </div>
+                </div>
+              </fieldset>
+              
+              <fieldset class="micronutrientes-section mb-4">
+                <legend class="section-title">Micronutrientes (porción)</legend> <!-- Aclarar si es porción o 100g -->
+                <div class="row g-3">
+                  <div class="col-md-4">
+                    <label class="form-label">Omega 3 (g):</label>
+                    <input type="text" class="form-control" value="{{ alimento.n3_gr|default_if_none:'0' }}" disabled>
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label">Vitamina A (µg RE):</label>
+                    <input type="text" class="form-control" value="{{ alimento.vit_a_mcg|default_if_none:'0' }}" disabled>
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label">Vitamina B12 (µg):</label>
+                    <input type="text" class="form-control" value="{{ alimento.vit_b12_mcg|default_if_none:'0' }}" disabled>
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label">Calcio (mg):</label>
+                    <input type="text" class="form-control" value="{{ alimento.calcio_mg|default_if_none:'0' }}" disabled>
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label">Hierro (mg):</label>
+                    <input type="text" class="form-control" value="{{ alimento.hierro_mg|default_if_none:'0' }}" disabled>
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label">Selenio (µg):</label>
+                    <input type="text" class="form-control" value="{{ alimento.selenio_mcg|default_if_none:'0' }}" disabled>
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label">Zinc (mg):</label>
+                    <input type="text" class="form-control" value="{{ alimento.zinc_mg|default_if_none:'0' }}" disabled>
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label">Potasio (mg):</label>
+                    <input type="text" class="form-control" value="{{ alimento.potasio_mg|default_if_none:'0' }}" disabled>
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label">Sodio (mg):</label>
+                    <input type="text" class="form-control" value="{{ alimento.sodio_mg|default_if_none:'0' }}" disabled>
+                  </div>
+                </div>
+              </fieldset>
+              
+              <div class="d-flex justify-content-end gap-2 mt-4">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                  <i class="fas fa-times me-2"></i>Cerrar
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       </div>
     </div>
-  </div>
-  <!-- Modal de alimentos USDA-->
-  <div class="modal fade" id="detalleModal{{ forloop.counter }}" tabindex="-1" aria-labelledby="detalleModalLabel" aria-hidden="true">
+    {% endfor %}
+
+    <!-- Paginación -->
+    <div class="pagination-container mt-4">
+      <nav aria-label="Page navigation">
+        <ul class="pagination justify-content-center">
+          {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1{% if request_get_q %}&q={{ request_get_q }}{% endif %}{% if request_get_grupo %}&grupo={{ request_get_grupo }}{% endif %}" aria-label="First">
+                        <span aria-hidden="true">««</span>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request_get_q %}&q={{ request_get_q }}{% endif %}{% if request_get_grupo %}&grupo={{ request_get_grupo }}{% endif %}" aria-label="Previous">
+                        <span aria-hidden="true">«</span>
+                    </a>
+                </li>
+          {% endif %}
+          {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                    <li class="page-item active"><a class="page-link" href="#">{{ num }}</a></li>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                    <li class="page-item"><a class="page-link" href="?page={{ num }}{% if request_get_q %}&q={{ request_get_q }}{% endif %}{% if request_get_grupo %}&grupo={{ request_get_grupo }}{% endif %}">{{ num }}</a></li>
+                {% endif %}
+          {% endfor %}
+          {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request_get_q %}&q={{ request_get_q }}{% endif %}{% if request_get_grupo %}&grupo={{ request_get_grupo }}{% endif %}" aria-label="Next">
+                        <span aria-hidden="true">»</span>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request_get_q %}&q={{ request_get_q }}{% endif %}{% if request_get_grupo %}&grupo={{ request_get_grupo }}{% endif %}" aria-label="Last">
+                        <span aria-hidden="true">»»</span>
+                    </a>
+                </li>
+          {% endif %}
+        </ul>
+      </nav>
+    </div>
+  {% else %}
+    <div class="alert alert-warning mt-3">No se pudieron cargar los alimentos o no se encontraron resultados. Por favor, intente más tarde o ajuste su búsqueda.</div>
+  {% endif %}
+
+  <!-- Modal para agregar nuevo alimento -->
+  <div class="modal fade" id="agregarAlimentoModal" tabindex="-1" aria-labelledby="agregarAlimentoModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
       <div class="modal-content">
         <div class="modal-header background">
-          <h5 class="modal-title" id="modalTitle">
-            <i class="fas fa-utensils me-2"></i>
-            Detalle nutricional de {{ alimento.nombre_alimento }}
+          <h5 class="modal-title" id="agregarAlimentoModalLabel">
+            <i class="fas fa-plus-circle me-2"></i>
+            Agregar Nuevo Alimento
           </h5>
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
-          <form id="alimentoForm{{ forloop.counter }}">
-            <input type="hidden" id="alimentoId" value="{{ alimento.id }}" >
+          <form id="nuevoAlimentoForm">
+            {% csrf_token %}
             
-            <!-- Sección de información básica -->
             <fieldset class="info-basica-section mb-4">
-              <legend class="section-title">Información del Alimento</legend>
-
+              <legend class="section-title">Información Básica</legend>
               <div class="row g-3">
                 <div class="col-md-6">
-                  <label class="form-label">Nombre:</label>
-                  <input type="text" class="form-control colorBg " value="{{ alimento.nombre_alimento }}" disabled>
+                  <label class="form-label">
+                    Nombre del alimento: <span class="text-danger">*</span>
+                  </label>
+                  <input type="text" class="form-control" name="nombre_alimento" required>
                 </div>
                 <div class="col-md-6">
+                  <label class="form-label">
+                    Grupo alimenticio: <span class="text-danger">*</span>
+                  </label>
+                  <select class="form-select" name="id_grupo_alimenticio" required>
+                    <option value="">Seleccionar grupo</option>
+                    {% for grupo_obj in grupos_modal %} {# grupos_modal ahora viene de la API de grupos #}
+                      <option value="{{ grupo_obj.id_grupo_alimenticio }}">{{ grupo_obj.descripcion }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+                <div class="col-md-4">
                   <label class="form-label">Origen:</label>
-                  <input type="text" class="form-control" value="{{ alimento.origen|default:'USDA' }}" disabled>
+                  <input type="text" class="form-control" name="origen" value="Personalizado">
                 </div>
-                
-                <div class="col-md-6">
-                  <label class="form-label">Categoría:</label>
-                  <input type="text" class="form-control" value="{{ alimento.nombre_grupo_alimenticio|default:'' }}" disabled>
+                <div class="col-md-4">
+                  <label class="form-label">
+                    Medida: <span class="text-danger">*</span>
+                  </label>
+                  <input type="text" class="form-control" name="medida" required>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">
+                    N° medidas por porción: <span class="text-danger">*</span>
+                  </label>
+                  <input type="number" step="0.01" min="0" class="form-control" name="numero_medida" required>
                 </div>
                 <div class="col-md-6">
-                  <label class="form-label">Cantidad (porción):</label>
+                  <label class="form-label">
+                    Masa (total por porción): <span class="text-danger">*</span>
+                  </label>
                   <div class="input-group">
-                    <input type="text" class="form-control" value="{{ alimento.masa|default:'' }}" disabled>
+                    <input type="number" step="0.01" min="0" class="form-control" name="cantidad_porcion" required>
                     <span class="input-group-text">gr/ml</span>
                   </div>
                 </div>
               </div>
             </fieldset>
             
-            <!-- Sección de macronutrientes -->
             <fieldset class="macronutrientes-section mb-4">
-              <legend class="section-title">Macronutrientes</legend>
-
+              <legend class="section-title">Macronutrientes (total por porción indicada)</legend>
               <div class="row g-3">
                 <div class="col-md-3">
-                  <label class="form-label">Lípidos (g):</label>
-                  <input type="text" class="form-control" value="{{ alimento.lipidos_gr }}" disabled>
+                  <label class="form-label">
+                    Energía (kcal): <span class="text-danger">*</span>
+                  </label>
+                  <div class="input-group">
+                    <input type="number" step="0.1" min="0" class="form-control" name="kcal" required>
+                    <span class="input-group-text">kcal</span>
+                  </div>
                 </div>
                 <div class="col-md-3">
-                  <label class="form-label">Proteínas (g):</label>
-                  <input type="text" class="form-control" value="{{ alimento.proteinas_gr }}" disabled>
+                  <label class="form-label">
+                    Proteínas (g): <span class="text-danger">*</span>
+                  </label>
+                  <div class="input-group">
+                    <input type="number" step="0.01" min="0" class="form-control" name="proteinas_gr" required>
+                    <span class="input-group-text">g</span>
+                  </div>
                 </div>
                 <div class="col-md-3">
-                  <label class="form-label">Carbohidratos (g):</label>
-                  <input type="text" class="form-control" value="{{ alimento.carbohidratos_gr }}" disabled>
+                  <label class="form-label">
+                    Lípidos (g): <span class="text-danger">*</span>
+                  </label>
+                  <div class="input-group">
+                    <input type="number" step="0.01" min="0" class="form-control" name="lipidos_gr" required>
+                    <span class="input-group-text">g</span>
+                  </div>
                 </div>
                 <div class="col-md-3">
-                  <label class="form-label">Calorías (kcal):</label>
-                  <input type="text" class="form-control" value="{{ alimento.kcal }}" disabled>
+                  <label class="form-label">
+                    Carbohidratos (g): <span class="text-danger">*</span>
+                  </label>
+                  <div class="input-group">
+                    <input type="number" step="0.01" min="0" class="form-control" name="carbohidratos_gr" required>
+                    <span class="input-group-text">g</span>
+                  </div>
                 </div>
               </div>
             </fieldset>
             
-            <!-- Sección de micronutrientes -->
             <fieldset class="micronutrientes-section mb-4">
-              <legend class="section-title">Micronutrientes</legend>
-
+              <legend class="section-title">Micronutrientes (opcionales, total por porción indicada)</legend>
               <div class="row g-3">
                 <div class="col-md-4">
-                  <label class="form-label">Omega 3 (gr):</label>
-                  <input type="text" class="form-control" value="{{ alimento.n3_gr|default:'0' }}" disabled>
+                  <label class="form-label">Omega 3 (g):</label>
+                  <div class="input-group">
+                    <input type="number" step="0.01" min="0" class="form-control" name="omega_gr">
+                    <span class="input-group-text">g</span>
+                  </div>
                 </div>
                 <div class="col-md-4">
-                  <label class="form-label">Vitamina A (mcg):</label>
-                  <input type="text" class="form-control" value="{{ alimento.vit_a_mcg|default:'0' }}" disabled>
+                  <label class="form-label">Vitamina A (µg RE):</label>
+                  <div class="input-group">
+                    <input type="number" step="0.01" min="0" class="form-control" name="vitamina_a_mcg">
+                    <span class="input-group-text">µg RE</span>
+                  </div>
                 </div>
                 <div class="col-md-4">
-                  <label class="form-label">Vitamina B12 (mcg):</label>
-                  <input type="text" class="form-control" value="{{ alimento.vit_b12_mcg|default:'0' }}" disabled>
+                  <label class="form-label">Vitamina B12 (µg):</label>
+                  <div class="input-group">
+                    <input type="number" step="0.01" min="0" class="form-control" name="vitamina_b12_mcg">
+                    <span class="input-group-text">µg</span>
+                  </div>
                 </div>
                 <div class="col-md-4">
                   <label class="form-label">Calcio (mg):</label>
-                  <input type="text" class="form-control" value="{{ alimento.calcio_mg|default:'0' }}" disabled>
+                  <div class="input-group">
+                    <input type="number" step="0.01" min="0" class="form-control" name="calcio_mg">
+                    <span class="input-group-text">mg</span>
+                  </div>
                 </div>
                 <div class="col-md-4">
                   <label class="form-label">Hierro (mg):</label>
-                  <input type="text" class="form-control" value="{{ alimento.hierro_mg|default:'0' }}" disabled>
+                  <div class="input-group">
+                    <input type="number" step="0.01" min="0" class="form-control" name="hierro_mg">
+                    <span class="input-group-text">mg</span>
+                  </div>
                 </div>
                 <div class="col-md-4">
-                  <label class="form-label">Selenio (mcg):</label>
-                  <input type="text" class="form-control" value="{{ alimento.selenio_mcg|default:'0' }}" disabled>
+                  <label class="form-label">Selenio (µg):</label>
+                  <div class="input-group">
+                    <input type="number" step="0.01" min="0" class="form-control" name="selenio_mcg">
+                    <span class="input-group-text">µg</span>
+                  </div>
                 </div>
                 <div class="col-md-4">
                   <label class="form-label">Zinc (mg):</label>
-                  <input type="text" class="form-control" value="{{ alimento.zinc_mg|default:'0' }}" disabled>
+                  <div class="input-group">
+                    <input type="number" step="0.01" min="0" class="form-control" name="zinc_mg">
+                    <span class="input-group-text">mg</span>
+                  </div>
                 </div>
                 <div class="col-md-4">
                   <label class="form-label">Potasio (mg):</label>
-                  <input type="text" class="form-control" value="{{ alimento.potasio_mg|default:'0' }}" disabled>
+                  <div class="input-group">
+                    <input type="number" step="0.01" min="0" class="form-control" name="potasio_mg">
+                    <span class="input-group-text">mg</span>
+                  </div>
                 </div>
                 <div class="col-md-4">
                   <label class="form-label">Sodio (mg):</label>
-                  <input type="text" class="form-control" value="{{ alimento.sodio_mg|default:'0' }}" disabled>
+                  <div class="input-group">
+                    <input type="number" step="0.01" min="0" class="form-control" name="sodio_mg">
+                    <span class="input-group-text">mg</span>
+                  </div>
                 </div>
               </div>
             </fieldset>
             
-            <!-- Botones de acción -->
             <div class="d-flex justify-content-end gap-2 mt-4">
               <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                <i class="fas fa-times me-2"></i>Cerrar
+                <i class="fas fa-times me-2"></i>Cancelar
+              </button>
+              <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save me-2"></i>Guardar Alimento
               </button>
             </div>
           </form>
@@ -197,259 +423,172 @@
       </div>
     </div>
   </div>
-  {% endfor %}
+</div> <!-- Cierre de .contenedor-alimentos -->
 
-  <!-- Paginación -->
-  <div class="pagination-container mt-4">
-    <nav aria-label="Page navigation">
-      <ul class="pagination justify-content-center">
-        {% if page_obj.has_previous %}
-              <li class="page-item">
-                  <a class="page-link" href="?page=1{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.grupo %}&grupo={{ request.GET.grupo }}{% endif %}" aria-label="First">
-                      <span aria-hidden="true">&laquo;&laquo;</span>
-                  </a>
-              </li>
-              <li class="page-item">
-                  <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.grupo %}&grupo={{ request.GET.grupo }}{% endif %}" aria-label="Previous">
-                      <span aria-hidden="true">&laquo;</span>
-                  </a>
-              </li>
-        {% endif %}
-        {% for num in page_obj.paginator.page_range %}
-              {% if page_obj.number == num %}
-                  <li class="page-item active"><a class="page-link" href="#">{{ num }}</a></li>
-              {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
-                  <li class="page-item"><a class="page-link" href="?page={{ num }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.grupo %}&grupo={{ request.GET.grupo }}{% endif %}">{{ num }}</a></li>
-              {% endif %}
-        {% endfor %}
-        {% if page_obj.has_next %}
-              <li class="page-item">
-                  <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.grupo %}&grupo={{ request.GET.grupo }}{% endif %}" aria-label="Next">
-                      <span aria-hidden="true">&raquo;</span>
-                  </a>
-              </li>
-              <li class="page-item">
-                  <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.grupo %}&grupo={{ request.GET.grupo }}{% endif %}" aria-label="Last">
-                      <span aria-hidden="true">&raquo;&raquo;</span>
-                  </a>
-              </li>
-        {% endif %}
-      </ul>
-    </nav>
-  </div>
-</div>
-{% else %}
-  <div class="alert alert-warning mt-3">No se pudieron cargar los alimentos. Por favor, intente más tarde.</div>
-{% endif %}
-<!-- Modal para agregar nuevo alimento -->
-<div class="modal fade" id="agregarAlimentoModal" tabindex="-1" aria-labelledby="agregarAlimentoModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered modal-lg">
-    <div class="modal-content">
-      <div class="modal-header background">
-        <h5 class="modal-title" id="agregarAlimentoModalLabel">
-          <i class="fas fa-plus-circle me-2"></i>
-          Agregar Nuevo Alimento
-        </h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <form id="nuevoAlimentoForm" method="post" action="#">
-          {% csrf_token %}
-          
-          <!-- Sección de información básica -->
-          <fieldset class="info-basica-section mb-4">
-            <legend class="section-title">Información Básica</legend>
-
-            <div class="row g-3">
-              <div class="col-md-8">
-                <label class="form-label">
-                  Nombre del alimento: <span class="text-danger">*</span>
-                </label>
-                <input type="text" class="form-control" name="nombre_alimento" required>
-              </div>
-              
-              <div class="col-md-4">
-                <label class="form-label">
-                  Grupo alimenticio: <span class="text-danger">*</span>
-                </label>
-                <select class="form-select" name="nombre_grupo_alimenticio" required>
-                  <option value="">Seleccionar grupo</option>
-                  {% for grupo in grupos %}
-                    <option value="{{ grupo }}">{{ grupo }}</option>
-                  {% endfor %}
-                </select>
-              </div>
-              
-              <div class="col-md-6">
-                <label class="form-label">Origen:</label>
-                <input type="text" class="form-control" name="origen" value="Personalizado" disabled>
-              </div>
-              
-              <div class="col-md-6">
-                <label class="form-label">
-                  Cantidad por porción: <span class="text-danger">*</span>
-                </label>
-                <div class="input-group">
-                  <input type="number" step="0.1" class="form-control" name="cantidad_porcion" required>
-                  <span class="input-group-text">gr/ml</span>
-                </div>
-              </div>
-            </div>
-          </fieldset>
-          
-          <!-- Sección de macronutrientes -->
-          <fieldset class="macronutrientes-section mb-4">
-            <legend class="section-title">Macronutrientes (por 100g/ml)</legend>
-
-            <div class="row g-3">
-              <div class="col-md-3">
-                <label class="form-label">
-                  Energía (kcal): <span class="text-danger">*</span>
-                </label>
-                <div class="input-group">
-                  <input type="number" step="0.1" class="form-control" name="kcal" required>
-                  <span class="input-group-text">kcal</span>
-                </div>
-              </div>
-              
-              <div class="col-md-3">
-                <label class="form-label">
-                  Proteínas (g): <span class="text-danger">*</span>
-                </label>
-                <div class="input-group">
-                  <input type="number" step="0.01" class="form-control" name="proteinas_gr" required>
-                  <span class="input-group-text">g</span>
-                </div>
-              </div>
-              
-              <div class="col-md-3">
-                <label class="form-label">
-                  Lípidos (g): <span class="text-danger">*</span>
-                </label>
-                <div class="input-group">
-                  <input type="number" step="0.01" class="form-control" name="lipidos_gr" required>
-                  <span class="input-group-text">g</span>
-                </div>
-              </div>
-              
-              <div class="col-md-3">
-                <label class="form-label">
-                  Carbohidratos (g): <span class="text-danger">*</span>
-                </label>
-                <div class="input-group">
-                  <input type="number" step="0.01" class="form-control" name="carbohidratos_gr" required>
-                  <span class="input-group-text">g</span>
-                </div>
-              </div>
-            </div>
-          </fieldset>
-          
-          <!-- Sección de micronutrientes -->
-          <fieldset class="micronutrientes-section mb-4">
-            <legend class="section-title">Micronutrientes (opcionales)</legend>
-
-            <div class="row g-3">
-              <div class="col-md-4">
-                <label class="form-label">Omega 3 (gr):</label>
-                <div class="input-group">
-                  <input type="number" step="0.01" class="form-control" name="omega_gr">
-                  <span class="input-group-text">gr</span>
-                </div>
-              </div>
-
-              <div class="col-md-4">
-                <label class="form-label">Vitamina A (mcg):</label>
-                <div class="input-group">
-                  <input type="number" step="0.01" class="form-control" name="vitamina_a_mcg">
-                  <span class="input-group-text">mcg</span>
-                </div>
-              </div>
-
-              <div class="col-md-4">
-                <label class="form-label">Vitamina B12 (mcg):</label>
-                <div class="input-group">
-                  <input type="number" step="0.01" class="form-control" name="vitamina_b12_mcg">
-                  <span class="input-group-text">mcg</span>
-                </div>
-              </div>
-
-              <div class="col-md-4">
-                <label class="form-label">Calcio (mg):</label>
-                <div class="input-group">
-                  <input type="number" step="0.01" class="form-control" name="calcio_mg">
-                  <span class="input-group-text">mg</span>
-                </div>
-              </div>
-              
-              <div class="col-md-4">
-                <label class="form-label">Hierro (mg):</label>
-                <div class="input-group">
-                  <input type="number" step="0.01" class="form-control" name="hierro_mg">
-                  <span class="input-group-text">mg</span>
-                </div>
-              </div>
-              
-              <div class="col-md-4">
-                <label class="form-label">Selenio (mcg):</label>
-                <div class="input-group">
-                  <input type="number" step="0.01" class="form-control" name="selenio_mcg">
-                  <span class="input-group-text">mcg</span>
-                </div>
-              </div>
-
-              <div class="col-md-4">
-                <label class="form-label">Zinc (mg):</label>
-                <div class="input-group">
-                  <input type="number" step="0.01" class="form-control" name="zinc_mg">
-                  <span class="input-group-text">mg</span>
-                </div>
-              </div>
-              
-              <div class="col-md-4">
-                <label class="form-label">Potasio (mg):</label>
-                <div class="input-group">
-                  <input type="number" step="0.01" class="form-control" name="potasio_mg">
-                  <span class="input-group-text">mg</span>
-                </div>
-              </div>
-              
-              <div class="col-md-4">
-                <label class="form-label">Sodio (mg):</label>
-                <div class="input-group">
-                  <input type="number" step="0.01" class="form-control" name="sodio_mg">
-                  <span class="input-group-text">mg</span>
-                </div>
-              </div>
-            </div>
-          </fieldset>
-          
-          <!-- Botones de acción -->
-          <div class="d-flex justify-content-end gap-2 mt-4">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-              <i class="fas fa-times me-2"></i>Cancelar
-            </button>
-            <button type="submit" class="btn btn-primary">
-              <i class="fas fa-save me-2"></i>Guardar Alimento
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
-</div>
-<!--script aqui para modal de agregar nuevo alimento (no permitir valores negativos)-->
 <script>
-  document.addEventListener('DOMContentLoaded', function () {
-    const form = document.getElementById('nuevoAlimentoForm');
-    const numberInputs = form.querySelectorAll('input[type="number"]');
+document.addEventListener('DOMContentLoaded', function () {
+    const nuevoAlimentoForm = document.getElementById('nuevoAlimentoForm');
+    const numberInputs = nuevoAlimentoForm.querySelectorAll('input[type="number"]');
 
     numberInputs.forEach(input => {
-      input.setAttribute('min', '0');
-      input.addEventListener('input', () => {
-        if (input.value < 0) input.value = 0;
-      });
+        // El atributo min="0" ya está en el HTML, pero esto es un refuerzo
+        input.addEventListener('input', () => {
+            if (input.value !== '' && parseFloat(input.value) < 0) {
+                input.value = '0';
+            }
+        });
+        input.addEventListener('blur', () => { // Para asegurar que no se quede vacío si es requerido
+            if (input.required && input.value === '') {
+                // Puedes añadir una clase de error o dejar que la validación HTML lo maneje
+            }
+        });
     });
-  });
-</script>
 
+    if (nuevoAlimentoForm) {
+        nuevoAlimentoForm.addEventListener('submit', async function(event) {
+            event.preventDefault(); // Prevenir el envío tradicional
+
+            // Validación simple de campos requeridos antes de enviar
+            let formIsValid = true;
+            nuevoAlimentoForm.querySelectorAll('[required]').forEach(input => {
+                if (!input.value.trim()) {
+                    formIsValid = false;
+                    // Opcional: Marcar campos inválidos
+                    input.classList.add('is-invalid'); 
+                } else {
+                    input.classList.remove('is-invalid');
+                }
+            });
+
+            if (!formIsValid) {
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire('Campos incompletos', 'Por favor, complete todos los campos marcados con *.', 'warning');
+                } else {
+                    alert('Por favor, complete todos los campos marcados con *.');
+                }
+                return; // Detener si no es válido
+            }
+
+
+            const submitButton = nuevoAlimentoForm.querySelector('button[type="submit"]');
+            const originalButtonText = submitButton.innerHTML;
+            submitButton.disabled = true;
+            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Guardando...';
+
+            const formData = new FormData(nuevoAlimentoForm);
+            const csrfToken = formData.get('csrfmiddlewaretoken');
+
+            const parseFloatOrNull = (value) => {
+                if (value === null || value.trim() === '') return null;
+                const num = parseFloat(value);
+                return isNaN(num) ? null : num;
+            };
+
+            const data = {
+                nombre_alimento: formData.get('nombre_alimento'),
+                medida: formData.get('medida'),
+                numero_medida: parseFloatOrNull(formData.get('numero_medida')),
+                masa: parseFloatOrNull(formData.get('cantidad_porcion')),
+                kcal: parseFloatOrNull(formData.get('kcal')),
+                proteinas_gr: parseFloatOrNull(formData.get('proteinas_gr')),
+                carbohidratos_gr: parseFloatOrNull(formData.get('carbohidratos_gr')),
+                lipidos_gr: parseFloatOrNull(formData.get('lipidos_gr')),
+                n3_gr: parseFloatOrNull(formData.get('omega_gr')),
+                vit_a_mcg: parseFloatOrNull(formData.get('vitamina_a_mcg')),
+                vit_b12_mcg: parseFloatOrNull(formData.get('vitamina_b12_mcg')),
+                calcio_mg: parseFloatOrNull(formData.get('calcio_mg')),
+                hierro_mg: parseFloatOrNull(formData.get('hierro_mg')),
+                selenio_mcg: parseFloatOrNull(formData.get('selenio_mcg')),
+                zinc_mg: parseFloatOrNull(formData.get('zinc_mg')),
+                potasio_mg: parseFloatOrNull(formData.get('potasio_mg')),
+                sodio_mg: parseFloatOrNull(formData.get('sodio_mg')),
+                id_grupo_alimenticio: formData.get('id_grupo_alimenticio') ? parseInt(formData.get('id_grupo_alimenticio')) : null,
+                origen: formData.get('origen')
+            };
+
+            try {
+                const response = await fetch('https://nutrilinkapi-production.up.railway.app/api_nutrilink/alimento/guardar_alimento', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.status === "success") {
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            icon: 'success',
+                            title: '¡Guardado!',
+                            text: result.mensaje || 'Alimento guardado correctamente.',
+                            timer: 2000,
+                            showConfirmButton: false
+                        });
+                    } else {
+                        alert(result.mensaje || 'Alimento guardado correctamente.');
+                    }
+                    
+                    const modalElement = document.getElementById('agregarAlimentoModal');
+                    const modalInstance = bootstrap.Modal.getInstance(modalElement);
+                    if (modalInstance) {
+                        modalInstance.hide();
+                    }
+                    // Limpiar el formulario después de ocultar el modal
+                    modalElement.addEventListener('hidden.bs.modal', function () {
+                        nuevoAlimentoForm.reset();
+                        nuevoAlimentoForm.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+                        // Recargar la página para ver el nuevo alimento
+                        location.reload(); 
+                    }, { once: true });
+
+
+                } else {
+                    let errorMessage = 'Error al guardar el alimento.';
+                    if (result && result.mensaje) {
+                        errorMessage = result.mensaje;
+                    } else if (result && result.errors && typeof result.errors === 'object') { // Asumiendo que la API puede devolver 'errors'
+                        let errors = [];
+                        for (const key in result.errors) {
+                            errors.push(`<b>${key}</b>: ${result.errors[key].join(', ')}`);
+                        }
+                        errorMessage = errors.join('<br>');
+                    } else if (result && result.error && typeof result.error === 'string') {
+                         errorMessage = result.error;
+                    } else if (response.statusText) {
+                        errorMessage = `Error ${response.status}: ${response.statusText}`;
+                    }
+
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error al Guardar',
+                            html: errorMessage
+                        });
+                    } else {
+                        alert(errorMessage.replace(/<br>/g, '\n').replace(/<b>/g, '').replace(/<\/b>/g, ''));
+                    }
+                }
+            } catch (error) {
+                console.error('Error en la petición fetch:', error);
+                const errorMsg = 'No se pudo conectar con el servidor o hubo un error inesperado. Inténtalo más tarde.';
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error de Conexión',
+                        text: errorMsg
+                    });
+                } else {
+                    alert(errorMsg);
+                }
+            } finally {
+                submitButton.disabled = false;
+                submitButton.innerHTML = originalButtonText;
+            }
+        });
+    }
+});
+</script>
 {% endblock %}
