@@ -8,6 +8,9 @@ from requests.exceptions import RequestException
 from django.core.mail import send_mail, EmailMultiAlternatives # Para enviar emails
 from django.contrib import messages  # Para mostrar alertas en el template
 import json
+import plotly.express as px
+import plotly.io as pio
+import pandas as pd
 
 # Create your views here.
 def gestion(request):
@@ -86,24 +89,95 @@ def historialClinico(request, id_paciente):
 def metricas(request, id_paciente):
     paciente = get_paciente_data(id_paciente)
     historial = get_historial_antropometrico(id_paciente)
-    
-    fechas_disponibles = [registro['fecha'] for registro in historial if 'fecha' in registro]
-    
+
+    fechas_disponibles = sorted(list(set([registro['fecha'] for registro in historial if 'fecha' in registro])))
+
     fecha_seleccionada = request.GET.get('fecha')
     diagnosticos = None
-    
+
     if fecha_seleccionada:
         diagnosticos = get_diagnosticos_antropometricos(id_paciente, fecha_seleccionada)
-    
+
+    # Preparar datos para los gráficos siempre que haya historial
+    graficos_data = None
+    if historial:
+        # Convertir el historial a DataFrame
+        df = pd.DataFrame(historial)
+
+        # Convertir las columnas numéricas de string a float
+        numeric_cols = ['peso_kg', 'talla_cm', 'porc_grasa']
+        for col in numeric_cols:
+            if col in df.columns:
+                df[col] = pd.to_numeric(df[col], errors='coerce')  # Convierte a número, inválidos a NaN
+
+        # Convertir la fecha a datetime
+        df['fecha'] = pd.to_datetime(df['fecha'], errors='coerce')
+
+        # Calculamos IMC si tenemos peso y talla
+        if 'peso_kg' in df.columns and 'talla_cm' in df.columns:
+            df['imc'] = df['peso_kg'] / ((df['talla_cm']/100)**2)
+
+        # Eliminar filas con fechas inválidas
+        df = df.dropna(subset=['fecha'])
+
+        # Ordenar por fecha
+        df = df.sort_values('fecha')
+
+        # Crear gráficos
+        graficos_data = {
+            'imc': crear_grafico_evolucion(df, 'fecha', 'imc', 'IMC (kg/m²)'),
+            'peso': crear_grafico_evolucion(df, 'fecha', 'peso_kg', 'Peso (kg)'),
+            'grasa': crear_grafico_evolucion(df, 'fecha', 'porc_grasa', '% Grasa corporal'),
+        }
+
     return render(request, 'patients/metricas.html', {
         'paciente': paciente,
         'historial_antropometrico': historial,
         'diagnosticos_data': diagnosticos,
         'fecha_seleccionada': fecha_seleccionada,
         'fechas_disponibles': fechas_disponibles,
+        'graficos_data': graficos_data,
         'section': 'metricas'
     })
-    
+
+
+def crear_grafico_evolucion(df, x_col, y_col, title):
+    """Graficos de linea"""
+    if y_col not in df.columns:
+        return None
+
+    # Filtrar datos válidos
+    df_plot = df.dropna(subset=[x_col, y_col])
+    if df_plot.empty:
+        return None
+
+    fig = px.line(
+        df_plot,
+        x=x_col,
+        y=y_col,
+        title=title,
+        markers=True,
+        labels={x_col: 'Fecha', y_col: title}
+    )
+
+    # Diseño
+    fig.update_layout(
+        plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='rgba(0,0,0,0)',
+        xaxis=dict(
+            showgrid=False,
+            tickformat='%Y-%m-%d',
+            # Ticks
+            tickvals=df_plot[x_col].dt.strftime('%Y-%m-%d').unique().tolist(),
+            ticktext=df_plot[x_col].dt.strftime('%Y-%m-%d').unique().tolist()
+        ),
+        yaxis=dict(showgrid=True, gridcolor='lightgray'),
+        margin=dict(l=20, r=20, t=40, b=20),
+        height=300
+    )
+
+    return pio.to_html(fig, full_html=False)
+
 def minuta(request, id_paciente):
     paciente = get_paciente_data(id_paciente)
     
