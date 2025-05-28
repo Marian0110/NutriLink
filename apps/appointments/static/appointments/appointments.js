@@ -251,6 +251,11 @@ async function cargarResumenCitas(id_nutricionista) {
                         badgeClass = 'badge-burdeo';
                         backgroundClass = 'bg-burdeo';
                         break;
+                    case 'Solicitada':
+                        borderClass = 'border-primary';
+                        badgeClass = 'bg-primary';
+                        backgroundClass = 'bg-primary bg-opacity-25';
+                        break;
                 }
 
                 const li = document.createElement('li');
@@ -262,18 +267,20 @@ async function cargarResumenCitas(id_nutricionista) {
                     ${horaTexto}<br>
                     <span class="badge ${badgeClass}">${cita.estado}</span>
                     ${cita.estado === 'Reservada' ? `
-                        <button class="btn btn-sm btn-outline-danger mt-2 cancelar-cita-btn"
-                            data-paciente-id="${cita.id_paciente}"
-                            data-nutricionista-id="${id_nutricionista}"
-                            data-fecha-hora="${cita.fecha} ${cita.hora}">
-                            <i class="fas fa-times-circle me-1"></i>Cancelar cita
-                        </button>
-                        <button class="btn btn-sm btn-outline-primary mt-2 completar-cita-btn"
-                            data-paciente-id="${cita.id_paciente}"
-                            data-nutricionista-id="${id_nutricionista}"
-                            data-fecha-hora="${cita.fecha}T${cita.hora}">
-                            <i class="fas fa-check-circle me-1"></i>Marcar como completada
-                        </button>
+                        <div class="d-flex flex-column align-items-start gap-2 mt-3">
+                            <button class="btn btn-sm btn-outline-danger cancelar-cita-btn"
+                                data-paciente-id="${cita.id_paciente}"
+                                data-nutricionista-id="${id_nutricionista}"
+                                data-fecha-hora="${cita.fecha}T${cita.hora}">
+                                <i class="fas fa-times-circle me-1"></i>Cancelar cita
+                            </button>
+                            <button class="btn btn-sm btn-outline-primary completar-cita-btn"
+                                data-paciente-id="${cita.id_paciente}"
+                                data-nutricionista-id="${id_nutricionista}"
+                                data-fecha-hora="${cita.fecha}T${cita.hora}">
+                                <i class="fas fa-check-circle me-1"></i>Marcar como completada
+                            </button>
+                        </div>
                     ` : ''}
                     `;
 
@@ -491,6 +498,7 @@ document.addEventListener('DOMContentLoaded', function () {
         console.log('Antes de la función cargar Nutri :', id_nutricionista);
         cargarResumenCitas(parseInt(id_nutricionista));
         verificarCancelacionesPendientesNutricionista(parseInt(id_nutricionista));
+        verificarSolicitudesPendientesNutricionista(parseInt(id_nutricionista));
     }
 });
 
@@ -553,5 +561,73 @@ async function verificarCancelacionesPendientesNutricionista(id_nutricionista) {
         }
     } catch (error) {
         console.error('Error al verificar cancelaciones:', error);
+    }
+}
+
+async function verificarSolicitudesPendientesNutricionista(id_nutricionista) {
+    try {
+        const response = await fetch(`https://nutrilinkapi-production.up.railway.app/api_nutrilink/agenda/citas_nutricionista/${id_nutricionista}`);
+        const result = await response.json();
+
+        if (!response.ok || result.status !== 'ok') {
+            throw new Error(result.mensaje || 'Error al verificar solicitudes.');
+        }
+
+        const citas = result.citas || [];
+
+        for (const cita of citas) {
+            if (cita.estado === 'Solicitada') {
+                const [anio, mes, dia] = cita.fecha.split('-');
+                const fechaObj = new Date(parseInt(anio), parseInt(mes) - 1, parseInt(dia));
+                const fecha = fechaObj.toLocaleDateString('es-CL', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+                const hora = cita.hora?.substring(0, 5) ?? '--:--';
+
+                const alerta = await Swal.fire({
+                    title: 'Nueva cita solicitada',
+                    text: `El paciente ${cita.primer_nombre} ${cita.apellido_paterno} ha solicitado una cita para el ${fecha} a las ${hora}.`,
+                    icon: 'info',
+                    showCancelButton: true,
+                    confirmButtonText: 'Confirmar',
+                    cancelButtonText: 'Ver más tarde'
+                });
+
+                if (alerta.isConfirmed) {
+                    const datos = {
+                        id_paciente: cita.id_paciente,
+                        id_nutricionista: id_nutricionista,
+                        fecha_hora: `${cita.fecha}T${cita.hora}`
+                    };
+
+                    // ✅ Mostrar los datos que se van a enviar
+                    console.log('🔄 Enviando solicitud PATCH a /confirmar_solicitud_cita con:', datos);
+
+                    const confirmar = await fetch('https://nutrilinkapi-production.up.railway.app/api_nutrilink/agenda/confirmar_solicitud_cita', {
+                        method: 'PATCH',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(datos)
+                    });
+
+                    const resConfirmacion = await confirmar.json();
+                    console.log('📥 Respuesta de confirmación:', resConfirmacion);
+
+                    if (resConfirmacion.status === 'ok') {
+                        await Swal.fire('Cita confirmada', 'La cita ha sido marcada como reservada.', 'success');
+                    } else {
+                        throw new Error(resConfirmacion.mensaje);
+                    }
+                }
+
+                await new Promise(resolve => setTimeout(resolve, 200));
+            }
+        }
+    } catch (error) {
+        console.error('❌ Error al verificar solicitudes:', error);
     }
 }
