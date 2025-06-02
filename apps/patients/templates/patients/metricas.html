@@ -9,8 +9,12 @@
     <div class="card-body">
       <h3 class="card-title mb-1 text-center mt-2">Datos Antropométricos</h3>
       <h6 class="text-muted mb-4 text-center">Registra peso, talla, circunferencias, entre otros datos</h6>
+      
       <form method="#" action="#" id="form-antropometrico">
         {% csrf_token %}
+
+        
+        
         <div class="row">
           <!-- Peso -->
           <div class="col-md-4 mb-3 mt-4">
@@ -81,10 +85,39 @@
             <label for="id_fecha" class="form-label">Fecha</label>
             <input type="date" class="form-control" id="id_fecha" name="fecha">
           </div>
+
+          <!-- Porcentaje de macronutrientes -->
+        <h3 class="card-title mb-1 text-center mt-2">Porcentaje de macronutrientes</h3>
+        <h6 class="text-muted mb-4 text-center">Elige el porcentaje de macronutrientes para el paciente</h6>
+        <div class="row">
+          <div class="col-md-4 mb-3">
+            <label for="id_porc_carbohidratos" class="form-label">Porcentaje de carbohidratos</label>
+            <div class="input-group">
+              <input type="number" class="form-control" id="id_porc_carbohidratos" name="porc_carbohidratos" placeholder="Ej: 50" min="0" max="100" step="any">
+              <span class="input-group-text">%</span>
+            </div>
+          </div>
+          <div class="col-md-4 mb-3">
+            <label for="id_porc_proteinas" class="form-label">Porcentaje de proteínas</label>
+            <div class="input-group">
+              <input type="number" class="form-control" id="id_porc_proteinas" name="porc_proteinas" placeholder="Ej: 20" min="0" max="100" step="any">
+              <span class="input-group-text">%</span>
+            </div>
+          </div>
+          <div class="col-md-4 mb-3">
+            <label for="id_porc_lipidos" class="form-label">Porcentaje de lípidos</label>
+            <div class="input-group">
+              <input type="number" class="form-control" id="id_porc_lipidos" name="porc_lipidos" placeholder="Ej: 30" min="0" max="100" step="any">
+              <span class="input-group-text">%</span>
+            </div>
+          </div>
+        </div>
+        <!-- Fin Sección Porcentajes -->
+
         </div>
         <!-- Boton -->
-        <div class="d-flex justify-content-center">
-          <button type="button" class="btn btn-save">Guardar Datos</button>
+        <div class="d-flex justify-content-center mt-4"> <!-- Añadido mt-4 para espaciado -->
+          <button type="button" class="btn btn-save">Guardar Datos y Calcular Requerimientos</button> <!-- Texto del botón actualizado -->
         </div>
       </form>
     </div>
@@ -95,13 +128,6 @@
       <div class="card-body py-3">
         <h3 class="card-title mb-2">Historial de Mediciones</h3>
         <h6 class="text-muted mb-3">Visualiza los registros antropométricos por fecha</h6>
-          <!-- Filtro de fecha
-          <div class="mb-3">
-            <label for="filtro_fecha" class="form-label">Selecciona una fecha</label>
-            <input type="date" id="filtro_fecha" class="form-control" style="max-width: 250px;">
-          </div> -->
-
-          <!-- Tabla de resultados -->
         <div class="table-responsive">
           <table class="table table-striped table-bordered mt-3" id="tabla_mediciones">
             <thead class="table-dark">
@@ -153,7 +179,6 @@
           {% csrf_token %}
           <div class="row align-items-end">
             <div class="col-md-8 mb-3">
-              <!-- <label for="id_fecha_select" class="form-label">Visualiza los diagnósticos antropométricos por fecha</label>-->
               <h6 class="text-muted mb-3">Visualiza los diagnósticos antropométricos</h6>
               <select class="form-select" id="id_fecha_select" name="fecha" required>
                 <option value="">-- Selecciona una fecha --</option>
@@ -274,14 +299,20 @@
 function validarFormulario() {
     const form = document.getElementById('form-antropometrico');
     let isValid = true;
+    let sumaPorcentajes = 0;
+    const camposPorcentaje = ['id_porc_carbohidratos', 'id_porc_proteinas', 'id_porc_lipidos'];
     
-    // Validacion de campos vacios
+    // Validacion de campos vacios (incluyendo los nuevos de porcentaje)
     form.querySelectorAll('input[type="number"], input[type="date"]').forEach(input => {
         if (!input.value) {
             isValid = false;
             input.classList.add('is-invalid');
         } else {
             input.classList.remove('is-invalid');
+            // Sumar porcentajes si son campos de macronutrientes
+            if (camposPorcentaje.includes(input.id) && parseFloat(input.value) >= 0) {
+                sumaPorcentajes += parseFloat(input.value);
+            }
         }
     });
 
@@ -290,40 +321,82 @@ function validarFormulario() {
         if (parseFloat(input.value) < 0) {
             isValid = false;
             input.classList.add('is-invalid');
+             // Si ya es inválido por estar vacío, no mostrar doble alerta
+            if (input.value) { 
+                Swal.fire({
+                    title: 'Datos inválidos',
+                    text: `El campo "${input.previousElementSibling.textContent.trim()}" no puede ser negativo.`,
+                    icon: 'warning'
+                });
+            }
         }
     });
 
-    if (!isValid) {
+    // Validacion de suma de porcentajes (opcional, pero buena práctica)
+    // Permitir un pequeño margen de error por decimales, ej. 99.9 a 100.1
+    if (isValid && (sumaPorcentajes < 99.9 || sumaPorcentajes > 100.1) && (
+        document.getElementById('id_porc_carbohidratos').value ||
+        document.getElementById('id_porc_proteinas').value ||
+        document.getElementById('id_porc_lipidos').value
+    )) {
+        isValid = false;
+        camposPorcentaje.forEach(id => document.getElementById(id).classList.add('is-invalid'));
         Swal.fire({
-            title: 'Datos inválidos',
-            text: 'Por favor complete todos los campos con valores positivos',
+            title: 'Porcentajes incorrectos',
+            text: 'La suma de los porcentajes de macronutrientes debe ser 100%. Actualmente es: ' + sumaPorcentajes.toFixed(1) + '%',
             icon: 'warning'
         });
-        return false;
     }
-    return true;
+
+
+    if (!isValid && !Swal.isVisible()) { // Evitar múltiples popups si ya hay uno de valor negativo o suma
+        Swal.fire({
+            title: 'Datos incompletos o inválidos',
+            text: 'Por favor complete todos los campos requeridos con valores válidos.',
+            icon: 'warning'
+        });
+    }
+    return isValid;
 }
 
 // Func para enviar datos a la API
-async function enviarDatosAntropometricos() {
+async function enviarDatosAntropometricosYRequerimientos() {
     const pacienteId = JSON.parse("{{ paciente.id_paciente|escapejs }}");
     const fecha = document.getElementById('id_fecha').value;
 
     const formData = {
         pacienteId: pacienteId,
-        fecha: fecha,
-        pesoKg: document.getElementById('id_peso').value,
-        tallaCm: document.getElementById('id_talla').value,
-        circCinturaCm: document.getElementById('id_cintura').value,
-        perimBraquialMm: document.getElementById('id_braquial').value,
-        pliegueTricipitalMm: document.getElementById('id_tricipital').value,
-        pliegueBicipitalMm: document.getElementById('id_bicipital').value,
-        pliegueSuprailiacoMm: document.getElementById('id_suprailiaco').value,
-        pliegueSubescapularMm: document.getElementById('id_subescapular').value
+        fecha: fecha, // El backend debería poder manejar YYYY-MM-DD
+        pesoKg: parseFloat(document.getElementById('id_peso').value),
+        tallaCm: parseFloat(document.getElementById('id_talla').value),
+        circCinturaCm: parseFloat(document.getElementById('id_cintura').value),
+        perimBraquialMm: parseFloat(document.getElementById('id_braquial').value) * 10, // Convertir cm a mm si se ingresa en cm
+        pliegueTricipitalMm: parseFloat(document.getElementById('id_tricipital').value),
+        pliegueBicipitalMm: parseFloat(document.getElementById('id_bicipital').value),
+        pliegueSuprailiacoMm: parseFloat(document.getElementById('id_suprailiaco').value),
+        pliegueSubescapularMm: parseFloat(document.getElementById('id_subescapular').value),
+        // Nuevos campos de porcentaje
+        porcentajeCarbohidratos: parseFloat(document.getElementById('id_porc_carbohidratos').value),
+        porcentajeProteinas: parseFloat(document.getElementById('id_porc_proteinas').value),
+        porcentajeLipidos: parseFloat(document.getElementById('id_porc_lipidos').value)
     };
 
+    // Asegurarse de que los campos opcionales que no se llenaron se envíen como null o no se envíen
+    // si el backend los espera así. Para este ejemplo, si el valor es NaN (porque el campo estaba vacío y parseFloat falló), 
+    // se podría omitir o enviar como null. Por ahora, asumimos que la validación se encarga de que no estén vacíos.
+    // Es importante que el backend maneje correctamente valores nulos o ausentes para campos no obligatorios.
+
+
+    // Ajuste para perimBraquialMm: si el placeholder dice "Ej: 25" y la unidad es "cm",
+    // pero el JSON espera "perimBraquialMm: 280" (que sería 28 cm),
+    // entonces hay una inconsistencia. Asumiré que el usuario ingresa en CM como dice el placeholder y la unidad,
+    // y lo convertiré a MM si el backend espera MM.
+    // Si el backend ya espera CM para perimetro braquial (y lo llama _mm por error), entonces no se necesita la conversión.
+    // Basado en tu JSON de ejemplo `perimBraquialMm: 280`, parece que espera milímetros.
+    // Si el input `id_braquial` tiene unidad "cm", entonces sí hay que multiplicar por 10.
+
     try {
-        const response = await fetch('https://nutrilinkapi-production.up.railway.app/api_nutrilink/antropometria/guardar_calculo_antropometria', {
+        const response = await fetch('https://nutrilinkapi-production.up.railway.app/api_nutrilink/requerimientos/guardar_antropometria_y_requerimientos', { // ENDPOINT ACTUALIZADO
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -337,7 +410,7 @@ async function enviarDatosAntropometricos() {
         if (data.status === 'success') {
             Swal.fire({
                 title: '¡Éxito!',
-                text: data.mensaje,
+                text: data.mensaje, // Mensaje de éxito del nuevo endpoint
                 icon: 'success',
                 timer: 2000,
                 showConfirmButton: false
@@ -346,7 +419,7 @@ async function enviarDatosAntropometricos() {
                 window.location.href = `?fecha=${encodeURIComponent(fecha)}`;
             });
         } else {
-            throw new Error(data.mensaje || 'Error al guardar los datos');
+            throw new Error(data.mensaje || 'Error al guardar los datos y requerimientos');
         }
     } catch (error) {
         console.error('Error:', error);
@@ -364,19 +437,19 @@ document.querySelector('.btn-save').addEventListener('click', function(e) {
 
     Swal.fire({
         title: '¿Confirmar datos?',
-        text: 'Se guardarán todas las mediciones.',
+        text: 'Se guardarán las mediciones y se calcularán los requerimientos.', // Mensaje de confirmación actualizado
         icon: 'question',
         showCancelButton: true,
-        confirmButtonText: 'Sí, registrar',
+        confirmButtonText: 'Sí, registrar y calcular', // Texto del botón de confirmación actualizado
         cancelButtonText: 'Cancelar'
     }).then((result) => {
         if (result.isConfirmed) {
-            enviarDatosAntropometricos();
+            enviarDatosAntropometricosYRequerimientos(); // Llamar a la función actualizada
         }
     });
 });
 
-// Función para formatear fecha
+// Función para formatear fecha (sin cambios)
 function formatearFecha(fechaStr) {
     const opciones = { year: 'numeric', month: 'short', day: 'numeric' };
     return new Date(fechaStr).toLocaleDateString('es-ES', opciones);
