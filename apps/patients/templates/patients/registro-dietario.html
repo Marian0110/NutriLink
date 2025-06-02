@@ -1,4 +1,3 @@
-<!-- ... (El HTML de la plantilla permanece igual que en tu última versión) ... -->
 {% extends 'basePerfil.html' %}
 {% load static %}
 {% block title %}Registro Dietario 24 Horas{% endblock %}
@@ -14,6 +13,13 @@
 
   <input type="hidden" id="paciente-id" value="{{ paciente.id_paciente }}">
   {% csrf_token %}
+
+  <div class="registro-selector-container" style="margin-bottom: 20px;">
+    <label for="registro-date-selector">Seleccionar registros anteriores:</label>
+    <select id="registro-date-selector" class="registro-date-selector">
+      <option value="" selected disabled>Cargando fechas disponibles...</option>
+    </select>
+  </div>
 
   <div id="adecuacion-registro-section" style="margin-bottom: 25px;">
     <h3>Resumen Nutricional y Adecuación</h3>
@@ -72,13 +78,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     const notasGeneralesTextarea = document.getElementById('notas-generales-registro');
     const adecuacionStatusDiv = document.getElementById('adecuacion-status');
     const tablaAdecuacionCuerpo = document.getElementById('tabla-adecuacion-registro').querySelector('tbody');
+    const registroDateSelectorEl = document.getElementById('registro-date-selector');
+
 
     let ALL_TIEMPOS_COMIDA_DATA = [];
     let ALL_ALIMENTOS_DATA = [];
-    const datosAlimentoPorFilaDOM = new Map(); // Sigue siendo útil para obtener el alimentoData original para UI
+    const datosAlimentoPorFilaDOM = new Map();
     let mealTimeBlockCounter = 0;
+    let isViewingHistoricalRegistro = false;
 
-    async function fetchAPI(url, entityName, options = {}) { /* ... sin cambios ... */ 
+    async function fetchAPI(url, entityName, options = {}) {
         try {
             const response = await fetch(url, options);
             if (!response.ok) {
@@ -86,24 +95,24 @@ document.addEventListener('DOMContentLoaded', async () => {
                 try {
                     const errorData = await response.json();
                     errorDetail = errorData.mensaje || errorData.detail || JSON.stringify(errorData);
-                } catch (e) { 
+                } catch (e) {
                     errorDetail = response.statusText || errorDetail;
                 }
                 throw new Error(errorDetail);
             }
-            if (response.status === 204) return null; 
+            if (response.status === 204) return null;
             return await response.json();
         } catch (error) {
             console.error(`Excepción en fetchAPI para ${entityName} (${url}):`, error);
-            Swal.fire('Error de Carga', `No se pudo cargar ${entityName}: primero debes guardar los datos del paciente en historial clínico y antropometría y requerimientos!`, 'error');
+            Swal.fire('Error de Carga', `No se pudieron cargar ${entityName}: ${error.message}. Asegúrate de haber guardado los datos del paciente en Historial Clínico y Antropometría/Requerimientos.`, 'error');
             throw error;
         }
     }
-    
-    function populateSelect(selectElement, opciones, valorKey, textoKey, placeholderTexto = "Seleccionar...", currentValue = null, disabled = false) { /* ... sin cambios ... */
+
+    function populateSelect(selectElement, opciones, valorKey, textoKey, placeholderTexto = "Seleccionar...", currentValue = null, disabled = false) {
         const valorSeleccionadoAntes = currentValue !== null ? currentValue : selectElement.value;
         selectElement.innerHTML = `<option value="" ${!valorSeleccionadoAntes ? 'selected' : ''} disabled>${placeholderTexto}</option>`;
-        
+
         if (!opciones || opciones.length === 0) {
              selectElement.innerHTML += `<option value="" disabled>No hay opciones</option>`;
              return;
@@ -112,18 +121,21 @@ document.addEventListener('DOMContentLoaded', async () => {
             const optionEl = document.createElement('option');
             optionEl.value = opcion[valorKey];
             optionEl.textContent = opcion[textoKey];
+            if (opcion.fecha_dieta) { // Para el selector de fechas
+                optionEl.dataset.fechaDieta = opcion.fecha_dieta;
+            }
             selectElement.appendChild(optionEl);
         });
-        
+
         if (valorSeleccionadoAntes && selectElement.querySelector(`option[value="${valorSeleccionadoAntes}"]`)) {
             selectElement.value = valorSeleccionadoAntes;
-        } else if (selectElement.options.length > 1 && !selectElement.value) { 
+        } else if (selectElement.options.length > 1 && !selectElement.value) {
              selectElement.selectedIndex = 0;
         }
         selectElement.disabled = disabled;
     }
 
-    async function cargarDatosBase() { /* ... sin cambios ... */ 
+    async function cargarDatosBase() {
         try {
             [ALL_TIEMPOS_COMIDA_DATA, ALL_ALIMENTOS_DATA] = await Promise.all([
                 fetchAPI('https://nutrilinkapi-production.up.railway.app/api_nutrilink/minuta/obtener_tiempos_comida_con_id', 'tiempos de comida'),
@@ -135,11 +147,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         } catch (error) {
             if (btnAnadirTiempoComida) btnAnadirTiempoComida.disabled = true;
             if (btnGuardarRegistroCompleto) btnGuardarRegistroCompleto.disabled = true;
-            throw error;
+            // El error ya se maneja en fetchAPI, no es necesario un throw aquí a menos que quieras detener toda la inicialización.
         }
     }
-    
-    function actualizarValoresNutricionalesFilaAlimento(filaAlimento, alimentoData, porciones) { /* ... sin cambios ... */ 
+
+    function actualizarValoresNutricionalesFilaAlimento(filaAlimento, alimentoData, porciones) {
         const numPorciones = parseFloat(porciones) || 0;
         const inputs = {
             medidaEquiv: filaAlimento.querySelector('.input-medida-equiv'),
@@ -159,7 +171,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             sodio: filaAlimento.querySelector('.input-sodio'),
         };
 
-        if (alimentoData && inputs.medidaEquiv) { 
+        if (alimentoData && inputs.medidaEquiv) {
             inputs.medidaEquiv.value = `${parseFloat(alimentoData.numero_medida).toFixed(2)} ${alimentoData.medida}`;
             const camposBase = {
                 gramos: alimentoData.masa, kcal: alimentoData.kcal, proteinas: alimentoData.proteinas_gr,
@@ -192,14 +204,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
         }
     }
-    
+
     function createMealTimeBlock(tiempoComidaIdPreselect = null, horaPreselect = "", alimentosPreselect = []) {
         const blockId = `mtb-${mealTimeBlockCounter++}`;
         const blockDiv = document.createElement('div');
         blockDiv.classList.add('tiempo-comida-block');
         blockDiv.dataset.blockId = blockId;
-        blockDiv.dataset.tiempoId = tiempoComidaIdPreselect || ''; 
-        blockDiv.dataset.hora = horaPreselect || ''; 
+        blockDiv.dataset.tiempoId = tiempoComidaIdPreselect || '';
+        blockDiv.dataset.hora = horaPreselect || '';
 
         const headerDiv = document.createElement('div');
         headerDiv.classList.add('tiempo-comida-header');
@@ -207,20 +219,26 @@ document.addEventListener('DOMContentLoaded', async () => {
         const selectTiempoComida = document.createElement('select');
         selectTiempoComida.classList.add('select-tabla', 'select-tiempo-comida-block');
         selectTiempoComida.name = `tiempo_comida_block_${blockId}`;
-        
+        selectTiempoComida.disabled = isViewingHistoricalRegistro;
+
+
         const inputHora = document.createElement('input');
         inputHora.type = 'time';
         inputHora.classList.add('input-tabla', 'input-hora-block');
         inputHora.name = `hora_block_${blockId}`;
         inputHora.value = horaPreselect;
+        inputHora.readOnly = isViewingHistoricalRegistro;
+
 
         inputHora.addEventListener('change', () => {
-            blockDiv.dataset.hora = inputHora.value; 
+            if (isViewingHistoricalRegistro) return;
+            blockDiv.dataset.hora = inputHora.value;
             reorderMealTimeBlocksByTime();
         });
-        
+
         selectTiempoComida.addEventListener('change', () => {
-            blockDiv.dataset.tiempoId = selectTiempoComida.value; 
+            if (isViewingHistoricalRegistro) return;
+            blockDiv.dataset.tiempoId = selectTiempoComida.value;
             updateAllMealTimeSelects();
         });
 
@@ -250,34 +268,42 @@ document.addEventListener('DOMContentLoaded', async () => {
                 addFoodRowToMealTimeBlock(tbodyAlimentos, blockId, alimento.alimento_id_alimento, parseFloat(alimento.numero_porciones_dieta));
             });
         } else {
-            addFoodRowToMealTimeBlock(tbodyAlimentos, blockId); 
+            addFoodRowToMealTimeBlock(tbodyAlimentos, blockId);
         }
 
         const accionesBloqueDiv = document.createElement('div');
         accionesBloqueDiv.classList.add('acciones-bloque');
-        
-        // Botón Añadir Alimento
+
         const btnAnadirAlimento = document.createElement('button');
         btnAnadirAlimento.type = 'button';
         btnAnadirAlimento.classList.add('button-secondary');
         btnAnadirAlimento.textContent = 'Añadir Alimento a este Tiempo';
-        btnAnadirAlimento.addEventListener('click', () => addFoodRowToMealTimeBlock(tbodyAlimentos, blockId));
-        
-        // Botón Eliminar Tiempo
+        btnAnadirAlimento.disabled = isViewingHistoricalRegistro;
+        btnAnadirAlimento.addEventListener('click', () => {
+            if (isViewingHistoricalRegistro) return;
+            addFoodRowToMealTimeBlock(tbodyAlimentos, blockId)
+        });
+
         const btnEliminarBloque = document.createElement('button');
         btnEliminarBloque.type = 'button';
         btnEliminarBloque.classList.add('button-eliminar-fila');
         btnEliminarBloque.textContent = 'Eliminar Tiempo';
-        btnEliminarBloque.addEventListener('click', () => handleDeleteMealTimeBlock(blockDiv));
+        btnEliminarBloque.disabled = isViewingHistoricalRegistro;
+        btnEliminarBloque.addEventListener('click', () => {
+            if (isViewingHistoricalRegistro) return;
+            handleDeleteMealTimeBlock(blockDiv)
+        });
         
-        // Agregar ambos botones al div de acciones
-        accionesBloqueDiv.appendChild(btnAnadirAlimento);
-        accionesBloqueDiv.appendChild(btnEliminarBloque);
-        
+        if (!isViewingHistoricalRegistro) {
+            accionesBloqueDiv.appendChild(btnAnadirAlimento);
+            accionesBloqueDiv.appendChild(btnEliminarBloque);
+        }
+
+
         blockDiv.appendChild(accionesBloqueDiv);
-        
+
         tiemposComidaContainer.appendChild(blockDiv);
-        populateSelect(selectTiempoComida, ALL_TIEMPOS_COMIDA_DATA, 'id_tiempo_comida', 'descripcion', 'Seleccionar Tiempo...', tiempoComidaIdPreselect);
+        populateSelect(selectTiempoComida, ALL_TIEMPOS_COMIDA_DATA, 'id_tiempo_comida', 'descripcion', 'Seleccionar Tiempo...', tiempoComidaIdPreselect, isViewingHistoricalRegistro);
 
         return blockDiv;
     }
@@ -287,7 +313,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         const nuevaFilaAlimento = tbodyAlimentos.insertRow();
         nuevaFilaAlimento.dataset.foodRowId = foodRowId;
 
-        // 1. Celda Alimento (con dropdown)
         const cellAlimento = nuevaFilaAlimento.insertCell();
         cellAlimento.classList.add('cell-alimento-dropdown-container');
 
@@ -298,6 +323,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         dropdownButton.type = 'button';
         dropdownButton.classList.add('alimento-dropdown-button');
         dropdownButton.textContent = 'Seleccione alimento...';
+        dropdownButton.disabled = isViewingHistoricalRegistro;
+
 
         const dropdownPanel = document.createElement('div');
         dropdownPanel.classList.add('alimento-dropdown-panel');
@@ -306,6 +333,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         inputFiltroPanel.type = 'text';
         inputFiltroPanel.classList.add('input-tabla', 'input-filtro-alimento-panel');
         inputFiltroPanel.placeholder = 'Buscar...';
+        inputFiltroPanel.readOnly = isViewingHistoricalRegistro;
+
 
         const optionsList = document.createElement('ul');
         optionsList.classList.add('alimento-options-list');
@@ -317,6 +346,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         hiddenSelect.name = `alimento_${foodRowId}`;
         hiddenSelect.style.display = 'none';
         hiddenSelect.classList.add('select-alimento-hidden');
+        hiddenSelect.disabled = isViewingHistoricalRegistro;
+
 
         dropdownContainer.appendChild(dropdownButton);
         dropdownContainer.appendChild(dropdownPanel);
@@ -341,6 +372,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     li.classList.add('selected-item');
                 }
                 li.addEventListener('click', () => {
+                    if (isViewingHistoricalRegistro) return;
                     hiddenSelect.value = alimento.id_alimento;
                     dropdownButton.textContent = alimento.nombre_alimento;
                     inputFiltroPanel.value = alimento.nombre_alimento;
@@ -352,6 +384,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         inputFiltroPanel.addEventListener('input', () => {
+            if (isViewingHistoricalRegistro) return;
             const filtro = inputFiltroPanel.value.toLowerCase().trim();
             const alimentosFiltrados = ALL_ALIMENTOS_DATA.filter(alimento =>
                 alimento.nombre_alimento.toLowerCase().includes(filtro)
@@ -360,6 +393,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
 
         dropdownButton.addEventListener('click', (e) => {
+            if (isViewingHistoricalRegistro) return;
             e.stopPropagation();
             document.querySelectorAll('.alimento-dropdown-panel.visible').forEach(panel => {
                 if (panel !== dropdownPanel) panel.classList.remove('visible');
@@ -375,19 +409,20 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         });
 
-        // 2. Celda Acciones (con botón Eliminar) - MOVIDA AQUÍ
         const cellAcciones = nuevaFilaAlimento.insertCell();
-        const btnEliminarAlimentoRow = document.createElement('button'); // Renombrado para evitar conflicto con variable de otro scope si existiera
+        const btnEliminarAlimentoRow = document.createElement('button');
         btnEliminarAlimentoRow.type = 'button';
         btnEliminarAlimentoRow.classList.add('button-eliminar-fila', 'button-eliminar-alimento');
         btnEliminarAlimentoRow.textContent = 'Eliminar';
-        // El event listener para eliminar se maneja por delegación en `tiemposComidaContainer.addEventListener('click', ...)`
+        btnEliminarAlimentoRow.disabled = isViewingHistoricalRegistro;
         cellAcciones.appendChild(btnEliminarAlimentoRow);
 
-        // 3. Resto de las celdas de nutrientes
+        // Hacer que los inputs de nutrientes sean readonly si es un registro histórico
+        const readOnlyState = isViewingHistoricalRegistro;
+
         const otherCellsHTML = `
             <td><input type="text" class="input-tabla input-medida-equiv" name="medida_equiv_${foodRowId}" readonly></td>
-            <td><input type="number" class="input-tabla input-numero input-porciones" name="porciones_${foodRowId}" min="0" step="0.1" value="${porcionesPreselect}"></td>
+            <td><input type="number" class="input-tabla input-numero input-porciones" name="porciones_${foodRowId}" min="0" step="0.1" value="${porcionesPreselect}" ${readOnlyState ? 'readonly' : ''}></td>
             <td><input type="number" class="input-tabla input-numero input-gramos" name="gramos_${foodRowId}" readonly></td>
             <td><input type="number" class="input-tabla input-numero input-kcal" name="kcal_${foodRowId}" readonly></td>
             <td><input type="number" class="input-tabla input-numero input-proteinas" name="proteinas_${foodRowId}" readonly></td>
@@ -402,15 +437,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             <td><input type="number" class="input-tabla input-numero input-zinc" name="zinc_${foodRowId}" readonly></td>
             <td><input type="number" class="input-tabla input-numero input-potasio" name="potasio_${foodRowId}" readonly></td>
             <td><input type="number" class="input-tabla input-numero input-sodio" name="sodio_${foodRowId}" readonly></td>
-        `; // La celda de acciones ha sido eliminada de este string HTML
+        `;
         const tempDiv = document.createElement('div');
         tempDiv.innerHTML = `<table><tr>${otherCellsHTML}</tr></table>`;
         Array.from(tempDiv.querySelector('tr').cells).forEach(cell => {
             nuevaFilaAlimento.appendChild(cell);
         });
 
-        // Lógica para poblar el select oculto y actualizar valores nutricionales (sin cambios)
-        populateSelect(hiddenSelect, ALL_ALIMENTOS_DATA, 'id_alimento', 'nombre_alimento', 'Seleccione alimento...', alimentoIdPreselect);
+        populateSelect(hiddenSelect, ALL_ALIMENTOS_DATA, 'id_alimento', 'nombre_alimento', 'Seleccione alimento...', alimentoIdPreselect, isViewingHistoricalRegistro);
 
         if (alimentoIdPreselect) {
             const alimentoData = ALL_ALIMENTOS_DATA.find(a => a.id_alimento.toString() === alimentoIdPreselect.toString());
@@ -427,8 +461,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             actualizarValoresNutricionalesFilaAlimento(nuevaFilaAlimento, null, porcionesPreselect);
         }
     }
-    
-    document.addEventListener('click', (e) => { /* ... sin cambios ... */ 
+
+    document.addEventListener('click', (e) => {
         const openPanels = document.querySelectorAll('.alimento-dropdown-panel.visible');
         openPanels.forEach(panel => {
             const dropdownContainer = panel.closest('.alimento-searchable-dropdown');
@@ -438,38 +472,38 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     });
 
-    function getSelectedMealTimeIdsDOM() { /* ... sin cambios ... */ 
+    function getSelectedMealTimeIdsDOM() {
         const selected = [];
         tiemposComidaContainer.querySelectorAll('.select-tiempo-comida-block').forEach(select => {
             if (select.value && select.value !== "") selected.push(parseInt(select.value));
         });
         return selected;
     }
-    function updateAllMealTimeSelects() { /* ... sin cambios ... */ 
+    function updateAllMealTimeSelects() {
         const allBlockSelects = tiemposComidaContainer.querySelectorAll('.select-tiempo-comida-block');
-        const overallSelectedIds = getSelectedMealTimeIdsDOM(); 
+        const overallSelectedIds = getSelectedMealTimeIdsDOM();
 
         allBlockSelects.forEach(currentSelect => {
             const blockDiv = currentSelect.closest('.tiempo-comida-block');
             const currentValueForThisSelect = blockDiv.dataset.tiempoId ? parseInt(blockDiv.dataset.tiempoId) : null;
-            
+
             const availableForThisSelect = ALL_TIEMPOS_COMIDA_DATA.filter(time => {
-                return time.id_tiempo_comida === currentValueForThisSelect || 
+                return time.id_tiempo_comida === currentValueForThisSelect ||
                        !overallSelectedIds.some(id => id === time.id_tiempo_comida && id !== currentValueForThisSelect);
             });
-            
-            const currentlySelectedValueInDOM = currentSelect.value; 
-            populateSelect(currentSelect, availableForThisSelect, 'id_tiempo_comida', 'descripcion', 'Seleccionar Tiempo...', currentValueForThisSelect);
-            
-            if (currentValueForThisSelect && currentSelect.value != currentValueForThisSelect) { 
+
+            const currentlySelectedValueInDOM = currentSelect.value;
+            populateSelect(currentSelect, availableForThisSelect, 'id_tiempo_comida', 'descripcion', 'Seleccionar Tiempo...', currentValueForThisSelect, isViewingHistoricalRegistro);
+
+            if (currentValueForThisSelect && currentSelect.value != currentValueForThisSelect) {
                  if (availableForThisSelect.some(opt => opt.id_tiempo_comida == currentValueForThisSelect)) {
                     currentSelect.value = currentValueForThisSelect;
                  } else if (currentlySelectedValueInDOM && availableForThisSelect.some(opt => opt.id_tiempo_comida.toString() === currentlySelectedValueInDOM)) {
                     currentSelect.value = currentlySelectedValueInDOM;
-                    blockDiv.dataset.tiempoId = currentlySelectedValueInDOM; 
+                    blockDiv.dataset.tiempoId = currentlySelectedValueInDOM;
                  } else {
-                    blockDiv.dataset.tiempoId = ""; 
-                    if (currentSelect.options.length > 0) currentSelect.selectedIndex = 0; 
+                    blockDiv.dataset.tiempoId = "";
+                    if (currentSelect.options.length > 0) currentSelect.selectedIndex = 0;
                  }
             } else if (!currentValueForThisSelect && currentSelect.value !== "") {
                 blockDiv.dataset.tiempoId = currentSelect.value;
@@ -477,11 +511,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
         updateAddMealButtonState();
     }
-    function updateAddMealButtonState() { /* ... sin cambios ... */ 
+    function updateAddMealButtonState() {
         if (!btnAnadirTiempoComida || !ALL_TIEMPOS_COMIDA_DATA) return;
+        
+        if (isViewingHistoricalRegistro) {
+            btnAnadirTiempoComida.style.display = 'none';
+            btnAnadirTiempoComida.disabled = true;
+            return;
+        }
+
         const numBloquesActuales = tiemposComidaContainer.querySelectorAll('.tiempo-comida-block').length;
         const numTotalTiemposComida = ALL_TIEMPOS_COMIDA_DATA.length;
-        
+
         if (ALL_TIEMPOS_COMIDA_DATA.length > 0 && numBloquesActuales < numTotalTiemposComida) {
             btnAnadirTiempoComida.style.display = 'inline-block';
             btnAnadirTiempoComida.disabled = false;
@@ -490,7 +531,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             btnAnadirTiempoComida.disabled = true;
         }
     }
-    async function handleDeleteMealTimeBlock(blockDiv) { /* ... sin cambios ... */ 
+    async function handleDeleteMealTimeBlock(blockDiv) {
+        if (isViewingHistoricalRegistro) {
+            Swal.fire('Acción no permitida', 'No se pueden eliminar tiempos de comida de un registro histórico.', 'warning');
+            return;
+        }
         const tiempoComidaId = blockDiv.dataset.tiempoId;
         const nombreTiempoComida = ALL_TIEMPOS_COMIDA_DATA.find(tc => tc.id_tiempo_comida.toString() === tiempoComidaId)?.descripcion || `ID ${tiempoComidaId}`;
 
@@ -530,14 +575,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 if (response && response.status === 'success') {
                     Swal.fire('¡Eliminado!', response.mensaje || `${nombreTiempoComida} y sus alimentos han sido eliminados.`, 'success');
-                    
+
                     blockDiv.querySelectorAll('tr[data-food-row-id]').forEach(foodRow => {
                         datosAlimentoPorFilaDOM.delete(foodRow);
                     });
                     blockDiv.remove();
-                    updateAllMealTimeSelects(); 
+                    updateAllMealTimeSelects();
                     reorderMealTimeBlocksByTime();
-                    await cargarYMostrarResumenNutricionalYDetalles(); 
+                    await cargarYMostrarResumenNutricionalYDetalles();
                 } else {
                     throw new Error(response.mensaje || `No se pudo eliminar ${nombreTiempoComida}.`);
                 }
@@ -548,6 +593,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     async function handleDeleteFoodRow(foodRowElement) {
+        if (isViewingHistoricalRegistro) {
+            Swal.fire('Acción no permitida', 'No se pueden eliminar alimentos de un registro histórico.', 'warning');
+            return;
+        }
         const hiddenAlimentoSelect = foodRowElement.querySelector('.select-alimento-hidden');
         const alimentoId = hiddenAlimentoSelect ? hiddenAlimentoSelect.value : null;
         const alimentoData = alimentoId ? ALL_ALIMENTOS_DATA.find(a => a.id_alimento.toString() === alimentoId) : null;
@@ -556,15 +605,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         const mealTimeBlock = foodRowElement.closest('.tiempo-comida-block');
         const tiempoComidaId = mealTimeBlock ? mealTimeBlock.dataset.tiempoId : null;
 
-        // Si no hay alimentoId o tiempoComidaId, el alimento no está guardado en el backend aún.
-        // O si el tiempo de comida es nuevo y aún no tiene un ID asignado.
         if (!alimentoId || !tiempoComidaId) {
             const tbody = foodRowElement.closest('tbody');
             if (tbody && tbody.rows.length > 1) {
                 datosAlimentoPorFilaDOM.delete(foodRowElement);
                 foodRowElement.remove();
             } else {
-                // Limpiar la única fila en lugar de eliminarla
                 const dropdownContainer = foodRowElement.querySelector('.alimento-searchable-dropdown');
                 if (dropdownContainer) {
                     dropdownContainer.querySelector('.alimento-dropdown-button').textContent = 'Seleccione alimento...';
@@ -576,9 +622,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 actualizarValoresNutricionalesFilaAlimento(foodRowElement, null, 1);
                 datosAlimentoPorFilaDOM.delete(foodRowElement);
             }
-            // No es necesario mostrar SweetAlert si solo se elimina del DOM localmente.
-            // Podrías añadir un mensaje sutil si lo deseas.
-            return; 
+            return;
         }
 
         const result = await Swal.fire({
@@ -609,13 +653,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 if (response && response.status === 'success') {
                     Swal.fire('¡Eliminado!', response.mensaje || `${nombreAlimento} ha sido eliminado.`, 'success');
-                    
-                    // Actualizar UI después de eliminar del backend
                     const tbody = foodRowElement.closest('tbody');
                     if (tbody && tbody.rows.length > 1) {
                         datosAlimentoPorFilaDOM.delete(foodRowElement);
                         foodRowElement.remove();
-                    } else { // Era la última fila, limpiarla
+                    } else {
                         const dropdownContainer = foodRowElement.querySelector('.alimento-searchable-dropdown');
                         if (dropdownContainer) {
                             dropdownContainer.querySelector('.alimento-dropdown-button').textContent = 'Seleccione alimento...';
@@ -627,50 +669,49 @@ document.addEventListener('DOMContentLoaded', async () => {
                         actualizarValoresNutricionalesFilaAlimento(foodRowElement, null, 1);
                         datosAlimentoPorFilaDOM.delete(foodRowElement);
                     }
-                    // Recargar el resumen para actualizar la tabla de adecuación
                     await cargarYMostrarResumenNutricionalYDetalles();
                 } else {
                     throw new Error(response.mensaje || `No se pudo eliminar ${nombreAlimento}.`);
                 }
-
             } catch (error) {
                  Swal.fire('Error', `Error al eliminar ${nombreAlimento}: ${error.message}`, 'error');
             }
         }
     }
 
-    function reorderMealTimeBlocksByTime() { /* ... sin cambios ... */ 
+    function reorderMealTimeBlocksByTime() {
         const blocks = Array.from(tiemposComidaContainer.querySelectorAll('.tiempo-comida-block'));
         if (blocks.length <= 1) return;
 
         blocks.sort((a, b) => {
-            const timeA = a.dataset.hora; 
+            const timeA = a.dataset.hora;
             const timeB = b.dataset.hora;
             if (!timeA && !timeB) return 0;
-            if (!timeA) return -1; 
-            if (!timeB) return 1;  
+            if (!timeA) return -1;
+            if (!timeB) return 1;
             return timeA.localeCompare(timeB);
         });
 
         blocks.forEach(block => tiemposComidaContainer.appendChild(block));
     }
 
-    tiemposComidaContainer.addEventListener('change', (event) => { /* ... sin cambios ... */ 
+    tiemposComidaContainer.addEventListener('change', (event) => {
+        if (isViewingHistoricalRegistro) return;
         const target = event.target;
         const foodRow = target.closest('tr[data-food-row-id]');
         const blockDiv = target.closest('.tiempo-comida-block');
 
         if (target.classList.contains('select-tiempo-comida-block') && blockDiv) {
-            blockDiv.dataset.tiempoId = target.value; 
+            blockDiv.dataset.tiempoId = target.value;
             updateAllMealTimeSelects();
         } else if (target.classList.contains('input-hora-block') && blockDiv) {
-            blockDiv.dataset.hora = target.value; 
+            blockDiv.dataset.hora = target.value;
              reorderMealTimeBlocksByTime();
-        } else if (target.classList.contains('select-alimento-hidden') && foodRow) { 
-            const alimentoId = target.value; 
+        } else if (target.classList.contains('select-alimento-hidden') && foodRow) {
+            const alimentoId = target.value;
             const porcionesInput = foodRow.querySelector('.input-porciones');
-            
-            if (alimentoId && ALL_ALIMENTOS_DATA) { 
+
+            if (alimentoId && ALL_ALIMENTOS_DATA) {
                 const alimentoSeleccionado = ALL_ALIMENTOS_DATA.find(a => a.id_alimento.toString() === alimentoId);
                 datosAlimentoPorFilaDOM.set(foodRow, alimentoSeleccionado);
                 if (!porcionesInput.value) porcionesInput.value = "1";
@@ -683,7 +724,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         }
     });
-    tiemposComidaContainer.addEventListener('input', (event) => { /* ... sin cambios ... */ 
+    tiemposComidaContainer.addEventListener('input', (event) => {
+        if (isViewingHistoricalRegistro) return;
         const target = event.target;
         const foodRow = target.closest('tr[data-food-row-id]');
         if (target.classList.contains('input-porciones') && foodRow) {
@@ -694,25 +736,31 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         }
     });
-    tiemposComidaContainer.addEventListener('click', (event) => { /* ... sin cambios ... */ 
+    tiemposComidaContainer.addEventListener('click', (event) => {
+        if (isViewingHistoricalRegistro) return;
         if (event.target.classList.contains('button-eliminar-alimento')) {
             const foodRow = event.target.closest('tr[data-food-row-id]');
             if (foodRow) {
-                handleDeleteFoodRow(foodRow); // Llamada a la función ahora es async
+                handleDeleteFoodRow(foodRow);
             }
         }
     });
 
-    if (btnAnadirTiempoComida) { /* ... sin cambios ... */ 
+    if (btnAnadirTiempoComida) {
         btnAnadirTiempoComida.addEventListener('click', () => {
+            if (isViewingHistoricalRegistro) return;
             const newBlock = createMealTimeBlock();
-            updateAllMealTimeSelects(); 
+            updateAllMealTimeSelects();
             reorderMealTimeBlocksByTime();
         });
     }
-    
-    if (btnGuardarRegistroCompleto) { /* ... sin cambios ... */ 
+
+    if (btnGuardarRegistroCompleto) {
         btnGuardarRegistroCompleto.addEventListener('click', async () => {
+            if (isViewingHistoricalRegistro) {
+                Swal.fire('Acción no permitida', 'No se puede guardar un registro histórico. Seleccione "Registro Actual" para editar.', 'warning');
+                return;
+            }
             const notasAGuardar = notasGeneralesTextarea.value;
             const detallesAGuardar = [];
             let esValidoGeneral = true;
@@ -727,21 +775,21 @@ document.addEventListener('DOMContentLoaded', async () => {
                     esValidoGeneral = false;
                     tiempoComidaSelect.style.borderColor = !tiempoComidaId ? 'red' : '';
                     horaInput.style.borderColor = !horaTiempoComida ? 'red' : '';
-                    return; 
+                    return;
                 } else {
                     tiempoComidaSelect.style.borderColor = '';
                     horaInput.style.borderColor = '';
                 }
 
                 blockDiv.querySelectorAll('tbody tr[data-food-row-id]').forEach(foodRow => {
-                    const hiddenAlimentoSelect = foodRow.querySelector('.select-alimento-hidden'); 
-                    const dropdownButton = foodRow.querySelector('.alimento-dropdown-button'); 
+                    const hiddenAlimentoSelect = foodRow.querySelector('.select-alimento-hidden');
+                    const dropdownButton = foodRow.querySelector('.alimento-dropdown-button');
                     const porcionesInput = foodRow.querySelector('.input-porciones');
                     const alimentoId = hiddenAlimentoSelect.value;
                     const porciones = parseFloat(porcionesInput.value);
-                    
+
                     if (alimentoId && !isNaN(porciones) && porciones > 0) {
-                        if(dropdownButton) dropdownButton.style.borderColor = ''; 
+                        if(dropdownButton) dropdownButton.style.borderColor = '';
                         porcionesInput.style.borderColor = '';
                         detallesAGuardar.push({
                             pacienteId: parseInt(pacienteId),
@@ -749,16 +797,27 @@ document.addEventListener('DOMContentLoaded', async () => {
                             tiempoComidaId: parseInt(tiempoComidaId),
                             numeroPorciones: porciones,
                             alimentoId: parseInt(alimentoId),
-                            notas: notasAGuardar 
+                            notas: notasAGuardar
                         });
-                    } else if (alimentoId || (porcionesInput.value && porcionesInput.value !== "1")) { 
+                    } else if (alimentoId || (porcionesInput.value && porcionesInput.value !== "1" && porcionesInput.value.trim() !== "" && porcionesInput.value.trim() !== "0")) { // Considerar 0 como no válido si no hay alimento
                         esValidoGeneral = false;
                         if (!alimentoId && dropdownButton) {
                             dropdownButton.style.borderColor = 'red';
                         } else if (dropdownButton) {
                              dropdownButton.style.borderColor = '';
                         }
-                        porcionesInput.style.borderColor = (isNaN(porciones) || porciones <= 0) ? 'red' : '';
+                        // Marcar porciones si es inválido o si hay alimento y no hay porciones válidas
+                        if ((!alimentoId && porcionesInput.value.trim() !== "" && porcionesInput.value.trim() !== "0") || (alimentoId && (isNaN(porciones) || porciones <= 0))) {
+                             porcionesInput.style.borderColor = 'red';
+                        } else {
+                             porcionesInput.style.borderColor = '';
+                        }
+
+                    } else if (!alimentoId && porcionesInput.value.trim() === "" || porcionesInput.value.trim() === "0" || porcionesInput.value.trim() === "1") {
+                        // Fila vacía o con porciones 1 por defecto sin alimento, no la consideramos error si no es la única
+                        // No hacer nada, no es error, simplemente no se guarda esta fila.
+                        // Pero si es la única fila del bloque, y el bloque tiene tiempo y hora, se vuelve error.
+                        // Esta validación más compleja se puede añadir si es necesario.
                     }
                 });
             });
@@ -767,6 +826,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                 Swal.fire('Campos incompletos', 'Por favor, complete todos los campos obligatorios (Tiempo, Hora, Alimento, Porciones > 0) en cada registro.', 'warning');
                 return;
             }
+
+            if (detallesAGuardar.length === 0 && !notasAGuardar.trim()) {
+                 Swal.fire('Sin datos', 'No hay registros de comida válidos ni notas para guardar.', 'info');
+                 return;
+            }
+
 
             Swal.fire({
                 title: 'Guardando Registro',
@@ -784,25 +849,21 @@ document.addEventListener('DOMContentLoaded', async () => {
                         body: JSON.stringify(detalle)
                     }).catch(error => ({ error: true, message: error.message, detalle }))
                 );
-            } else if (notasAGuardar.trim()) {
+            } else if (notasAGuardar.trim()) { // Solo notas si no hay detalles
                 const payloadSoloNotas = {
                     pacienteId: parseInt(pacienteId),
                     notas: notasAGuardar,
+                    // No enviar tiempoComidaId, alimentoId, etc. si solo son notas
                 };
-                console.warn("Intentando guardar solo notas con el endpoint de detalle. El backend debe estar preparado para esto.");
                 promesasGuardado.push(
                      fetchAPI('https://nutrilinkapi-production.up.railway.app/api_nutrilink/dieta/guardar_detalle_dieta', 'notas de dieta', {
-                        method: 'POST', 
+                        method: 'POST',
                         headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
-                        body: JSON.stringify(payloadSoloNotas) 
+                        body: JSON.stringify(payloadSoloNotas)
                     }).catch(error => ({ error: true, message: error.message, detalle: { notas: notasAGuardar } }))
                 );
             }
 
-            if (promesasGuardado.length === 0 && !notasAGuardar.trim()) {
-                 Swal.fire('Sin datos', 'No hay registros de comida ni notas para guardar.', 'info');
-                 return;
-            }
 
             try {
                 const resultados = await Promise.all(promesasGuardado);
@@ -816,35 +877,40 @@ document.addEventListener('DOMContentLoaded', async () => {
                     Swal.fire('Error al Guardar', `Algunos datos no se pudieron guardar:<br>${mensajesError}`, 'error');
                 } else {
                     Swal.fire('¡Guardado!', 'El registro dietario ha sido guardado exitosamente.', 'success');
-                    await cargarYMostrarResumenNutricionalYDetalles(); 
+                    await cargarYMostrarResumenNutricionalYDetalles();
+                    await loadRegistroDates(); // Recargar las fechas por si se creó un nuevo registro
+                    registroDateSelectorEl.value = "current"; // Volver a la vista actual
                 }
-            } catch (errorGeneral) { 
+            } catch (errorGeneral) {
                 Swal.fire('Error Crítico', `Ocurrió un error inesperado al procesar los guardados: ${errorGeneral.message}`, 'error');
             }
         });
     }
 
-    async function cargarYMostrarResumenNutricionalYDetalles() { /* ... sin cambios ... */ 
+    // Función para cargar el registro actual (editable)
+    async function cargarYMostrarResumenNutricionalYDetalles() {
         if (!pacienteId) {
             adecuacionStatusDiv.textContent = "ID de paciente no disponible.";
             adecuacionStatusDiv.className = 'info';
             return;
         }
-        adecuacionStatusDiv.textContent = "Cargando datos del registro...";
+        adecuacionStatusDiv.textContent = "Cargando datos del registro actual...";
         adecuacionStatusDiv.className = 'loading';
-        
-        tiemposComidaContainer.innerHTML = ''; 
-        mealTimeBlockCounter = 0; 
-        datosAlimentoPorFilaDOM.clear(); 
+
+        tiemposComidaContainer.innerHTML = '';
+        mealTimeBlockCounter = 0;
+        datosAlimentoPorFilaDOM.clear();
         tablaAdecuacionCuerpo.querySelectorAll('td[data-consumido], td[data-adecuacion]').forEach(td => td.textContent = '-');
-        notasGeneralesTextarea.value = ''; 
+        notasGeneralesTextarea.value = '';
 
         try {
+            // 1. Cargar Resumen Nutricional (para el registro más reciente o el actual que se esté trabajando)
             const urlResumen = `https://nutrilinkapi-production.up.railway.app/api_nutrilink/dieta/obtener_resumen_nutricional?pacienteId=${pacienteId}`;
             const resumenResponse = await fetchAPI(urlResumen, 'resumen nutricional');
 
             if (resumenResponse.status === "success" && resumenResponse.data) {
                 const resumenData = resumenResponse.data;
+                // Llenar tabla de adecuación
                 if (resumenData.adecuacion) {
                     for (const key in resumenData.adecuacion) {
                         const tdAdecuacion = tablaAdecuacionCuerpo.querySelector(`td[data-adecuacion="${key}"]`);
@@ -862,17 +928,18 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
                 adecuacionStatusDiv.textContent = "Resumen y adecuación actualizados.";
                 adecuacionStatusDiv.className = 'success';
-            } else if (resumenResponse.status === "not_found" || !resumenResponse.data || (resumenResponse.data && resumenResponse.data.detalles_por_tiempo_comida && resumenResponse.data.detalles_por_tiempo_comida.length === 0 && !resumenResponse.data.totales_consumidos)) {
+            } else if (resumenResponse.status === "not_found" || !resumenResponse.data || (resumenResponse.data && !resumenResponse.data.totales_consumidos && (!resumenResponse.data.detalles_por_tiempo_comida || resumenResponse.data.detalles_por_tiempo_comida.length === 0))) {
                  adecuacionStatusDiv.textContent = "No hay datos de adecuación para este paciente aún.";
                  if (adecuacionStatusDiv.className !== 'success') adecuacionStatusDiv.className = 'info';
             } else {
-                if (adecuacionStatusDiv.className !== 'success') {
-                    adecuacionStatusDiv.textContent = `Advertencia: ${resumenResponse.mensaje || "No se pudo obtener adecuación."}`;
+                 if (adecuacionStatusDiv.className !== 'success') {
+                    adecuacionStatusDiv.textContent = `Advertencia al cargar resumen: ${resumenResponse.mensaje || "No se pudo obtener adecuación."}`;
                     adecuacionStatusDiv.className = 'warning';
                 }
             }
 
-            const urlDetalles = `https://nutrilinkapi-production.up.railway.app/api_nutrilink/dieta/detalles_dieta?pacienteId=${pacienteId}`;
+            // 2. Cargar Detalles de la Dieta (alimentos por tiempo para el registro más reciente)
+            const urlDetalles = `https://nutrilinkapi-production.up.railway.app/api_nutrilink/dieta/detalles_dieta?pacienteId=${pacienteId}`; // Este obtiene el más reciente
             const detallesResponse = await fetchAPI(urlDetalles, 'detalles de dieta');
 
             if (detallesResponse.status === "success" && detallesResponse.data) {
@@ -883,7 +950,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 if (datosDieta.detalles && datosDieta.detalles.length > 0) {
                     const detallesAgrupados = datosDieta.detalles.reduce((acc, detalle) => {
-                        const key = `${detalle.id_tiempo_comida}-${detalle.hora_tiempo_comida}`; 
+                        const key = `${detalle.id_tiempo_comida}-${detalle.hora_tiempo_comida}`;
                         if (!acc[key]) {
                             acc[key] = {
                                 id_tiempo_comida: detalle.id_tiempo_comida,
@@ -892,8 +959,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                             };
                         }
                         acc[key].alimentos.push({
-                            alimento_id_alimento: detalle.alimento_id_alimento, 
-                            numero_porciones_dieta: detalle.numero_porciones_dieta 
+                            alimento_id_alimento: detalle.alimento_id_alimento,
+                            numero_porciones_dieta: detalle.numero_porciones_dieta
                         });
                         return acc;
                     }, {});
@@ -901,30 +968,33 @@ document.addEventListener('DOMContentLoaded', async () => {
                     Object.values(detallesAgrupados).forEach(grupo => {
                         createMealTimeBlock(grupo.id_tiempo_comida, grupo.hora_tiempo_comida, grupo.alimentos);
                     });
-                    
                     if (adecuacionStatusDiv.className !== 'success' && adecuacionStatusDiv.className !== 'warning') {
-                         adecuacionStatusDiv.textContent = "Registro cargado para edición.";
-                         adecuacionStatusDiv.className = 'info'; 
+                         adecuacionStatusDiv.textContent = "Registro actual cargado para edición.";
+                         adecuacionStatusDiv.className = 'info';
                     }
-                } else { 
+                } else {
                      if (adecuacionStatusDiv.className !== 'success' && adecuacionStatusDiv.className !== 'warning') {
-                        adecuacionStatusDiv.textContent = datosDieta.notas ? "Notas cargadas. No hay alimentos registrados." : "No hay alimentos registrados. Puede empezar a añadir.";
+                        adecuacionStatusDiv.textContent = datosDieta.notas ? "Notas cargadas. No hay alimentos registrados en el registro actual." : "No hay alimentos registrados en el registro actual. Puede empezar a añadir.";
                         adecuacionStatusDiv.className = 'info';
                      }
                 }
-            } else { 
+            } else if (detallesResponse.status === "not_found") {
                 if (adecuacionStatusDiv.className !== 'success' && adecuacionStatusDiv.className !== 'warning') {
+                    adecuacionStatusDiv.textContent = "No se encontraron detalles para el registro actual. Puede empezar a añadir.";
+                    adecuacionStatusDiv.className = 'info';
+                }
+            }
+             else {
+                 if (adecuacionStatusDiv.className !== 'success' && adecuacionStatusDiv.className !== 'warning') {
                     adecuacionStatusDiv.textContent = `Error al cargar detalles para edición: ${detallesResponse.mensaje || 'Respuesta inesperada.'}`;
                     adecuacionStatusDiv.className = 'error';
                 } else {
                     console.warn(`Error al cargar detalles para edición: ${detallesResponse.mensaje || 'Respuesta inesperada.'}, pero resumen/adecuacion se mostró.`);
                 }
             }
-            
-            if (tiemposComidaContainer.children.length === 0 && ALL_TIEMPOS_COMIDA_DATA && ALL_TIEMPOS_COMIDA_DATA.length > 0) {
-                const newBlock = createMealTimeBlock(); 
-                 updateAllMealTimeSelects(); 
-                 reorderMealTimeBlocksByTime();
+
+            if (tiemposComidaContainer.children.length === 0 && ALL_TIEMPOS_COMIDA_DATA && ALL_TIEMPOS_COMIDA_DATA.length > 0 && !isViewingHistoricalRegistro) {
+                createMealTimeBlock();
                  if (adecuacionStatusDiv.className !== 'success' && adecuacionStatusDiv.className !== 'warning' && adecuacionStatusDiv.className !== 'error') {
                     adecuacionStatusDiv.textContent = "Listo para añadir registros.";
                     adecuacionStatusDiv.className = 'info';
@@ -932,36 +1002,230 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
 
         } catch (error) {
-            console.error("Error al cargar resumen y/o detalles:", error);
-            adecuacionStatusDiv.textContent = `Error general al cargar datos: asegúrate de haber guardado antes los datos del paciente en historial clínico`;
+            console.error("Error al cargar resumen y/o detalles del registro actual:", error);
+            adecuacionStatusDiv.textContent = `Error general al cargar datos del registro actual: ${error.message}`;
             adecuacionStatusDiv.className = 'error';
-            if (tiemposComidaContainer.children.length === 0 && ALL_TIEMPOS_COMIDA_DATA && ALL_TIEMPOS_COMIDA_DATA.length > 0) {
-                const newBlock = createMealTimeBlock();
-                updateAllMealTimeSelects();
-                reorderMealTimeBlocksByTime();
+            if (tiemposComidaContainer.children.length === 0 && ALL_TIEMPOS_COMIDA_DATA && ALL_TIEMPOS_COMIDA_DATA.length > 0 && !isViewingHistoricalRegistro) {
+                createMealTimeBlock();
             }
         } finally {
-            updateAllMealTimeSelects(); 
-            reorderMealTimeBlocksByTime(); 
-            updateAddMealButtonState();
+            toggleEditableStateRegistro(!isViewingHistoricalRegistro);
             setTimeout(() => {
                 if (adecuacionStatusDiv.className === 'success' || adecuacionStatusDiv.className === 'info') {
-                    // No limpiar
+                    // No limpiar el mensaje si es útil
                 }
-            }, 4000);
+            }, 5000);
         }
     }
+
+    async function loadRegistroDates() {
+        registroDateSelectorEl.innerHTML = '<option value="" selected disabled>Cargando fechas...</option>';
+        try {
+            const response = await fetchAPI(`https://nutrilinkapi-production.up.railway.app/api_nutrilink/dieta/registros_dieta_por_fecha?pacienteId=${pacienteId}`, 'fechas de registros');
+            if (response.status === 'success' && response.data) {
+                registroDateSelectorEl.innerHTML = '<option value="current" selected>Registro Actual (Editable)</option>';
+                const sortedDates = response.data.sort((a, b) => new Date(b.fecha_dieta) - new Date(a.fecha_dieta));
+                sortedDates.forEach(registro => {
+                    const option = document.createElement('option');
+                    option.value = registro.id_dieta; // Usar id_dieta como value
+                    option.dataset.fechaDieta = registro.fecha_dieta; // Guardar fecha para posible uso
+                    const fecha = new Date(registro.fecha_dieta + 'T00:00:00'); // Asegurar que se interprete como local
+                    option.textContent = `Registro del ${fecha.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}`;
+                    registroDateSelectorEl.appendChild(option);
+                });
+            } else {
+                registroDateSelectorEl.innerHTML = '<option value="current" selected>Registro Actual (Editable)</option>';
+                registroDateSelectorEl.innerHTML += '<option value="" disabled>No hay registros anteriores</option>';
+                console.warn('No se encontraron fechas de registros o hubo un error:', response.mensaje);
+            }
+        } catch (error) {
+            registroDateSelectorEl.innerHTML = '<option value="current" selected>Registro Actual (Editable)</option>';
+            registroDateSelectorEl.innerHTML += '<option value="" disabled>Error al cargar fechas</option>';
+            // El error ya se muestra en fetchAPI
+        }
+    }
+
+    async function loadHistoricalRegistroDetails(idDieta, fechaDieta) {
+        if (!pacienteId || !idDieta) return;
+
+        isViewingHistoricalRegistro = true;
+        toggleEditableStateRegistro(false);
+        adecuacionStatusDiv.textContent = `Cargando detalles del registro histórico del ${new Date(fechaDieta + 'T00:00:00').toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}...`;
+        adecuacionStatusDiv.className = 'loading';
+
+        tiemposComidaContainer.innerHTML = '';
+        mealTimeBlockCounter = 0;
+        datosAlimentoPorFilaDOM.clear();
+        tablaAdecuacionCuerpo.querySelectorAll('td[data-consumido], td[data-adecuacion]').forEach(td => td.textContent = '-');
+        notasGeneralesTextarea.value = '';
+
+        try {
+            // 1. Cargar Resumen y Adecuación para el idDieta específico
+            const urlResumenHist = `https://nutrilinkapi-production.up.railway.app/api_nutrilink/dieta/obtener_resumen_nutricional_por_id_dieta?pacienteId=${pacienteId}&idDieta=${idDieta}`;
+            const resumenResponse = await fetchAPI(urlResumenHist, 'resumen de registro histórico');
+
+            if (resumenResponse.status === "success" && resumenResponse.data) {
+                const resumenData = resumenResponse.data;
+                if (resumenData.adecuacion) {
+                    for (const key in resumenData.adecuacion) {
+                        const tdAdecuacion = tablaAdecuacionCuerpo.querySelector(`td[data-adecuacion="${key}"]`);
+                        if (tdAdecuacion) tdAdecuacion.textContent = `${parseFloat(resumenData.adecuacion[key] || 0).toFixed(1)} %`;
+                    }
+                }
+                if (resumenData.totales_consumidos) {
+                    for (const key in resumenData.totales_consumidos) {
+                        const tdConsumido = tablaAdecuacionCuerpo.querySelector(`td[data-consumido="${key}"]`);
+                        if (tdConsumido) {
+                            const valor = parseFloat(resumenData.totales_consumidos[key] || 0);
+                            tdConsumido.textContent = key === 'dieta_calorias' ? valor.toFixed(0) : valor.toFixed(1);
+                        }
+                    }
+                    if (resumenData.totales_consumidos.notas) {
+                        notasGeneralesTextarea.value = resumenData.totales_consumidos.notas;
+                    }
+                }
+                adecuacionStatusDiv.textContent = `Mostrando resumen del registro del ${new Date(fechaDieta + 'T00:00:00').toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}.`;
+                adecuacionStatusDiv.className = 'info';
+            } else {
+                throw new Error(resumenResponse.mensaje || 'No se pudo cargar el resumen del registro histórico.');
+            }
+
+            // 2. Cargar Detalles de Alimentos para la fecha específica del registro histórico
+            // **ASUNCIÓN**: El backend soporta filtrar `detalles_dieta` por `fecha`.
+            // Si no, esta parte no mostrará los alimentos y solo el resumen anterior.
+            const urlDetallesHist = `https://nutrilinkapi-production.up.railway.app/api_nutrilink/dieta/detalles_dieta?pacienteId=${pacienteId}&fecha=${fechaDieta}`;
+            const detallesResponse = await fetchAPI(urlDetallesHist, `detalles de alimentos del registro histórico (${fechaDieta})`);
+
+            if (detallesResponse.status === "success" && detallesResponse.data && detallesResponse.data.detalles) {
+                if (detallesResponse.data.detalles.length > 0) {
+                    const detallesAgrupados = detallesResponse.data.detalles.reduce((acc, detalle) => {
+                        const key = `${detalle.id_tiempo_comida}-${detalle.hora_tiempo_comida}`;
+                        if (!acc[key]) {
+                            acc[key] = {
+                                id_tiempo_comida: detalle.id_tiempo_comida,
+                                hora_tiempo_comida: detalle.hora_tiempo_comida,
+                                alimentos: []
+                            };
+                        }
+                        acc[key].alimentos.push({
+                            alimento_id_alimento: detalle.alimento_id_alimento,
+                            numero_porciones_dieta: detalle.numero_porciones_dieta
+                        });
+                        return acc;
+                    }, {});
+
+                    Object.values(detallesAgrupados).forEach(grupo => {
+                        createMealTimeBlock(grupo.id_tiempo_comida, grupo.hora_tiempo_comida, grupo.alimentos);
+                    });
+                } else {
+                    tiemposComidaContainer.innerHTML = '<p style="text-align:center; padding:20px;">No se encontraron detalles de alimentos para este registro histórico.</p>';
+                }
+            } else if (detallesResponse.status === "not_found") {
+                 tiemposComidaContainer.innerHTML = `<p style="text-align:center; padding:20px;">No se encontraron detalles de alimentos para la fecha ${fechaDieta}.</p>`;
+            }
+            else {
+                console.warn(`No se pudieron cargar los detalles de alimentos para el registro histórico (${fechaDieta}): ${detallesResponse.mensaje}`);
+                tiemposComidaContainer.innerHTML = `<p style="text-align:center; padding:20px; color:orange;">Advertencia: No se pudieron cargar los detalles de alimentos para este registro. Solo se muestra el resumen.</p>`;
+            }
+
+        } catch (error) {
+            console.error("Error al cargar registro histórico:", error);
+            adecuacionStatusDiv.textContent = `Error al cargar registro histórico: ${error.message}`;
+            adecuacionStatusDiv.className = 'error';
+            tiemposComidaContainer.innerHTML = `<p style="color:red; text-align:center; padding:20px;">Error al cargar datos del registro: ${error.message}</p>`;
+        } finally {
+            toggleEditableStateRegistro(false); // Asegurar que todo esté deshabilitado
+        }
+    }
+
+
+    function toggleEditableStateRegistro(isEditable) {
+        isViewingHistoricalRegistro = !isEditable;
+
+        // Botones principales de la página
+        if (btnAnadirTiempoComida) {
+            btnAnadirTiempoComida.style.display = isEditable ? 'inline-block' : 'none';
+            btnAnadirTiempoComida.disabled = !isEditable;
+        }
+        if (btnGuardarRegistroCompleto) {
+            btnGuardarRegistroCompleto.style.display = isEditable ? 'inline-block' : 'none';
+            btnGuardarRegistroCompleto.disabled = !isEditable;
+        }
+        if (notasGeneralesTextarea) {
+            notasGeneralesTextarea.readOnly = !isEditable;
+        }
+
+        // Elementos dentro de cada bloque de tiempo de comida
+        tiemposComidaContainer.querySelectorAll('.tiempo-comida-block').forEach(block => {
+            block.querySelector('.select-tiempo-comida-block').disabled = !isEditable;
+            block.querySelector('.input-hora-block').readOnly = !isEditable;
+
+            const btnAddAlimento = block.querySelector('.acciones-bloque .button-secondary');
+            const btnDeleteTiempo = block.querySelector('.acciones-bloque .button-eliminar-fila');
+            if (btnAddAlimento) {
+                btnAddAlimento.style.display = isEditable ? 'inline-block' : 'none';
+                btnAddAlimento.disabled = !isEditable;
+            }
+            if (btnDeleteTiempo) {
+                btnDeleteTiempo.style.display = isEditable ? 'inline-block' : 'none';
+                btnDeleteTiempo.disabled = !isEditable;
+            }
+
+
+            block.querySelectorAll('tbody tr[data-food-row-id]').forEach(foodRow => {
+                foodRow.querySelector('.alimento-dropdown-button').disabled = !isEditable;
+                foodRow.querySelector('.input-filtro-alimento-panel').readOnly = !isEditable;
+                foodRow.querySelector('.select-alimento-hidden').disabled = !isEditable;
+                foodRow.querySelector('.input-porciones').readOnly = !isEditable;
+                
+                const btnDeleteAlimento = foodRow.querySelector('.button-eliminar-alimento');
+                if (btnDeleteAlimento) {
+                     btnDeleteAlimento.style.display = isEditable ? 'inline-block' : 'none'; // Ocultar el botón si no es editable
+                     btnDeleteAlimento.disabled = !isEditable;
+                }
+            });
+        });
+        updateAllMealTimeSelects(); // Actualiza los selects y el botón de añadir tiempo
+        reorderMealTimeBlocksByTime();
+    }
+
 
     async function initializePage() {
         adecuacionStatusDiv.textContent = "Cargando datos base...";
         adecuacionStatusDiv.className = 'loading';
         try {
-            await cargarDatosBase(); 
+            await cargarDatosBase(); // Carga Tiempos de Comida y Alimentos
+            await loadRegistroDates(); // Carga las fechas de registros anteriores en el combobox
+            
+            // Por defecto, cargar el registro actual (editable)
+            isViewingHistoricalRegistro = false;
             await cargarYMostrarResumenNutricionalYDetalles();
+            toggleEditableStateRegistro(true);
+
         } catch (error) {
-            adecuacionStatusDiv.textContent = "Error al inicializar la página. Intente recargar.";
+            // Los errores de fetchAPI ya muestran un Swal. Aquí podemos poner un mensaje más general.
+            adecuacionStatusDiv.textContent = "Error al inicializar la página. Verifique la consola y los mensajes de error.";
             adecuacionStatusDiv.className = 'error';
+            // Deshabilitar botones principales si la carga base falla críticamente
+             if (btnAnadirTiempoComida) btnAnadirTiempoComida.disabled = true;
+             if (btnGuardarRegistroCompleto) btnGuardarRegistroCompleto.disabled = true;
         }
+    }
+
+    if (registroDateSelectorEl) {
+        registroDateSelectorEl.addEventListener('change', async (event) => {
+            const selectedValue = event.target.value;
+            const selectedOption = event.target.options[event.target.selectedIndex];
+            const fechaDieta = selectedOption ? selectedOption.dataset.fechaDieta : null;
+
+            if (selectedValue === "current") {
+                isViewingHistoricalRegistro = false;
+                await cargarYMostrarResumenNutricionalYDetalles(); // Carga el más reciente editable
+                toggleEditableStateRegistro(true);
+            } else if (selectedValue && fechaDieta) {
+                await loadHistoricalRegistroDetails(selectedValue, fechaDieta); // Carga histórico no editable
+            }
+        });
     }
 
     initializePage();
