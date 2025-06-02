@@ -95,7 +95,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             return await response.json();
         } catch (error) {
             console.error(`Excepción en fetchAPI para ${entityName} (${url}):`, error);
-            Swal.fire('Error de Carga', `No se pudo cargar ${entityName}: primero debes guardar los datos del paciente en historial clínico!`, 'error');
+            Swal.fire('Error de Carga', `No se pudo cargar ${entityName}: primero debes guardar los datos del paciente en historial clínico y antropometría y requerimientos!`, 'error');
             throw error;
         }
     }

@@ -423,7 +423,7 @@ async function enviarDatosAntropometricosYRequerimientos() {
         }
     } catch (error) {
         console.error('Error:', error);
-        Swal.fire('Error', error.message, 'error');
+        Swal.fire('Error', 'Asegúrate de haber guardado los datos del paciente en historial clínico!', 'error');
     }
 }
 
