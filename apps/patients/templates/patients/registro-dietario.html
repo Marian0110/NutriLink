@@ -95,7 +95,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             return await response.json();
         } catch (error) {
             console.error(`Excepción en fetchAPI para ${entityName} (${url}):`, error);
-            Swal.fire('Error de Carga', `No se pudieron cargar ${entityName}: ${error.message}`, 'error');
+            Swal.fire('Error de Carga', `No se pudo cargar ${entityName}: primero debes guardar los datos del paciente en historial clínico!`, 'error');
             throw error;
         }
     }
@@ -933,7 +933,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         } catch (error) {
             console.error("Error al cargar resumen y/o detalles:", error);
-            adecuacionStatusDiv.textContent = `Error general al cargar datos: ${error.message}`;
+            adecuacionStatusDiv.textContent = `Error general al cargar datos: asegúrate de haber guardado antes los datos del paciente en historial clínico`;
             adecuacionStatusDiv.className = 'error';
             if (tiemposComidaContainer.children.length === 0 && ALL_TIEMPOS_COMIDA_DATA && ALL_TIEMPOS_COMIDA_DATA.length > 0) {
                 const newBlock = createMealTimeBlock();
