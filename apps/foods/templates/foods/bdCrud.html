@@ -621,7 +621,7 @@ document.addEventListener('DOMContentLoaded', function () {
             event.preventDefault();
 
             // Obtener el ID del nutricionista
-            const id_nutricionista = document.getElementById('id_nutricionista')?.value;
+           let id_nutricionista = sessionStorage.getItem('id_nutricionista');
             if (!id_nutricionista) {
                 Swal.fire('Error', 'No se pudo identificar al nutricionista. Por favor, inicie sesión nuevamente.', 'error');
                 return;
