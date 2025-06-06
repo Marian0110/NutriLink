@@ -620,6 +620,13 @@ document.addEventListener('DOMContentLoaded', function () {
         nuevoAlimentoForm.addEventListener('submit', async function(event) {
             event.preventDefault();
 
+            // Obtener el ID del nutricionista
+            const id_nutricionista = document.getElementById('id_nutricionista')?.value;
+            if (!id_nutricionista) {
+                Swal.fire('Error', 'No se pudo identificar al nutricionista. Por favor, inicie sesión nuevamente.', 'error');
+                return;
+            }
+
             const submitButton = nuevoAlimentoForm.querySelector('button[type="submit"]');
             const originalButtonText = submitButton.innerHTML;
             submitButton.disabled = true;
@@ -660,6 +667,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 zinc_mg: parseFloatOrNull(formData.get('zinc_mg')),
                 potasio_mg: parseFloatOrNull(formData.get('potasio_mg')),
                 sodio_mg: parseFloatOrNull(formData.get('sodio_mg')),
+                id_nutricionista: id_nutricionista // Añadimos el ID del nutricionista
             };
 
             console.log("Enviando datos para crear nuevo alimento:", API_CREAR_ALIMENTO_URL, " Payload:", data);
@@ -714,7 +722,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 submitButton.innerHTML = originalButtonText;
             }
         });
-    }
+      }
 
     // --- MANEJAR LA ELIMINACIÓN DE ALIMENTOS ---
     document.querySelectorAll('.btn-eliminar-alimento').forEach(button => {
