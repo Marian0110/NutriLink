@@ -74,7 +74,6 @@
         </div>
       </div>
     </div>
-    <!-- Modal de detalles del alimento -->
     <div class="modal fade" id="detalleModal{{ alimento.id_alimento }}" tabindex="-1" aria-labelledby="detalleModalLabel{{ alimento.id_alimento }}" aria-hidden="true">
       <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
@@ -86,8 +85,8 @@
             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
-            <form id="alimentoForm{{ alimento.id_alimento }}" class="editable-form">
-               <input type="hidden" id="alimentoId{{ alimento.id_alimento }}" name="id_alimento" value="{{ alimento.id_alimento }}" >
+            <form id="alimentoForm{{ alimento.id_alimento }}" class="editable-form" data-alimento-origen="{{ alimento.origen|default:'Personalizado' }}">
+                <input type="hidden" id="alimentoId{{ alimento.id_alimento }}" name="id_alimento" value="{{ alimento.id_alimento }}" >
               {% csrf_token %}
               
               <fieldset class="info-basica-section mb-4">
@@ -99,25 +98,25 @@
                   </div>
                   <div class="col-md-6">
                     <label class="form-label">Origen (ej: USDA, Envase):</label>
-                    <input type="text" class="form-control" name="origen" value="{{ alimento.origen|default:'USDA' }}">
+                    <input type="text" class="form-control" name="origen" value="{{ alimento.origen|default:'Personalizado' }}">
                   </div>
                   <div class="col-md-6">
                     <label class="form-label">Grupo:</label>
-                          
+                              
                     <select class="form-select select-grupo-alimento-modal" name="id_grupo_alimenticio">
                         <option value="">Seleccione un grupo...</option>
 
                         {% for grupo_obj in grupos_modal %}
                             <option value="{{ grupo_obj.id_grupo_alimenticio }}"
-                                    {% comment %}
-                                    Ahora alimento.id_grupo_alimenticio existe y es un número (o None).
-                                    grupo_obj.id_grupo_alimenticio también es un número.
-                                    La comparación directa es más limpia si los tipos son consistentes.
-                                    Si hay duda, stringformat es más seguro.
-                                    {% endcomment %}
-                                    {% if alimento.id_grupo_alimenticio is not None and grupo_obj.id_grupo_alimenticio == alimento.id_grupo_alimenticio %}
-                                        selected
-                                    {% endif %}>
+                                        {% comment %}
+                                        Ahora alimento.id_grupo_alimenticio existe y es un número (o None).
+                                        grupo_obj.id_grupo_alimenticio también es un número.
+                                        La comparación directa es más limpia si los tipos son consistentes.
+                                        Si hay duda, stringformat es más seguro.
+                                        {% endcomment %}
+                                        {% if alimento.id_grupo_alimenticio is not None and grupo_obj.id_grupo_alimenticio == alimento.id_grupo_alimenticio %}
+                                            selected
+                                        {% endif %}>
                                 {{ grupo_obj.descripcion }}
                             </option>
                         {% endfor %}
@@ -133,7 +132,7 @@
                             </option>
                         {% endif %}
                     </select>
-    
+            
                   </div>
                   <div class="col-md-3">
                     <label class="form-label">Medida (ej: tazas):</label>
@@ -216,8 +215,8 @@
                   </div>
                 </div>
               </fieldset>
-                    
-              <div class="d-flex justify-content-end gap-2 mt-4">
+                        
+              <div class="d-flex justify-content-end gap-2 mt-4 alimento-actions">
                 <button type="button" class="btn btn-danger btn-eliminar-alimento" data-alimento-id="{{ alimento.id_alimento }}">
                   <i class="fas fa-trash-alt me-2"></i>Eliminar
                 </button>
@@ -235,7 +234,6 @@
     </div>
     {% endfor %}
 
-    <!-- Paginación -->
     <div class="pagination-container mt-4">
       <nav aria-label="Page navigation">
         <ul class="pagination justify-content-center">
@@ -277,7 +275,6 @@
     <div class="alert alert-warning mt-3">No se pudieron cargar los alimentos o no se encontraron resultados. Por favor, intente más tarde o ajuste su búsqueda.</div>
   {% endif %}
 
-  <!-- Modal para agregar nuevo alimento -->
   <div class="modal fade" id="agregarAlimentoModal" tabindex="-1" aria-labelledby="agregarAlimentoModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
       <div class="modal-content">
@@ -464,9 +461,7 @@
       </div>
     </div>
   </div>
-</div> <!-- Cierre de .contenedor-alimentos -->
-
-<script>
+</div> <script>
 document.addEventListener('DOMContentLoaded', function () {
     const API_GRUPOS_URL = 'https://nutrilinkapi-production.up.railway.app/api_nutrilink/alimento/obtener_grupos_alimenticios_con_id';
     // URL para CREAR nuevos alimentos (POST)
@@ -604,27 +599,14 @@ document.addEventListener('DOMContentLoaded', function () {
                     let errorMessage = 'Error al actualizar el alimento.';
                     if (result && result.mensaje) {
                         errorMessage = result.mensaje;
-                    } else if (result && result.errors) { 
-                        errorMessage = Object.entries(result.errors).map(([key, val]) => `${key}: ${val.join ? val.join(', ') : val}`).join('<br>');
-                    } else if (result && result.detail) { // A veces DRF usa 'detail' para errores
-                        errorMessage = result.detail;
-                    } else if (response.statusText) {
-                        errorMessage = `Error ${response.status}: ${response.statusText}`;
+                    } else if (result && result.errors) {
+                        errorMessage += '<br>' + Object.values(result.errors).join('<br>');
                     }
-                    
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error al Guardar',
-                        html: errorMessage
-                    });
+                    Swal.fire('Error', errorMessage, 'error');
                 }
             } catch (error) {
-                console.error('Error en la petición fetch:', error);
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error de Conexión',
-                    text: 'No se pudo conectar con el servidor. Inténtalo más tarde.'
-                });
+                console.error('Error al enviar la solicitud de actualización:', error);
+                Swal.fire('Error de Conexión', 'No se pudo conectar con el servidor para actualizar el alimento.', 'error');
             } finally {
                 submitButton.disabled = false;
                 submitButton.innerHTML = originalButtonText;
@@ -632,44 +614,46 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    // --- MANEJAR LA CREACIÓN DE NUEVOS ALIMENTOS ---
+    // --- MANEJAR EL AGREGADO DE NUEVOS ALIMENTOS ---
     const nuevoAlimentoForm = document.getElementById('nuevoAlimentoForm');
     if (nuevoAlimentoForm) {
         nuevoAlimentoForm.addEventListener('submit', async function(event) {
             event.preventDefault();
-            if (!this.checkValidity()) {
-                event.stopPropagation();
-                // Bootstrap se encargará de mostrar los mensajes de validación nativos
-                // Puedes añadir una alerta de Swal si quieres.
-                Swal.fire('Campos incompletos', 'Por favor, rellena todos los campos obligatorios.', 'warning');
-                return;
-            }
 
-            const submitButton = this.querySelector('button[type="submit"]');
+            const submitButton = nuevoAlimentoForm.querySelector('button[type="submit"]');
             const originalButtonText = submitButton.innerHTML;
             submitButton.disabled = true;
             submitButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Guardando...';
 
-            const formData = new FormData(this);
+            const formData = new FormData(nuevoAlimentoForm);
             const csrfToken = formData.get('csrfmiddlewaretoken');
 
-            const parseFloatOrNull = (value) => (value === null || String(value).trim() === '') ? null : (isNaN(parseFloat(value)) ? null : parseFloat(value));
-            const parseIntOrNull = (value) => (value === null || String(value).trim() === '') ? null : (isNaN(parseInt(value, 10)) ? null : parseInt(value, 10));
+            const parseFloatOrNull = (value) => {
+                if (value === null || String(value).trim() === '') return null;
+                const num = parseFloat(value);
+                return isNaN(num) ? null : num;
+            };
+            
+            const parseIntOrNull = (value) => {
+                if (value === null || String(value).trim() === '') return null;
+                const num = parseInt(value, 10);
+                return isNaN(num) ? null : num;
+            };
 
             const data = {
                 nombre_alimento: formData.get('nombre_alimento'),
+                origen: formData.get('origen') || 'Personalizado',
                 id_grupo_alimenticio: parseIntOrNull(formData.get('id_grupo_alimenticio')),
-                origen: formData.get('origen'),
                 medida: formData.get('medida'),
                 numero_medida: parseFloatOrNull(formData.get('numero_medida')),
-                masa: parseFloatOrNull(formData.get('cantidad_porcion')), // 'cantidad_porcion' es el name en el form
+                masa: parseFloatOrNull(formData.get('cantidad_porcion')), // 'cantidad_porcion' en el form de nuevo alimento
                 kcal: parseFloatOrNull(formData.get('kcal')),
                 proteinas_gr: parseFloatOrNull(formData.get('proteinas_gr')),
                 carbohidratos_gr: parseFloatOrNull(formData.get('carbohidratos_gr')),
                 lipidos_gr: parseFloatOrNull(formData.get('lipidos_gr')),
-                n3_gr: parseFloatOrNull(formData.get('omega_gr')), // 'omega_gr' es el name en el form
-                vit_a_mcg: parseFloatOrNull(formData.get('vitamina_a_mcg')),
-                vit_b12_mcg: parseFloatOrNull(formData.get('vitamina_b12_mcg')),
+                n3_gr: parseFloatOrNull(formData.get('omega_gr')), // 'omega_gr' en el form de nuevo alimento
+                vit_a_mcg: parseFloatOrNull(formData.get('vitamina_a_mcg')), // 'vitamina_a_mcg' en el form de nuevo alimento
+                vit_b12_mcg: parseFloatOrNull(formData.get('vitamina_b12_mcg')), // 'vitamina_b12_mcg' en el form de nuevo alimento
                 calcio_mg: parseFloatOrNull(formData.get('calcio_mg')),
                 hierro_mg: parseFloatOrNull(formData.get('hierro_mg')),
                 selenio_mcg: parseFloatOrNull(formData.get('selenio_mcg')),
@@ -678,10 +662,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 sodio_mg: parseFloatOrNull(formData.get('sodio_mg')),
             };
 
-            console.log("Enviando datos para crear nuevo alimento:", data, "a:", API_CREAR_ALIMENTO_URL);
+            console.log("Enviando datos para crear nuevo alimento:", API_CREAR_ALIMENTO_URL, " Payload:", data);
 
             try {
-                const response = await fetch(API_CREAR_ALIMENTO_URL, { // Usar API_CREAR_ALIMENTO_URL
+                const response = await fetch(API_CREAR_ALIMENTO_URL, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -689,34 +673,42 @@ document.addEventListener('DOMContentLoaded', function () {
                     },
                     body: JSON.stringify(data)
                 });
+
                 const result = await response.json();
 
                 if (response.ok && result.status === "success") {
                     Swal.fire({
                         icon: 'success',
-                        title: '¡Alimento Agregado!',
-                        text: result.mensaje || 'El nuevo alimento ha sido guardado correctamente.',
+                        title: '¡Creado!',
+                        text: result.mensaje || 'Alimento agregado correctamente.',
                         timer: 2000,
                         showConfirmButton: false
                     });
-                    const modalElement = this.closest('.modal');
+                    
+                    const modalElement = nuevoAlimentoForm.closest('.modal');
                     if (modalElement) {
                         const modalInstance = bootstrap.Modal.getInstance(modalElement);
-                        if (modalInstance) modalInstance.hide();
-                        modalElement.querySelector('form').reset(); // Limpiar formulario
+                        if (modalInstance) {
+                            modalInstance.hide();
+                        }
                     }
-                    setTimeout(() => location.reload(), 1500);
+                    
+                    setTimeout(() => {
+                        location.reload(); 
+                    }, 1500);
+
                 } else {
                     let errorMessage = 'Error al agregar el alimento.';
-                    if (result && result.mensaje) errorMessage = result.mensaje;
-                    else if (result && result.errors) errorMessage = Object.entries(result.errors).map(([k, v]) => `${k}: ${v.join ? v.join(', ') : v}`).join('<br>');
-                    else if (result && result.detail) errorMessage = result.detail;
-                    else if (response.statusText) errorMessage = `Error ${response.status}: ${response.statusText}`;
-                    Swal.fire({ icon: 'error', title: 'Error al Guardar', html: errorMessage });
+                    if (result && result.mensaje) {
+                        errorMessage = result.mensaje;
+                    } else if (result && result.errors) {
+                        errorMessage += '<br>' + Object.values(result.errors).join('<br>');
+                    }
+                    Swal.fire('Error', errorMessage, 'error');
                 }
             } catch (error) {
-                console.error('Error en la petición fetch para crear:', error);
-                Swal.fire({ icon: 'error', title: 'Error de Conexión', text: 'No se pudo conectar con el servidor.' });
+                console.error('Error al enviar la solicitud de creación:', error);
+                Swal.fire('Error de Conexión', 'No se pudo conectar con el servidor para agregar el alimento.', 'error');
             } finally {
                 submitButton.disabled = false;
                 submitButton.innerHTML = originalButtonText;
@@ -724,95 +716,119 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-
     // --- MANEJAR LA ELIMINACIÓN DE ALIMENTOS ---
     document.querySelectorAll('.btn-eliminar-alimento').forEach(button => {
         button.addEventListener('click', async function() {
             const alimentoId = this.dataset.alimentoId;
-            if (!alimentoId) {
-                Swal.fire('Error Interno', 'No se pudo identificar el alimento a eliminar.', 'error');
-                return;
-            }
-
-            const modal = this.closest('.modal');
-            const form = modal ? modal.querySelector('form') : null;
-            const csrfTokenInput = form ? form.querySelector('input[name="csrfmiddlewaretoken"]') : document.querySelector('#nuevoAlimentoForm input[name="csrfmiddlewaretoken"]'); // Fallback al token del form de nuevo alimento si no está en el de edición
-            const csrfToken = csrfTokenInput ? csrfTokenInput.value : (document.querySelector('input[name="csrfmiddlewaretoken"]')?.value || '');
-
+            const urlEliminar = API_ELIMINAR_ALIMENTO_URL_BASE + alimentoId;
+            const csrfToken = document.querySelector('input[name="csrfmiddlewaretoken"]').value;
 
             Swal.fire({
                 title: '¿Estás seguro?',
-                html: `Vas a eliminar el alimento (ID: <strong>${alimentoId}</strong>).<br>¡Esta acción no se puede revertir!`,
+                text: "¡No podrás revertir esto!",
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#d33',
-                cancelButtonColor: '#3085d6',
-                confirmButtonText: 'Sí, ¡eliminar!',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Sí, eliminarlo!',
                 cancelButtonText: 'Cancelar'
             }).then(async (result) => {
                 if (result.isConfirmed) {
-                    const eliminarUrl = API_ELIMINAR_ALIMENTO_URL_BASE + alimentoId;
-                    
-                    const swalLoading = Swal.fire({
-                        title: 'Eliminando...',
-                        text: 'Por favor espera.',
-                        allowOutsideClick: false,
-                        didOpen: () => { Swal.showLoading(); }
-                    });
-
                     try {
-                        const response = await fetch(eliminarUrl, {
+                        const response = await fetch(urlEliminar, {
                             method: 'DELETE',
                             headers: {
-                                'Content-Type': 'application/json', 
-                                'X-CSRFToken': csrfToken 
+                                'X-CSRFToken': csrfToken,
+                                'Content-Type': 'application/json'
                             }
                         });
 
-                        swalLoading.close(); 
+                        const resultData = await response.json();
 
-                        const apiResult = await response.json();
-
-                        if (response.ok && apiResult.status === "success") {
+                        if (response.ok && resultData.status === "success") {
                             Swal.fire({
                                 icon: 'success',
                                 title: '¡Eliminado!',
-                                text: apiResult.mensaje || 'Alimento eliminado correctamente.',
-                                timer: 2500,
+                                text: 'Alimento eliminado correctamente.',
+                                timer: 2000,
                                 showConfirmButton: false
                             });
                             
                             const modalElement = this.closest('.modal');
                             if (modalElement) {
                                 const modalInstance = bootstrap.Modal.getInstance(modalElement);
-                                if (modalInstance) modalInstance.hide();
+                                if (modalInstance) {
+                                    modalInstance.hide();
+                                }
                             }
                             
-                            setTimeout(() => { location.reload(); }, 2000);
+                            setTimeout(() => {
+                                location.reload(); 
+                            }, 1500);
 
                         } else {
-                            let errorMessage = 'Error al eliminar el alimento.';
-                            if (apiResult && apiResult.mensaje) errorMessage = apiResult.mensaje;
-                            else if (apiResult && apiResult.detail) errorMessage = apiResult.detail;
-                            else if (response.statusText) errorMessage = `Error ${response.status}: ${response.statusText}`;
-                            Swal.fire({ icon: 'error', title: 'Error al Eliminar', html: errorMessage });
+                            Swal.fire('Error', resultData.mensaje || 'No se pudo eliminar el alimento.', 'error');
                         }
                     } catch (error) {
-                        swalLoading.close(); 
-                        console.error('Error en la petición fetch de eliminación:', error);
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Error de Conexión',
-                            text: 'No se pudo conectar con el servidor para eliminar. Inténtalo más tarde.'
-                        });
+                        console.error('Error al enviar la solicitud de eliminación:', error);
+                        Swal.fire('Error de Conexión', 'No se pudo conectar con el servidor para eliminar el alimento.', 'error');
                     }
                 }
             });
         });
     });
 
-    // --- INICIALIZACIÓN ---
-    // cargarGruposDesdeAPI(); // Descomentar si se necesita para poblar selects dinámicamente que no vengan de Django
+    // --- LÓGICA PARA HACER READONLY Y OCULTAR BOTONES PARA ALIMENTOS USDA ---
+  document.querySelectorAll('.modal').forEach(modalElement => {
+      modalElement.addEventListener('show.bs.modal', function (event) {
+          const form = modalElement.querySelector('.editable-form');
+          if (!form) return;
+
+          const alimentoOrigen = form.dataset.alimentoOrigen;
+          const isUSDA = alimentoOrigen && alimentoOrigen.toLowerCase().includes('usda');
+
+          const formControls = form.querySelectorAll('input, select');
+          
+          // Si es un alimento USDA, hacer los campos readonly/disabled
+          if (isUSDA) {
+              formControls.forEach(control => {
+                  control.setAttribute('readonly', 'readonly');
+                  if (control.tagName === 'SELECT') {
+                      control.setAttribute('disabled', 'disabled');
+                  }
+                  control.classList.remove('colorBg'); 
+              });
+
+              // Ocultar los botones de Guardar y Eliminar
+              const saveButton = form.querySelector('.btn-guardar');
+              const deleteButton = form.querySelector('.btn-eliminar-alimento');
+              
+              if (saveButton) saveButton.style.display = 'none';
+              if (deleteButton) deleteButton.style.display = 'none';
+          } else {
+              // Si no es USDA (es personalizado), asegurarse de que los campos sean editables
+              formControls.forEach(control => {
+                  control.removeAttribute('readonly');
+                  if (control.tagName === 'SELECT') {
+                      control.removeAttribute('disabled');
+                  }
+                  if (control.getAttribute('name') === 'nombre_alimento') {
+                      control.classList.add('colorBg'); 
+                  }
+              });
+
+              const saveButton = form.querySelector('.btn-guardar');
+              const deleteButton = form.querySelector('.btn-eliminar-alimento');
+              
+              if (saveButton) saveButton.style.display = 'block';
+              if (deleteButton) deleteButton.style.display = 'block';
+          }
+      });
+  });
+
+    // Llama a cargarGruposDesdeAPI si necesitas que los selects de grupo se carguen dinámicamente.
+    // Aunque tu código ya los popula con Django, esto sería para casos donde se gestiona 100% con JS.
+    // cargarGruposDesdeAPI();
 });
 </script>
 {% endblock %}
