@@ -888,6 +888,187 @@ document.addEventListener('DOMContentLoaded', async () => {
             adecuacionStatusDiv.className = 'info';
             return;
         }
+
+        try {
+            // 1. Verificar Factor de Actividad Física
+            const urlActividadFisica = `https://nutrilinkapi-production.up.railway.app/api_nutrilink/paciente/obtener_actividad_fisica/${pacienteId}`;
+            const actividadFisicaResponse = await fetchAPI(urlActividadFisica, 'factor de actividad física');
+
+            // fetchAPI lanzará un error si la respuesta HTTP no es OK (ej. 404).
+            // Si la respuesta es OK, verificamos los datos.
+            if (!actividadFisicaResponse || actividadFisicaResponse.id_actividad_fisica === null || actividadFisicaResponse.valor_naf === null) {
+                let mensaje = "El factor de actividad física no ha sido asignado o no se pudo obtener.";
+                if (actividadFisicaResponse && actividadFisicaResponse.mensaje) {
+                    // Si la API tiene un mensaje específico (ej. por un 200 OK pero datos nulos)
+                    mensaje = actividadFisicaResponse.mensaje;
+                } else if (actividadFisicaResponse && actividadFisicaResponse.id_actividad_fisica === null) {
+                     mensaje = "El factor de actividad física no ha sido asignado.";
+                }
+                console.warn("Problema con factor de actividad física:", mensaje, actividadFisicaResponse);
+                throw { type: 'falta_dato_historial', message: `Falta el factor de actividad física. ${mensaje}` };
+            }
+
+            // 2. Verificar Factor Patológico
+            const urlFactorPatologico = `https://nutrilinkapi-production.up.railway.app/api_nutrilink/paciente/obtener_factor_patologico/${pacienteId}`;
+            const factorPatologicoResponse = await fetchAPI(urlFactorPatologico, 'factor patológico');
+
+            if (!factorPatologicoResponse || factorPatologicoResponse.descripcion === null || factorPatologicoResponse.valor_factor === null) {
+                let mensaje = "El factor patológico no ha sido asignado o no se pudo obtener.";
+                 if (factorPatologicoResponse && factorPatologicoResponse.mensaje) {
+                    mensaje = factorPatologicoResponse.mensaje;
+                } else if (factorPatologicoResponse && factorPatologicoResponse.descripcion === null) {
+                    mensaje = "El factor patológico no ha sido asignado.";
+                }
+                console.warn("Problema con factor patológico:", mensaje, factorPatologicoResponse);
+                throw { type: 'falta_dato_historial', message: `Falta el factor patológico. ${mensaje}` };
+            }
+        } catch (error) {
+            // Este catch maneja errores de fetchAPI para Actividad Física y Factor Patológico,
+            // o los errores con 'type: falta_dato_historial' lanzados arriba.
+            console.error("Error durante la verificación de datos del historial clínico:", error);
+
+            if (error.type === 'falta_dato_historial') {
+                Swal.fire({
+                    title: 'Faltan Datos del Historial',
+                    text: `${error.message} No es posible continuar sin esta información. Por favor, completa el historial clínico.`,
+                    icon: 'warning',
+                    confirmButtonText: 'Ir a Historial Clínico',
+                    allowOutsideClick: false,
+                    allowEscapeKey: false
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        const pacienteIdParaRedirect = document.getElementById('paciente-id').value;
+                        if (!pacienteIdParaRedirect) {
+                            Swal.fire("Error Interno", "No se pudo obtener la información del paciente para redirigir.", "error");
+                            return;
+                        }
+                        const baseUrlHistorial = "{% url 'patients:historial-clinico' id_paciente=0 %}";
+                        let urlHistorial = baseUrlHistorial.replace('0', pacienteIdParaRedirect);
+
+                        if (baseUrlHistorial.startsWith("{%") || urlHistorial.includes("/0/")) {
+                            console.warn(`Problema al generar URL para historial clínico con tag Django. Base: "${baseUrlHistorial}", Resultante: "${urlHistorial}". Fallback a manual.`);
+                            urlHistorial = `/patients/${pacienteIdParaRedirect}/historial-clinico/`;
+                        }
+                        console.log("Redirigiendo a Historial Clínico:", urlHistorial);
+                        window.location.href = urlHistorial;
+                    }
+                });
+            } else {
+                // Otro tipo de error (ej. 500 al consultar estos datos, error de red NO relacionado a "dato no encontrado")
+                Swal.fire(
+                    'Error Crítico',
+                    `No se pudieron verificar los datos del historial clínico del paciente: ${error.message}. No se puede continuar.`,
+                    'error'
+                );
+            }
+            adecuacionStatusDiv.textContent = `Error: ${error.message || "Problema al verificar datos del historial."}`;
+            adecuacionStatusDiv.className = 'error';
+            toggleEditableStateRegistro(false);
+            if (btnAnadirTiempoComida) btnAnadirTiempoComida.disabled = true;
+            if (btnGuardarRegistroCompleto) btnGuardarRegistroCompleto.disabled = true;
+            return; // Salir de cargarYMostrarResumenNutricionalYDetalles
+        }
+
+        try {
+            // 3. VERIFICAR REQUERIMIENTOS
+            const urlRequerimientos = `https://nutrilinkapi-production.up.railway.app/api_nutrilink/requerimientos/obtener_requerimientos?pacienteId=${pacienteId}`;
+            // fetchAPI lanzará un error si la respuesta HTTP no es OK (ej. 404, 500).
+            // El error lanzado por fetchAPI contendrá el mensaje del JSON de la respuesta de error de la API.
+            const requerimientosResponse = await fetchAPI(urlRequerimientos, 'requerimientos del paciente');
+
+            // Si llegamos aquí, fetchAPI tuvo una respuesta HTTP OK (2xx).
+            // Ahora, verificamos si la respuesta, aunque OK, no contiene los datos esperados
+            // o si el 'status' interno de la API indica un problema.
+            if (!requerimientosResponse || requerimientosResponse.status !== "success" || !requerimientosResponse.data || requerimientosResponse.data.id_requerimientos === null) {
+                // Este caso es para una respuesta 200 OK pero con datos que consideramos inválidos o "no encontrados".
+                // Es una salvaguarda. Idealmente, la API devolvería 404 si no hay requerimientos.
+                console.warn("Respuesta HTTP OK para requerimientos, pero los datos no son válidos o están incompletos:", requerimientosResponse);
+                // Lanzamos un error para ser capturado por el bloque catch y manejado allí.
+                // Usamos un mensaje que podamos identificar luego.
+                throw new Error(requerimientosResponse?.mensaje || "Respuesta OK pero no se encontraron requerimientos válidos.");
+            }
+            // Si todo está bien (HTTP OK y datos válidos), continuamos a cargar el resto.
+
+        } catch (error) {
+            // Este CATCH se ejecuta si:
+            // 1. fetchAPI lanza un error (ej. por un HTTP 404 "No se encontraron requerimientos...", o un 500 de la API).
+            // 2. El 'throw new Error' del bloque try de arriba se ejecuta.
+
+            console.error("Error durante la verificación de requerimientos:", error.message);
+
+            // AHORA, DISTINGUIMOS EL TIPO DE ERROR PARA EL SWAL CORRECTO
+            // Asumimos que si el mensaje de error de la API (contenido en error.message)
+            // incluye "No se encontraron requerimientos", es el caso específico que queremos manejar con redirección.
+            // Ajusta esta condición si el mensaje exacto de tu API es diferente para un 404 de requerimientos.
+            const mensajeErrorApiNoRequerimientos = "No se encontraron requerimientos guardados para este paciente."; // O el mensaje exacto de tu API para 404
+
+            if (error.message && error.message.includes(mensajeErrorApiNoRequerimientos.substring(0,30))) { // Comparamos una parte significativa del mensaje
+                // CASO: FALTAN REQUERIMIENTOS (404 de la API o error similar) -> MOSTRAR SWAL Y REDIRIGIR
+                Swal.fire({
+                    title: 'Faltan Requerimientos',
+                    text: 'No es posible realizar el registro de dieta sin antes guardar los requerimientos. Vuelve a la sección "Antropometría y Requerimientos".',
+                    icon: 'warning',
+                    confirmButtonText: 'OK',
+                    allowOutsideClick: false,
+                    allowEscapeKey: false
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        console.log("SweetAlert de 'Faltan Requerimientos' confirmado.");
+                        const pacienteIdParaRedirect = document.getElementById('paciente-id').value;
+                        if (!pacienteIdParaRedirect) {
+                            console.error("CRÍTICO: No se pudo obtener pacienteId para la redirección desde el DOM.");
+                            Swal.fire("Error Interno", "No se pudo obtener la información del paciente para redirigir.", "error");
+                            return;
+                        }
+
+                        let urlMetricas;
+                        try {
+                            const baseUrl = "{% url 'patients:metricas' id_paciente=0 %}";
+                            urlMetricas = baseUrl.replace('0', pacienteIdParaRedirect);
+                            console.log("URL generada con tag Django y replace:", urlMetricas);
+
+                            if (baseUrl.startsWith("{%") || urlMetricas.includes("/0/")) {
+                                console.warn(`Problema al generar URL con tag Django o al reemplazar. Base URL: "${baseUrl}", URL resultante: "${urlMetricas}". Intentando construcción manual.`);
+                                urlMetricas = `/patients/${pacienteIdParaRedirect}/metricas/`;
+                                console.log("URL generada manually (fallback):", urlMetricas);
+                            }
+                        } catch (e) {
+                            console.error(`Error de JavaScript al procesar la URL: `, e);
+                            console.warn("Intentando construcción manual de la URL (después de error JS).");
+                            urlMetricas = `/patients/${pacienteIdParaRedirect}/metricas/`;
+                            console.log("URL generada manualmente (en catch JS):", urlMetricas);
+                        }
+
+                        console.log("FINAL - Intentando redirigir a:", urlMetricas);
+                        if (urlMetricas && !urlMetricas.includes("/0/") && urlMetricas.includes(`/${pacienteIdParaRedirect}/`)) {
+                            console.log("Redirigiendo ahora...");
+                            window.location.href = urlMetricas;
+                        } else {
+                            console.error("La URL de métricas es indefinida, no se procesó correctamente, o no contiene el ID del paciente esperado: ", urlMetricas);
+                            Swal.fire("Error de Configuración", "No se pudo construir la URL para la redirección. Revise la consola.", "error");
+                        }
+                    }
+                });
+                adecuacionStatusDiv.textContent = "Atención: No hay requerimientos nutricionales guardados.";
+                adecuacionStatusDiv.className = 'warning';
+            } else {
+                // CASO: OTRO TIPO DE ERROR (ej. 500 del servidor, error de red, etc.) -> MOSTRAR SWAL DE ERROR CRÍTICO
+                Swal.fire(
+                    'Error Crítico',
+                    `No se pudieron verificar los requerimientos del paciente: ${error.message}. No se puede continuar.`,
+                    'error'
+                );
+                adecuacionStatusDiv.textContent = `Error al verificar requerimientos: ${error.message}`;
+                adecuacionStatusDiv.className = 'error';
+            }
+
+            // En ambos casos de error en la verificación de requerimientos, deshabilitamos y salimos.
+            toggleEditableStateRegistro(false);
+            if (btnAnadirTiempoComida) btnAnadirTiempoComida.disabled = true;
+            if (btnGuardarRegistroCompleto) btnGuardarRegistroCompleto.disabled = true;
+            return; // Salir de cargarYMostrarResumenNutricionalYDetalles
+        }
+
         adecuacionStatusDiv.textContent = "Cargando datos del registro actual...";
         adecuacionStatusDiv.className = 'loading';
 
@@ -996,10 +1177,16 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
 
         } catch (error) {
+            // Este catch es para los fetch de resumen y detalles de la dieta.
+            // El caso de "no requerimientos" ya se manejó arriba.
             console.error("Error al cargar resumen y/o detalles del registro actual:", error);
+            // No mostrar un Swal aquí si el error de "no requerimientos" ya se mostró.
+            // Solo actualizar el div de estado.
             adecuacionStatusDiv.textContent = `Error general al cargar datos del registro actual: ${error.message}`;
             adecuacionStatusDiv.className = 'error';
             if (tiemposComidaContainer.children.length === 0 && ALL_TIEMPOS_COMIDA_DATA && ALL_TIEMPOS_COMIDA_DATA.length > 0 && !isViewingHistoricalRegistro) {
+                // Solo añadir un bloque si no estamos viendo un histórico y no hay nada
+                // Y si el error no fue por falta de requerimientos (porque ya se habría salido)
                 createMealTimeBlock();
             }
         } finally {
@@ -1192,13 +1379,17 @@ document.addEventListener('DOMContentLoaded', async () => {
             await loadRegistroDates(); // Carga las fechas de registros anteriores en el combobox
             
             // Por defecto, cargar el registro actual (editable)
+            // La llamada a cargarYMostrarResumenNutricionalYDetalles ahora incluye la verificación de requerimientos.
             isViewingHistoricalRegistro = false;
-            await cargarYMostrarResumenNutricionalYDetalles();
-            toggleEditableStateRegistro(true);
+            await cargarYMostrarResumenNutricionalYDetalles(); // <--- ESTA LLAMADA HARÁ LA VERIFICACIÓN
+            // toggleEditableStateRegistro(true); // Esto se maneja dentro de cargarYMostrarResumenNutricionalYDetalles o su 'finally'
 
         } catch (error) {
-            // Los errores de fetchAPI ya muestran un Swal. Aquí podemos poner un mensaje más general.
-            adecuacionStatusDiv.textContent = "Error al inicializar la página. Verifique la consola y los mensajes de error.";
+            // Los errores de fetchAPI ya muestran un Swal.
+            // El error de "no requerimientos" ya tiene su propio Swal y redirección.
+            // Este catch es para errores en cargarDatosBase o loadRegistroDates que no sean manejados por fetchAPI.
+            console.error("Error crítico durante la inicialización:", error);
+            adecuacionStatusDiv.textContent = `Error al inicializar la página: ${error.message}. Verifique la consola.`;
             adecuacionStatusDiv.className = 'error';
             // Deshabilitar botones principales si la carga base falla críticamente
              if (btnAnadirTiempoComida) btnAnadirTiempoComida.disabled = true;
