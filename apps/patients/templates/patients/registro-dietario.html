@@ -88,25 +88,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     let isViewingHistoricalRegistro = false;
 
     async function fetchAPI(url, entityName, options = {}) {
-        try {
-            const response = await fetch(url, options);
-            if (!response.ok) {
-                let errorDetail = `Error HTTP ${response.status}`;
-                try {
-                    const errorData = await response.json();
-                    errorDetail = errorData.mensaje || errorData.detail || JSON.stringify(errorData);
-                } catch (e) {
-                    errorDetail = response.statusText || errorDetail;
-                }
-                throw new Error(errorDetail);
+        const response = await fetch(url, options);
+        if (!response.ok) {
+            let errorDetail = `Error HTTP ${response.status}`;
+            try {
+                const errorData = await response.json();
+                errorDetail = errorData.mensaje || errorData.detail || JSON.stringify(errorData);
+            } catch (e) {
+                errorDetail = response.statusText || errorDetail;
             }
-            if (response.status === 204) return null;
-            return await response.json();
-        } catch (error) {
-            console.error(`Excepción en fetchAPI para ${entityName} (${url}):`, error);
-            Swal.fire('Error de Carga', `No se pudieron cargar ${entityName}: ${error.message}. Asegúrate de haber guardado los datos del paciente en Historial Clínico y Antropometría/Requerimientos.`, 'error');
-            throw error;
+            throw new Error(errorDetail);
         }
+        if (response.status === 204) return null;
+        return await response.json();
     }
 
     function populateSelect(selectElement, opciones, valorKey, textoKey, placeholderTexto = "Seleccionar...", currentValue = null, disabled = false) {
