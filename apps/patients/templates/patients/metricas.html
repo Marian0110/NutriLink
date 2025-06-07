@@ -44,8 +44,8 @@
           <div class="col-md-4 mb-3">
             <label for="id_braquial" class="form-label">Perímetro braquial</label>
             <div class="input-group">
-              <input type="number" class="form-control" id="id_braquial" name="braquial" placeholder="Ej: 290" min="0" step="any">
-              <span class="input-group-text">mm</span>
+              <input type="number" class="form-control" id="id_braquial" name="braquial" placeholder="Ej: 29" min="0" step="any">
+              <span class="input-group-text">cm</span>
             </div>
           </div>
           <!-- Tricipital -->
@@ -364,66 +364,144 @@ async function enviarDatosAntropometricosYRequerimientos() {
     const pacienteId = JSON.parse("{{ paciente.id_paciente|escapejs }}");
     const fecha = document.getElementById('id_fecha').value;
 
+    try {
+        // 1. Verificar Actividad Física
+        const actividadFisicaResponse = await fetch(`https://nutrilinkapi-production.up.railway.app/api_nutrilink/paciente/obtener_actividad_fisica/${pacienteId}`);
+        if (!actividadFisicaResponse.ok) {
+            // Si la API devuelve un error al consultar, es un problema, pero no necesariamente que falte el dato.
+            // Podríamos decidir si mostrar un error genérico o intentar continuar. Por ahora, asumimos que si no es OK, es un problema.
+            let errorMsg = 'Error al verificar la actividad física.';
+            try {
+                const errorData = await actividadFisicaResponse.json();
+                errorMsg = errorData.mensaje || errorMsg;
+            } catch (e) { /* No hacer nada si no se puede parsear el JSON del error */ }
+            Swal.fire('Atención', errorMsg, 'warning');
+            return; // Detener la ejecución si hay un error al consultar
+        }
+        const actividadFisicaData = await actividadFisicaResponse.json();
+        if (actividadFisicaData.id_actividad_fisica === null || actividadFisicaData.valor_naf === null) {
+            Swal.fire(
+                'Falta Información',
+                'Recuerda agregar el factor de actividad física en la sección de historial clínico.',
+                'warning'
+            );
+            return; // Detener la ejecución
+        }
+
+        // 2. Verificar Factor Patológico
+        const factorPatologicoResponse = await fetch(`https://nutrilinkapi-production.up.railway.app/api_nutrilink/paciente/obtener_factor_patologico/${pacienteId}`);
+        if (!factorPatologicoResponse.ok) {
+            let errorMsg = 'Error al verificar el factor patológico.';
+            try {
+                const errorData = await factorPatologicoResponse.json();
+                errorMsg = errorData.mensaje || errorMsg;
+            } catch (e) { /* No hacer nada */ }
+            Swal.fire('Atención', errorMsg, 'warning');
+            return;
+        }
+        const factorPatologicoData = await factorPatologicoResponse.json();
+        if (factorPatologicoData.descripcion === null || factorPatologicoData.valor_factor === null) {
+            Swal.fire(
+                'Falta Información',
+                'Recuerda agregar el factor patológico en la sección de historial clínico.',
+                'warning'
+            );
+            return; // Detener la ejecución
+        }
+
+    } catch (error) {
+        console.error('Error en validaciones previas:', error);
+        Swal.fire(
+            'Error de Conexión',
+            `No se pudieron verificar los datos previos del paciente: ${error.message}. Asegúrate de tener conexión a internet.`,
+            'error'
+        );
+        return; // Detener la ejecución si hay un error de red en las validaciones
+    }
+
     const formData = {
         pacienteId: pacienteId,
         fecha: fecha, // El backend debería poder manejar YYYY-MM-DD
         pesoKg: parseFloat(document.getElementById('id_peso').value),
         tallaCm: parseFloat(document.getElementById('id_talla').value),
         circCinturaCm: parseFloat(document.getElementById('id_cintura').value),
-        perimBraquialMm: parseFloat(document.getElementById('id_braquial').value) * 10, // Convertir cm a mm si se ingresa en cm
+        perimBraquialMm: parseFloat(document.getElementById('id_braquial').value), 
         pliegueTricipitalMm: parseFloat(document.getElementById('id_tricipital').value),
         pliegueBicipitalMm: parseFloat(document.getElementById('id_bicipital').value),
         pliegueSuprailiacoMm: parseFloat(document.getElementById('id_suprailiaco').value),
         pliegueSubescapularMm: parseFloat(document.getElementById('id_subescapular').value),
-        // Nuevos campos de porcentaje
         porcentajeCarbohidratos: parseFloat(document.getElementById('id_porc_carbohidratos').value),
         porcentajeProteinas: parseFloat(document.getElementById('id_porc_proteinas').value),
         porcentajeLipidos: parseFloat(document.getElementById('id_porc_lipidos').value)
     };
 
-    // Asegurarse de que los campos opcionales que no se llenaron se envíen como null o no se envíen
-    // si el backend los espera así. Para este ejemplo, si el valor es NaN (porque el campo estaba vacío y parseFloat falló), 
-    // se podría omitir o enviar como null. Por ahora, asumimos que la validación se encarga de que no estén vacíos.
-    // Es importante que el backend maneje correctamente valores nulos o ausentes para campos no obligatorios.
+    // Ajuste para perimBraquialMm si el input está en cm y el backend espera mm
+    const perimBraquialInput = document.getElementById('id_braquial').value;
+    if (perimBraquialInput && !isNaN(parseFloat(perimBraquialInput))) {
+        formData.perimBraquialMm = parseFloat(perimBraquialInput) * 10;
+    }
 
+    if (isNaN(formData.pesoKg) || isNaN(formData.tallaCm) ||
+        isNaN(formData.porcentajeCarbohidratos) || isNaN(formData.porcentajeProteinas) || isNaN(formData.porcentajeLipidos)) {
+        Swal.fire('Campos Incompletos', 'Asegúrate de llenar Peso, Talla y los porcentajes de macronutrientes.', 'warning');
+        return;
+    }
 
-    // Ajuste para perimBraquialMm: si el placeholder dice "Ej: 25" y la unidad es "cm",
-    // pero el JSON espera "perimBraquialMm: 280" (que sería 28 cm),
-    // entonces hay una inconsistencia. Asumiré que el usuario ingresa en CM como dice el placeholder y la unidad,
-    // y lo convertiré a MM si el backend espera MM.
-    // Si el backend ya espera CM para perimetro braquial (y lo llama _mm por error), entonces no se necesita la conversión.
-    // Basado en tu JSON de ejemplo `perimBraquialMm: 280`, parece que espera milímetros.
-    // Si el input `id_braquial` tiene unidad "cm", entonces sí hay que multiplicar por 10.
-
+    // --- ENVÍO DE DATOS A LA API ---
     try {
-        const response = await fetch('https://nutrilinkapi-production.up.railway.app/api_nutrilink/requerimientos/guardar_antropometria_y_requerimientos', { // ENDPOINT ACTUALIZADO
+        // Mostrar un loader mientras se procesa
+        Swal.fire({
+            title: 'Guardando datos...',
+            text: 'Por favor, espera.',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
+        const response = await fetch('https://nutrilinkapi-production.up.railway.app/api_nutrilink/requerimientos/guardar_antropometria_y_requerimientos', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRFToken': '{{ csrf_token }}'
+                'X-CSRFToken': '{{ csrf_token }}' // Asegúrate que este token se renderice correctamente
             },
             body: JSON.stringify(formData)
         });
 
-        const data = await response.json();
+        const data = await response.json(); // Intentar parsear JSON siempre
 
-        if (data.status === 'success') {
+        if (response.ok && data.status === 'success') { // HTTP 2xx y status 'success'
             Swal.fire({
                 title: '¡Éxito!',
-                text: data.mensaje, // Mensaje de éxito del nuevo endpoint
+                text: data.mensaje,
                 icon: 'success',
-                timer: 2000,
+                timer: 2500,
                 showConfirmButton: false
             }).then(() => {
-                // Recargar la pagina con la fecha como parámetro
                 window.location.href = `?fecha=${encodeURIComponent(fecha)}`;
             });
         } else {
-            throw new Error(data.mensaje || 'Error al guardar los datos y requerimientos');
+            // Si la respuesta no fue OK (ej. 400, 404, 500) o si fue OK pero data.status es 'error'
+            let errorMessage = data.mensaje || 'Error desconocido al guardar los datos.';
+            if (data.detalle_db) {
+                errorMessage += ` (Detalle: ${data.detalle_db})`;
+            }
+            // Si el status es 400, es probable que sea un error de validación de los datos enviados
+            if (response.status === 400) {
+                 Swal.fire('Error de Validación', errorMessage, 'error');
+            } else if (response.status === 404) {
+                 Swal.fire('No Encontrado', errorMessage, 'error');
+            } else {
+                 Swal.fire('Error del Servidor', errorMessage, 'error');
+            }
         }
-    } catch (error) {
-        console.error('Error:', error);
-        Swal.fire('Error', 'Asegúrate de haber guardado los datos del paciente en historial clínico!', 'error');
+    } catch (error) { // Errores de red o al parsear JSON (si la respuesta no es JSON válido)
+        console.error('Error en fetch o procesamiento:', error);
+        Swal.fire(
+            'Error de Comunicación',
+            `Ocurrió un problema al intentar guardar los datos: ${error.message}. Verifica tu conexión o inténtalo más tarde.`,
+            'error'
+        );
     }
 }
 
