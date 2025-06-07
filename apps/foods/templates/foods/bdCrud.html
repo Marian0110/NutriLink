@@ -511,6 +511,13 @@ document.addEventListener('DOMContentLoaded', function () {
             }
             const alimentoId = alimentoIdInput.value;
 
+            // Obtener el ID del nutricionista
+            let id_nutricionista = sessionStorage.getItem('id_nutricionista');
+            if (!id_nutricionista) {
+                Swal.fire('Error', 'No se pudo identificar al nutricionista. Por favor, inicie sesión nuevamente.', 'error');
+                return;
+            }
+
             // Construir la URL completa para la actualización
             const urlActualizar = API_ACTUALIZAR_ALIMENTO_URL_BASE + alimentoId;
 
@@ -535,10 +542,6 @@ document.addEventListener('DOMContentLoaded', function () {
             };
 
             const data = {
-                // id_alimento no es estrictamente necesario en el cuerpo para PUT si ya está en la URL,
-                // pero algunas APIs lo aceptan o incluso lo usan para validación.
-                // Lo incluimos por si tu API lo espera, pero puedes probar quitándolo si no es necesario.
-                // id_alimento: parseInt(alimentoId),
                 nombre_alimento: formData.get('nombre_alimento'),
                 origen: formData.get('origen'),
                 id_grupo_alimenticio: parseIntOrNull(formData.get('id_grupo_alimenticio')),
@@ -558,13 +561,14 @@ document.addEventListener('DOMContentLoaded', function () {
                 zinc_mg: parseFloatOrNull(formData.get('zinc_mg')),
                 potasio_mg: parseFloatOrNull(formData.get('potasio_mg')),
                 sodio_mg: parseFloatOrNull(formData.get('sodio_mg')),
+                id_nutricionista: id_nutricionista // Añadimos el ID del nutricionista
             };
 
             console.log("Enviando datos para actualizar a:", urlActualizar, " Payload:", data);
 
             try {
-                const response = await fetch(urlActualizar, { // Usar la nueva URL
-                    method: 'PUT', // Método PUT para actualizar el recurso completo
+                const response = await fetch(urlActualizar, {
+                    method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
                         'X-CSRFToken': csrfToken
@@ -578,7 +582,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     Swal.fire({
                         icon: 'success',
                         title: '¡Actualizado!',
-                        text: result.mensaje || 'Alimento actualizado correctamente.',
+                        text: 'Alimento actualizado correctamente.',
                         timer: 2000,
                         showConfirmButton: false
                     });
@@ -834,9 +838,7 @@ document.addEventListener('DOMContentLoaded', function () {
       });
   });
 
-    // Llama a cargarGruposDesdeAPI si necesitas que los selects de grupo se carguen dinámicamente.
-    // Aunque tu código ya los popula con Django, esto sería para casos donde se gestiona 100% con JS.
-    // cargarGruposDesdeAPI();
+    
 });
 </script>
 {% endblock %}
