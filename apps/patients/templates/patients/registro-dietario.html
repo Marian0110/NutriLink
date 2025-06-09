@@ -9,20 +9,45 @@
 
 {% block perfilcontent %}
 <div class="registro-dietario-content patient-content">
-  <h2>Registro de 24 horas</h2>
+  <h2 class="card-title mb-1 text-center mt-2">Registro de 24 horas</h2>
 
   <input type="hidden" id="paciente-id" value="{{ paciente.id_paciente }}">
   {% csrf_token %}
 
-  <div class="registro-selector-container" style="margin-bottom: 20px;">
-    <label for="registro-date-selector">Seleccionar registros anteriores:</label>
-    <select id="registro-date-selector" class="registro-date-selector">
-      <option value="" selected disabled>Cargando fechas disponibles...</option>
-    </select>
-  </div>
-
-  <div id="adecuacion-registro-section" style="margin-bottom: 25px;">
-    <h3>Resumen Nutricional y Adecuación</h3>
+  <div class="registro-selector-container">
+      <label for="registro-date-selector">Seleccionar registros anteriores:</label>
+      <select id="registro-date-selector" class="registro-date-selector">
+          <option value="" selected disabled>Cargando fechas disponibles...</option>
+        </select>
+    </div>
+    
+    <div id="adecuacion-registro-section">
+    <h3 class="card-title mb-1 text-center mt-2">Resumen Nutricional y Adecuación</h3>
+    <table id="tabla-resumen-adecuacion" class="adecuacion-table">
+        <thead>
+            <tr>
+                <th>Nutriente</th>
+                <th>Total Consumido</th>
+                <th>Requerimiento</th>
+                <th>% Adecuación</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td>Energía (Kcal)</td><td data-consumido="dieta_calorias">-</td><td data-requerimiento="requerimiento_calorico">-</td><td data-adecuacion="porc_adecuacion_calorico">- %</td></tr>
+            <tr><td>Proteínas (g)</td><td data-consumido="dieta_proteinas">-</td><td data-requerimiento="requerimiento_proteinas">-</td><td data-adecuacion="porc_adec_proteinas">- %</td></tr>
+            <tr><td>Carbohidratos (g)</td><td data-consumido="dieta_carbohidratos">-</td><td data-requerimiento="requerimiento_carbohidratos">-</td><td data-adecuacion="porc_adec_carbohidratos">- %</td></tr>
+            <tr><td>Lípidos (g)</td><td data-consumido="dieta_lipidos">-</td><td data-requerimiento="requerimiento_lipidos">-</td><td data-adecuacion="porc_adec_lipidos">- %</td></tr>
+            <tr><td>Omega 3 (g)</td><td data-consumido="dieta_n3">-</td><td data-requerimiento="requerimiento_n3">-</td><td data-adecuacion="porc_adec_n3">- %</td></tr>
+            <tr><td>Vitamina A (µg RE)</td><td data-consumido="dieta_vita">-</td><td data-requerimiento="requerimiento_vita">-</td><td data-adecuacion="porc_adec_vita">- %</td></tr>
+            <tr><td>Vitamina B12 (µg)</td><td data-consumido="dieta_b12">-</td><td data-requerimiento="requerimiento_b12">-</td><td data-adecuacion="porc_adec_b12">- %</td></tr>
+            <tr><td>Calcio (mg)</td><td data-consumido="dieta_calcio">-</td><td data-requerimiento="requerimiento_calcio">-</td><td data-adecuacion="porc_adec_calcio">- %</td></tr>
+            <tr><td>Hierro (mg)</td><td data-consumido="dieta_hierro">-</td><td data-requerimiento="requerimiento_hierro">-</td><td data-adecuacion="porc_adec_hierro">- %</td></tr>
+            <tr><td>Selenio (µg)</td><td data-consumido="dieta_selenio">-</td><td data-requerimiento="requerimiento_selenio">-</td><td data-adecuacion="porc_adec_selenio">- %</td></tr>
+            <tr><td>Zinc (mg)</td><td data-consumido="dieta_zinc">-</td><td data-requerimiento="requerimiento_zinc">-</td><td data-adecuacion="porc_adec_zinc">- %</td></tr>
+            <tr><td>Potasio (mg)</td><td data-consumido="dieta_potasio">-</td><td data-requerimiento="requerimiento_potasio">-</td><td data-adecuacion="porc_adec_potasio">- %</td></tr>
+            <tr><td>Sodio (mg)</td><td data-consumido="dieta_sodio">-</td><td data-requerimiento="requerimiento_sodio">-</td><td data-adecuacion="porc_adec_sodio">- %</td></tr>
+        </tbody>
+    </table>
     <div class="grafico-adecuacion-container">
         {% if grafico_adecuacion_html %}
             {{ grafico_adecuacion_html|safe }}
@@ -55,7 +80,7 @@
 document.addEventListener('DOMContentLoaded', async () => {
     const pacienteId = document.getElementById('paciente-id').value;
     const csrfToken = document.querySelector('input[name="csrfmiddlewaretoken"]').value;
-
+    const tablaResumenAdecuacionBodyEl = document.getElementById('tabla-resumen-adecuacion').querySelector('tbody');
     const tiemposComidaContainer = document.getElementById('tiempos-comida-container');
     const btnAnadirTiempoComida = document.getElementById('btn-anadir-tiempo-comida');
     const btnGuardarRegistroCompleto = document.getElementById('btn-guardar-registro-completo');
@@ -991,6 +1016,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         mealTimeBlockCounter = 0;
         datosAlimentoPorFilaDOM.clear();
         if (notasGeneralesTextarea) notasGeneralesTextarea.value = '';
+
+        if (tablaResumenAdecuacionBodyEl) {
+            tablaResumenAdecuacionBodyEl.querySelectorAll('td[data-consumido], td[data-requerimiento], td[data-adecuacion]').forEach(td => td.textContent = '-');
+        }
         
         if (graficoAdecuacionContainerEl) {
             graficoAdecuacionContainerEl.innerHTML = '<p>Cargando gráfico...</p>';
@@ -1055,6 +1084,54 @@ document.addEventListener('DOMContentLoaded', async () => {
             const resumenResponse = await fetchAPI(urlResumen, `resumen nutricional ${tituloFecha}`);
             if (resumenResponse.status === "success" && resumenResponse.data) {
                 const resumenData = resumenResponse.data;
+
+                if (tablaResumenAdecuacionBodyEl) {
+                    // Mapeo de claves de la API a los data-attributes de la tabla
+                    const nutrientMap = {
+                        // Consumido Key            // Requerimiento Key                // Adecuacion Key
+                        'dieta_calorias':        { req: 'requerimiento_calorico',      ade: 'porc_adecuacion_calorico', decimals: 0 },
+                        'dieta_proteinas':       { req: 'requerimiento_proteinas',     ade: 'porc_adec_proteinas',      decimals: 1 },
+                        'dieta_carbohidratos':   { req: 'requerimiento_carbohidratos', ade: 'porc_adec_carbohidratos',  decimals: 1 },
+                        'dieta_lipidos':         { req: 'requerimiento_lipidos',       ade: 'porc_adec_lipidos',        decimals: 1 },
+                        'dieta_n3':              { req: 'requerimiento_n3',            ade: 'porc_adec_n3',             decimals: 2 },
+                        'dieta_vita':            { req: 'requerimiento_vita',          ade: 'porc_adec_vita',           decimals: 1 },
+                        'dieta_b12':             { req: 'requerimiento_b12',           ade: 'porc_adec_b12',            decimals: 1 },
+                        'dieta_calcio':          { req: 'requerimiento_calcio',        ade: 'porc_adec_calcio',         decimals: 1 },
+                        'dieta_hierro':          { req: 'requerimiento_hierro',        ade: 'porc_adec_hierro',         decimals: 1 },
+                        'dieta_selenio':         { req: 'requerimiento_selenio',       ade: 'porc_adec_selenio',        decimals: 1 },
+                        'dieta_zinc':            { req: 'requerimiento_zinc',          ade: 'porc_adec_zinc',           decimals: 1 },
+                        'dieta_potasio':         { req: 'requerimiento_potasio',       ade: 'porc_adec_potasio',        decimals: 0 },
+                        'dieta_sodio':           { req: 'requerimiento_sodio',         ade: 'porc_adec_sodio',          decimals: 0 }
+                    };
+
+                    for (const [consumidoKey, mapInfo] of Object.entries(nutrientMap)) {
+                        const cellConsumido = tablaResumenAdecuacionBodyEl.querySelector(`td[data-consumido="${consumidoKey}"]`);
+                        const cellRequerimiento = tablaResumenAdecuacionBodyEl.querySelector(`td[data-requerimiento="${mapInfo.req}"]`);
+                        const cellAdecuacion = tablaResumenAdecuacionBodyEl.querySelector(`td[data-adecuacion="${mapInfo.ade}"]`);
+
+                        if (resumenData.totales_consumidos && typeof resumenData.totales_consumidos[consumidoKey] !== 'undefined' && cellConsumido) {
+                            const valor = parseFloat(resumenData.totales_consumidos[consumidoKey]);
+                            cellConsumido.textContent = isNaN(valor) ? '-' : valor.toFixed(mapInfo.decimals);
+                        } else if (cellConsumido) {
+                            cellConsumido.textContent = '-';
+                        }
+
+                        if (resumenData.requerimientos && typeof resumenData.requerimientos[mapInfo.req] !== 'undefined' && cellRequerimiento) {
+                            const valor = parseFloat(resumenData.requerimientos[mapInfo.req]);
+                            cellRequerimiento.textContent = isNaN(valor) ? '-' : valor.toFixed(mapInfo.decimals);
+                        } else if (cellRequerimiento) {
+                            cellRequerimiento.textContent = '-';
+                        }
+                        
+                        if (resumenData.adecuacion && typeof resumenData.adecuacion[mapInfo.ade] !== 'undefined' && cellAdecuacion) {
+                            const valor = parseFloat(resumenData.adecuacion[mapInfo.ade]);
+                            cellAdecuacion.textContent = isNaN(valor) ? '- %' : `${valor.toFixed(1)} %`;
+                        } else if (cellAdecuacion) {
+                            cellAdecuacion.textContent = '- %';
+                        }
+                    }
+                }
+
                 if (resumenData.totales_consumidos && resumenData.totales_consumidos.notas && !esRegistroHistorico) {
                     notasGeneralesTextarea.value = resumenData.totales_consumidos.notas;
                 } else if (esRegistroHistorico && resumenData.notas_generales_dieta) {
@@ -1065,10 +1142,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                     adecuacionStatusDiv.className = 'success';
                 }
             } else {
-                 if (adecuacionStatusDiv) {
-                    adecuacionStatusDiv.textContent = `No se pudieron cargar datos de resumen para ${tituloFecha}. ${resumenResponse.mensaje || ''}`;
-                    adecuacionStatusDiv.className = 'info';
-                 }
+                if (tablaResumenAdecuacionBodyEl) { // Asegurar que la tabla se limpie si no hay datos
+                    tablaResumenAdecuacionBodyEl.querySelectorAll('td[data-consumido], td[data-requerimiento], td[data-adecuacion]').forEach(td => td.textContent = '-');
+                }
+                if (adecuacionStatusDiv) {
+                adecuacionStatusDiv.textContent = `No se pudieron cargar datos de resumen para ${tituloFecha}. ${resumenResponse.mensaje || ''}`;
+                adecuacionStatusDiv.className = 'info';
+                }
             }
 
             // Cargar Detalles de la Dieta (Alimentos)
