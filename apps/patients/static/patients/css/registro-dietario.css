@@ -450,3 +450,58 @@
     font-style: italic;
     color: #777;
 }
+
+.grafico-adecuacion-container {
+      border: 1px solid #e0e0e0;
+      padding: 15px;
+      border-radius: 8px;
+      background-color: #fff;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      margin-bottom: 25px;
+      min-height: 300px; /* Para que tenga algo de altura mientras carga o si no hay datos */
+    }
+.grafico-adecuacion-container p { /* Estilo para mensajes dentro del gráfico */
+    text-align: center;
+    padding-top: 20px;
+    color: #666;
+}
+
+.plotly-graph-container {
+    opacity: 0;
+    transition: opacity 0.5s ease;
+}
+
+.plotly-graph-container.plotly-loaded {
+    opacity: 1;
+}
+
+.plotly-graph-loading, .plotly-graph-error {
+    padding: 20px;
+    text-align: center;
+    background: #f5f5f5;
+    border-radius: 4px;
+    margin: 10px 0;
+}
+
+.plotly-graph-error p {
+    color: #dc3545;
+    margin-bottom: 10px;
+}
+
+.plotly-graph-error button {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+
+.scrollable-table-x {
+  overflow-x: auto;
+  width: 100%;
+}
+.alimentos-tabla-block {
+  min-width: 1400px; /* Ajusta según la cantidad de columnas */
+}
