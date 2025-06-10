@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import redirect, render
 import requests
 from django.conf import settings
 from django.http import Http404, JsonResponse, HttpResponse
@@ -523,11 +523,9 @@ def obtener_datos_resumen_y_adecuacion_dieta_api(paciente_id, id_dieta=None):
             # Endpoint para el resumen más reciente del paciente
             api_url = f'https://nutrilinkapi-production.up.railway.app/api_nutrilink/dieta/obtener_resumen_nutricional?pacienteId={paciente_id}'
         
-        print(f"DEBUG (VIEWS): Llamando API para resumen/adecuación: {api_url}")
         response = requests.get(api_url, timeout=10)
         
         if response.status_code == 404:
-            print(f"DEBUG (VIEWS): API devolvió 404 para {api_url}")
             return None # No encontrado
         response.raise_for_status() # Lanza excepción para otros errores HTTP (500, etc.)
         
@@ -536,7 +534,6 @@ def obtener_datos_resumen_y_adecuacion_dieta_api(paciente_id, id_dieta=None):
         if api_response_data.get("status") == "success" and api_response_data.get("data"):
             return api_response_data["data"]
         else:
-            print(f"DEBUG (VIEWS): Respuesta no exitosa o sin datos de API para {api_url}. Respuesta: {api_response_data}")
             return None
             
     except requests.Timeout:
@@ -556,7 +553,6 @@ def crear_grafico_barras_adecuacion(adecuacion_data, titulo="Porcentaje de Adecu
     adecuacion_data: un diccionario como {'porc_adecuacion_calorico': 95.5, ...}
     """
     if not adecuacion_data or not isinstance(adecuacion_data, dict):
-        print("DEBUG (VIEWS): crear_grafico_barras_adecuacion - no adecuacion_data o no es dict")
         return None
 
     nombres_nutrientes_map = {
@@ -582,11 +578,9 @@ def crear_grafico_barras_adecuacion(adecuacion_data, titulo="Porcentaje de Adecu
                 valor = float(adecuacion_data[key_api])
                 datos_grafico.append({'Nutriente': nombre_amigable, '% Adecuación': valor})
             except (ValueError, TypeError):
-                print(f"DEBUG (VIEWS): No se pudo convertir a float el valor para {key_api}: {adecuacion_data[key_api]}")
                 pass
     
     if not datos_grafico:
-        print("DEBUG (VIEWS): crear_grafico_barras_adecuacion - no datos_grafico para plotear")
         return None
 
     df_plot = pd.DataFrame(datos_grafico)
@@ -652,8 +646,6 @@ def registroDietario(request, id_paciente):
     grafico_adecuacion_html = None
     if datos_dieta_actual and 'adecuacion' in datos_dieta_actual:
         grafico_adecuacion_html = crear_grafico_barras_adecuacion(datos_dieta_actual['adecuacion'])
-    else:
-        print("DEBUG (VIEWS): No se obtuvieron datos de adecuación para el gráfico inicial.")
 
     return render(request, 'patients/registro-dietario.html', {
         'paciente': paciente,

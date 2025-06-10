@@ -575,7 +575,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 });
 
                 if (response && response.status === 'success') {
-                    Swal.fire('¡Eliminado!', response.mensaje || `${nombreTiempoComida} y sus alimentos han sido eliminados.`, 'success');
+                    Swal.fire('¡Eliminado!', `${nombreTiempoComida} y sus alimentos han sido eliminados.`, 'success');
                     blockDiv.querySelectorAll('tr[data-food-row-id]').forEach(foodRow => datosAlimentoPorFilaDOM.delete(foodRow));
                     blockDiv.remove();
                     updateAllMealTimeSelects();
@@ -651,7 +651,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 });
 
                 if (response && response.status === 'success') {
-                    Swal.fire('¡Eliminado!', response.mensaje || `${nombreAlimento} ha sido eliminado.`, 'success');
+                    Swal.fire('¡Eliminado!', `${nombreAlimento} ha sido eliminado.`, 'success');
                     const tbody = foodRowElement.closest('tbody');
                     if (tbody && tbody.rows.length > 1) {
                         datosAlimentoPorFilaDOM.delete(foodRowElement);
