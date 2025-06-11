@@ -843,6 +843,9 @@ document.addEventListener('DOMContentLoaded', () => {
         entryDiv.id = `meal-entry-${entryIdSuffix}`;
         entryDiv.dataset.entryId = entryIdSuffix;
 
+        const mainContentDiv = document.createElement('div');
+        mainContentDiv.classList.add('meal-entry-main-content');
+
         const selectorDiv = document.createElement('div');
         selectorDiv.classList.add('meal-time-selector');
         const selectLabel = document.createElement('label');
@@ -881,7 +884,8 @@ document.addEventListener('DOMContentLoaded', () => {
         timeInputDiv.appendChild(timeLabel);
         timeInputDiv.appendChild(timeInput);
         selectorDiv.appendChild(timeInputDiv);
-        entryDiv.appendChild(selectorDiv);
+
+        mainContentDiv.appendChild(selectorDiv);
 
         const tableDiv = document.createElement('div');
         tableDiv.classList.add('food-portions-table');
@@ -916,27 +920,36 @@ document.addEventListener('DOMContentLoaded', () => {
         tbody.appendChild(inputRow);
         table.appendChild(tbody);
         tableDiv.appendChild(table);
-        entryDiv.appendChild(tableDiv);
+
+        mainContentDiv.appendChild(tableDiv);
+        entryDiv.appendChild(mainContentDiv);
 
         // No agregar botones de Guardar/Eliminar si es histórico
         if (!isHistorical) {
             const actionsDiv = document.createElement('div');
             actionsDiv.classList.add('meal-entry-actions');
+
             const saveButton = document.createElement('button');
             saveButton.textContent = 'Guardar Tiempo de Comida';
             saveButton.classList.add('save-single-meal-btn');
             saveButton.type = 'button';
+
             const deleteButton = document.createElement('button');
             deleteButton.textContent = 'Eliminar Tiempo de Comida';
             deleteButton.classList.add('delete-single-meal-btn');
             deleteButton.type = 'button';
+
             const statusDiv = document.createElement('div');
             statusDiv.classList.add('single-save-status');
+
             saveButton.addEventListener('click', () => handleSaveSingleMealEntry(entryDiv, saveButton, deleteButton, statusDiv));
             deleteButton.addEventListener('click', () => handleDeleteSingleMealEntry(entryDiv, saveButton, deleteButton, statusDiv));
+
             actionsDiv.appendChild(saveButton);
             actionsDiv.appendChild(deleteButton);
             actionsDiv.appendChild(statusDiv);
+
+            // <--- CAMBIO: ahora lo agregamos después de la tabla, no al final del entryDiv
             entryDiv.appendChild(actionsDiv);
         }
 
@@ -947,7 +960,6 @@ document.addEventListener('DOMContentLoaded', () => {
         mealTimeEntryCounter++;
     }
 
-    // MODIFICADO para aceptar un flag `isHistorical`
     function processAndDisplaySavedDetails(savedDetailsArray, isHistorical = false) {
         if (!Array.isArray(savedDetailsArray) || savedDetailsArray.length === 0) {
             if(generalStatusDiv && generalStatusDiv.className === 'info' && !isHistorical) generalStatusDiv.textContent = "No hay tiempos de comida guardados para la minuta actual.";
@@ -1024,6 +1036,9 @@ document.addEventListener('DOMContentLoaded', () => {
          entryDiv.id = `meal-entry-${entryIdSuffix}`;
          entryDiv.dataset.entryId = entryIdSuffix;
 
+         const contentAboveActionsDiv = document.createElement('div');
+         contentAboveActionsDiv.classList.add('meal-entry-content-above-actions');
+
          const selectorDiv = document.createElement('div');
          selectorDiv.classList.add('meal-time-selector');
          const selectLabel = document.createElement('label');
@@ -1051,7 +1066,7 @@ document.addEventListener('DOMContentLoaded', () => {
          timeInputDiv.appendChild(timeLabel);
          timeInputDiv.appendChild(timeInput);
          selectorDiv.appendChild(timeInputDiv);
-         entryDiv.appendChild(selectorDiv);
+         contentAboveActionsDiv.appendChild(selectorDiv);
 
          const tableDiv = document.createElement('div');
          tableDiv.classList.add('food-portions-table');
@@ -1083,7 +1098,8 @@ document.addEventListener('DOMContentLoaded', () => {
          tbody.appendChild(inputRow);
          table.appendChild(tbody);
          tableDiv.appendChild(table);
-         entryDiv.appendChild(tableDiv);
+         contentAboveActionsDiv.appendChild(tableDiv);
+         entryDiv.appendChild(contentAboveActionsDiv);
 
          const actionsDiv = document.createElement('div');
          actionsDiv.classList.add('meal-entry-actions');

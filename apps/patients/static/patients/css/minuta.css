@@ -30,20 +30,25 @@
 /* Contenedor para cada entrada de tiempo de comida (combobox + tabla) */
 .meal-time-entry {
   display: flex;
-  align-items: flex-start; /* Alinea los items al inicio verticalmente */
+  flex-direction: column;
   margin-bottom: 25px;
   padding: 20px;
   border: 1px solid var(--border-color);
-  border-radius: 8px; /* Similar a patient-card */
+  border-radius: 8px;
   background-color: var(--white);
   box-shadow: 0 2px 8px var(--shadow);
+}
+.meal-entry-main-content {
+  display: flex;
+  align-items: flex-start; 
+  width: 100%;
 }
 
 /* Contenedor del selector de tiempo de comida (label + select) */
 .meal-time-selector {
   margin-right: 25px;
-  min-width: 230px; /* Ancho mínimo para el combobox y label */
-  flex-shrink: 0; /* Evita que se encoja si la tabla es muy ancha */
+  min-width: 230px; 
+  flex-shrink: 0; 
 }
 
 .meal-time-selector label {
@@ -79,8 +84,8 @@
 
 /* Contenedor de la tabla de porciones */
 .food-portions-table {
-  flex-grow: 1; /* Permite que la tabla ocupe el espacio restante */
-  overflow-x: auto; /* Permite scroll horizontal si la tabla es muy ancha */
+  flex-grow: 1; 
+  overflow-x: auto; 
 }
 
 .food-portions-table table {
@@ -315,14 +320,22 @@
 
 /* Contenedor para el botón y el estado de guardado de la entrada */
 .meal-entry-actions {
-  margin-top: 10px; /* Espacio entre la tabla de porciones y las acciones */
-  /* Podrías usar flex si quieres alinear el botón y el mensaje de estado horizontalmente */
+  display: flex; /* Para que los botones y el status estén en línea */
+  gap: 10px;
+  align-items: center;
+  margin-top: 15px;
+  width: 100%; 
+}
+.save-single-meal-btn,
+.delete-single-meal-btn {
+  padding: 8px 15px;
 }
 .single-save-status {
   font-size: 0.85em;
   font-style: italic;
-  min-height: 1.2em; /* Para evitar saltos de layout */
-  margin-top: 5px;
+  min-height: 1.2em; 
+  flex-grow: 1; /* Para que ocupe el espacio restante si los botones no lo llenan */
+  text-align: left; 
 }
 .single-save-status.success { color: green; }
 .single-save-status.error { color: red; }
