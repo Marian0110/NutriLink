@@ -220,8 +220,8 @@ document.addEventListener('DOMContentLoaded', () => {
                  });
 
             if (isEditable) { // Solo mostrar botones si la entrada en sí los tiene (no todas las entradas históricas los tendrán)
-                if (saveBtn) saveBtn.style.display = 'inline-block'; 
-                if (deleteBtn) deleteBtn.style.display = 'inline-block'; 
+                if (saveBtn) saveBtn.style.display = 'block'; 
+                if (deleteBtn) deleteBtn.style.display = 'block'; 
             } else {
                 if (saveBtn) saveBtn.style.display = 'none';
                 if (deleteBtn) deleteBtn.style.display = 'none';
@@ -748,7 +748,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Solo mostrar si no estamos viendo una minuta histórica Y hay tiempos disponibles
         const availableTimes = getAvailableMealTimes();
         if (!isViewingHistoricalMinuta && availableTimes.length > 0) {
-            addMealTimeBtn.style.display = 'inline-block';
+            addMealTimeBtn.style.display = 'block';
             addMealTimeBtn.disabled = false;
         } else {
             addMealTimeBtn.style.display = 'none';

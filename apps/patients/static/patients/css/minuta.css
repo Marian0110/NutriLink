@@ -10,6 +10,8 @@
   --border-color: #e0e0e0; 
   --input-background: var(--white);
   --input-border: #ced4da;
+  --danger-color: #dc3545;
+  --danger-hover-color: #c82333;
 }
 
 .minuta-creation-content h1 {
@@ -287,6 +289,26 @@
   background-color: var(--secondary-color);
 }
 .save-single-meal-btn:disabled {
+  background-color: #adb5bd;
+  cursor: not-allowed;
+}
+
+/* Estilos para el botón de Guardar individual dentro de la entrada */
+.delete-single-meal-btn {
+  display: block; 
+  margin-top: 15px;
+  padding: 8px 15px;
+  background-color: var(--danger-color);
+  color: var(--white);
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+.delete-single-meal-btn:hover:not(:disabled) {
+  background-color: var(--danger-hover-color);
+}
+.delete-single-meal-btn:disabled {
   background-color: #adb5bd;
   cursor: not-allowed;
 }
