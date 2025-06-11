@@ -177,6 +177,12 @@
             <label class="form-label">Motivo de consulta:</label>
             <input type="text" class="form-control" id="input-motivo">
           </div>
+
+          <div class="mb-3">
+            <label class="form-label">Notas adicionales:</label>
+            <textarea type="text" class="form-control" id="input-notas"></textarea>
+          </div>
+          <!--
           <div class="mb-3">
             <label class="form-label">Hecho relevante:</label>
             <textarea class="form-control" id="input-hecho" rows="2"></textarea>
@@ -189,7 +195,7 @@
             <label class="form-label">Adherencia a medicamentos:</label>
             <textarea class="form-control" id="input-adherencia" rows="2"></textarea>
           </div>
-
+          -->
           <div class="d-flex justify-content-end">
             <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">Cancelar</button>
             <button type="submit" class="btn btn-success">Confirmar cita</button>
@@ -724,17 +730,19 @@ document.addEventListener('click', async function (e) {
 
         const idDisponibilidad = mapaDisponibilidades[horaSeleccionada];
         const motivo = document.getElementById('input-motivo')?.value.trim() || null;
-        const hecho = document.getElementById('input-hecho')?.value.trim() || null;
-        const compromiso = document.getElementById('input-compromiso')?.value.trim() || null;
-        const adherencia = document.getElementById('input-adherencia')?.value.trim() || null;
+        const nota = document.getElementById('input-notas')?.value.trim() || null;
+        // const hecho = document.getElementById('input-hecho')?.value.trim() || null;
+        // const compromiso = document.getElementById('input-compromiso')?.value.trim() || null;
+        // const adherencia = document.getElementById('input-adherencia')?.value.trim() || null;
 
         const body = {
           id_paciente: parseInt(idPaciente),
           id_disponibilidad: idDisponibilidad,
           motivo_consulta: motivo || null,
-          hecho_relevante: hecho || null,
-          compromiso_acordado: compromiso || null,
-          adherencia_medicamentos: adherencia || null
+          notas: nota || null 
+          // notas: hecho || null,
+          // compromiso_acordado: compromiso || null,
+          // adherencia_medicamentos: adherencia || null
         };
 
         try {
