@@ -181,12 +181,6 @@
     // Llamado a función de obtención de centros de atención
     obtenerCentrosAtencion(id_nutricionista);
 
-    if (!id_nutricionista || !correo || !contrasena) {
-      alert("No se encontró la sesión. Inicia sesión nuevamente.");
-      window.location.href = '/accounts/login';
-      return;
-    }
-
     // Función para deshabilitar opciones ya seleccionadas
     function disableSelectedOptions(selectElement) {
       const container = document.getElementById('especialidades-container');
