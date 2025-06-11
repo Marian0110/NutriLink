@@ -920,7 +920,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     const option = document.createElement('option');
                     option.value = registro.id_dieta;
                     option.dataset.fechaDieta = registro.fecha_dieta;
-                    const fecha = new Date(registro.fecha_dieta + 'T00:00:00'); // Interpretar como local
+                    const fecha = new Date(registro.fecha_dieta);
                     option.textContent = `Registro del ${fecha.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}`;
                     registroDateSelectorEl.appendChild(option);
                 });
