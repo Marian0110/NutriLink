@@ -179,25 +179,7 @@
 .encabezado {
   display: flex;
   justify-content: space-between;
-  align-items: center;
   margin-bottom: 1.2rem;
-}
-
-.btn-agregar {
-  background-color: var(--accent-color);
-  margin-top: 2%;
-  color: white;
-  border: none;
-  padding: 8px 14px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: bold;
-  width: 10%;
-  transition: background-color 0.2s ease;
-}
-
-.btn-agregar:hover {
-  background-color: var(--save);
 }
 
 .filtros {
@@ -232,4 +214,33 @@
   .contenedor-alimentos {
     max-width: 85%;
   }
+}
+
+.encabezado {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 1.2rem;
+  padding: 20px; 
+  text-align: left;
+}
+
+.btn-agregar {
+  background-color: var(--accent-color);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  width: auto;
+  min-width: 120px; 
+  transition: background-color 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px; 
+}
+
+.btn-agregar:hover {
+  background-color: var(--save);
 }
