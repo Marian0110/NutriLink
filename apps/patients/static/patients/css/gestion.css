@@ -54,9 +54,23 @@ h1.h3 {
 
   /* Card contenedora */
   .card {
-    min-height: calc(100vh - 180px);
+    background-color: white;
+    border-radius: 12px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    max-width: 80%;
+    margin-left: 250px;  /* margin del sidebar */
+    margin-top: 20px;
+    padding: 0 20px;
   }
-  
+
+  .encabezado {
+    max-width: 80%;
+    margin-left: 250px;  /* margin del sidebar */
+  }
+
   /* Tabla */
   .table th {
     font-weight: 600;
@@ -75,4 +89,15 @@ h1.h3 {
 
 .bg-statusD {
   background-color: #e35555;
+}
+
+@media (min-width: 1800px) {
+  /* Ajustes para pantallas grandes */
+  .card {
+    max-width: 85%;
+  }
+
+  .encabezado {
+    max-width: 85%;
+  }
 }
