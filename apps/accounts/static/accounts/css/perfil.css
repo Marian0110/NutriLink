@@ -10,37 +10,15 @@
   --bg-color: #f4f6f8;
 }
 
+.required {
+    color: red;
+    margin-left: 1%;
+}
+
 body {
   background-color: var(--bg-color);
   margin: 0;
   font-family: sans-serif;
-}
-
-/* Contenedor general */
-.cards-wrapper {
-  width: calc(100% - 200px);
-  box-sizing: border-box;
-  display: flex;
-  padding: 1rem;
-  margin-left: 10%;
-  gap: 1rem;
-}
-
-/* Card izquierda (Perfil) */
-.form-sectionP {
-  flex: 1 1 60%; 
-  background-color: var(--white);
-  border-radius: 15px;
-  padding: 1.5rem;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-  border: 1px solid var(--shadow);
-}
-/* Estilo individual de cada card lateral */
-.card-lateral {
-  background-color: white;
-  border-radius: 15px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-  padding: 1.5rem;
 }
 
 /* Formularios */
@@ -60,22 +38,10 @@ body {
   margin-bottom: 1rem;
 }
 
-.profile-picture img {
-  object-fit: cover;
-  width: 100%;
-  border-radius: 15px;
-  margin-bottom: 10%;
-}
-
-.btn {
-  cursor: pointer;
-}
-
 .error-message {
   color: red;
   font-size: 11px;
 }
-
 
 .selected-items-container {
   display: flex;
@@ -101,4 +67,75 @@ body {
 
 .remove-item:hover {
   color: #b02a37;
+}
+
+/* Contenedor principal */
+.cards-wrapper {
+  width: calc(100% - 250px);
+  box-sizing: border-box;
+  display: flex;
+  padding: 1rem;
+  margin-left: 15%;
+  gap: 2rem;
+  align-items: flex-start;
+}
+
+/* Card de perfil */
+.form-sectionP {
+  flex: 0 0 50%;
+  background-color: var(--white);
+  border-radius: 15px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  border: 1px solid var(--shadow);
+  height: auto;
+}
+
+/* Contenedor de cards laterales */
+.d-flex.flex-column {
+  flex: 0 0 45%;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Cards laterales individuales */
+.card-lateral {
+  background-color: white;
+  border-radius: 15px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  padding: 1.5rem;
+  width: 100%;
+}
+
+/* Formulario de perfil */
+.form-containerP {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.profile-picture {
+  text-align: center;
+  margin-bottom: 3%;
+}
+
+.profile-picture img {
+  width: 120px;
+  height: 120px;
+  border: 3px solid var(--accent-color);
+  object-fit: cover;
+  width: 100%;
+  border-radius: 15px;
+}
+
+@media (min-width: 1800px) {
+  /* Ajustes para pantallas grandes ancho card laterales y card perfil*/
+  .d-flex.flex-column {
+    flex: 0 0 45%;
+  }
+
+  .form-sectionP {
+    flex: 0 0 45%;
+  }
 }

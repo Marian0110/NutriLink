@@ -18,7 +18,7 @@
         {% csrf_token %}
         <div class="row">
           <div class="form-group col-md-6 mb-4">
-            <label for="pNombre">Primer nombre *</label>
+            <label for="pNombre">Primer nombre<span class="required">*</span></label>
             <input type="text" id="pNombre" name="pNombre" class="form-control" placeholder="nombre" />
             <span class="error-message" id="error-pNombre"></span>
           </div>
@@ -28,7 +28,7 @@
             <span class="error-message" id="error-sNombre"></span>
           </div>
           <div class="form-group col-md-6 mb-3">
-            <label for="apePater">Apellido paterno *</label>
+            <label for="apePater">Apellido paterno<span class="required">*</span></label>
             <input type="text" id="apePater" name="apePater" class="form-control" placeholder="apellido" />
             <span class="error-message" id="error-apePater"></span>
           </div>
@@ -38,12 +38,12 @@
             <span class="error-message" id="error-apeMater"></span>
           </div>
           <div class="form-group col-md-6 mb-3">
-            <label for="email">Correo *</label>
+            <label for="email">Correo<span class="required">*</span></label>
             <input type="email" id="email" name="email" class="form-control" placeholder="correo" disabled />
             <span class="error-message" id="error-email"></span>
           </div>
           <div class="form-group col-md-6 mb-3">
-            <label for="rut">RUT *</label>
+            <label for="rut">RUT<span class="required">*</span></label>
             <input type="text" id="rut" name="rut" class="form-control" placeholder="Rut" disabled />
             <span class="error-message" id="error-rut"></span>
           </div>
@@ -63,11 +63,11 @@
     </div>
   </div>
   <!-- Cards laterales, especializacion -->
-  <div class="d-flex flex-column flex-shrink-1" style="width: 50%;">
+  <div class="d-flex flex-column flex-shrink-1">
     <div
-      style="background-color: white; border-radius: 15px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);; padding: 1.5rem; margin-right: 50px;"
+      style="background-color: white; border-radius: 15px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);; padding: 1.5rem;"
       class="mb-3">
-      <div class="title mb-5">
+      <div class="title mb-3">
         <h5>Especialización</h5>
       </div>
       <form id="especializacion-form" method="POST">
@@ -85,20 +85,22 @@
           </div>
           <div class="selected-items-container" id="especialidades-container"></div>
         </div>
-        <button class="btn btn-success w-100 mt-3" type="submit">Guardar</button>
+        <div class="text-center">
+          <button class="btn btn-success w-50 mt-3" type="submit">Guardar</button>
+        </div>    
       </form>
     </div>
     <!-- Cambiar contraseña -->
     <div
-      style="background-color: white; border-radius: 15px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15); padding: 1.5rem; margin-right: 50px;"
+      style="background-color: white; border-radius: 15px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15); padding: 1.5rem;"
       class="mb-3">
-      <div class="title mb-4">
+      <div class="title mb-3">
         <h5>Cambiar contraseña</h5>
       </div>
       <form id="password-form" method="POST">
         {% csrf_token %}
         <div class="form-group mb-3">
-          <label for="passActual">Contraseña actual: *</label>
+          <label for="passActual">Contraseña actual:<span class="required">*</span></label>
           <input type="password" id="passActual" name="passActual" class="form-control" placeholder="********"
             required />
           <span class="error-message" id="error-passActual"></span>
@@ -114,23 +116,25 @@
             required />
           <span class="error-message" id="error-confirmarPass"></span>
         </div>
-        <button class="btn btn-success w-100" type="submit">Actualizar contraseña</button>
+        <div class="text-center">
+          <button class="btn btn-success w-50" type="submit">Actualizar contraseña</button>
+        </div>
       </form>
     </div>
     <!-- Centros de Atención Registrados -->
     <div id="centros-container"
-      style="background-color: white; border-radius: 15px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15); padding: 1.5rem; margin-right: 50px;"
+      style="background-color: white; border-radius: 15px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15); padding: 1.5rem;"
       class="mb-3">
-      <div class="title mb-4">
-        <h5>Centros de atención registrados</h5>
+      <div class="title mb-3">
+        <h5>Centros de atención</h5>
       </div>
       <!-- Aquí se insertarán dinámicamente los centros desde JavaScript -->
       <div id="lista-centros">
         <p class="text-muted">Cargando centros registrados...</p>
       </div>
       <!-- Botón para abrir el modal -->
-      <div class="text-end mt-3">
-        <button class="btn btn-success mt-2 w-100" data-bs-toggle="modal" data-bs-target="#modalAgregarCentro">
+      <div class="text-center mt-3">
+        <button class="btn btn-success mt-2 w-50" data-bs-toggle="modal" data-bs-target="#modalAgregarCentro">
           + Agregar centro de atención
         </button>
       </div>
