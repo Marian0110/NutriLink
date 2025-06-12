@@ -27,12 +27,25 @@
                         <div class="card shadow-lg mt-3"
                             style="border-radius: 15px; border: none; height: auto !important; min-height: unset;">
                             <div class="card-body">
+                                <!-- Centro de atención -->
+                                <div class="mb-3">
+                                    <h5 class="card-title mb-3">
+                                        <i class="fas fa-calendar-alt me-2"></i>Configuración de horas
+                                    </h5>
+                                    <div class="form-text text-muted mb-2">
+                                        <i class="fas fa-info-circle me-1"></i>Seleccione un centro de atención y luego marque las horas
+                                        deseadas
+                                    </div>
+                                    <label for="centroAtencion" class="form-label">Centro de atención:</label>
+                                    <select id="centroAtencion" class="form-select" required>
+                                        <option value="" disabled selected>Selecciona un centro</option>
+                                    </select>
+                                </div>
                                 <!-- Calendario -->
-                                <div class="mb-4">
+                                <div id="bloque-fecha" class="mb-4" style="display: none;">
                                     <label for="fecha" class="form-label">Selecciona una fecha:</label>
                                     <input type="date" id="fecha" class="form-control w-100 w-md-50" min="" />
                                 </div>
-
                                 <!-- Bloques horarios -->
                                 <div id="bloques-horarios" class="row row-cols-2 row-cols-sm-3 row-cols-md-4 g-3 mb-4">
                                     <!-- Se generan dinámicamente -->

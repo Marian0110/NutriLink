@@ -1,77 +1,132 @@
 console.log('appointments.js cargado');
+const mapaCentros = {}; // 🔒 Disponible para todo el script
 
-function generarBloquesHorarios(horasSeleccionadas = []) {
+function generarBloquesHorarios(horasSeleccionadas = [], horasBloqueadas = []) {
     const contenedor = document.getElementById('bloques-horarios');
     contenedor.innerHTML = '';
     const inicio = 8;
     const fin = 23;
 
+    // Para facilitar comparación rápida
+    const mapaSeleccionadas = new Map(horasSeleccionadas.map(h => [h.hora?.slice(0, 5), h.estado]));
+    const bloqueadasSet = new Set(horasBloqueadas.map(h => h.hora?.slice(0, 5)));
+
     for (let hora = inicio; hora < fin; hora++) {
         const horaStr = hora.toString().padStart(2, '0') + ':00';
-        const entrada = horasSeleccionadas.find(h => h.hora?.slice(0, 5) === horaStr);
+        const estado = mapaSeleccionadas.get(horaStr);
+        const esBloqueada = bloqueadasSet.has(horaStr);
 
-        const estado = entrada?.estado ?? 'No asignado';
-        const isChecked = estado === 'Disponible';
-        const esReservada = estado === 'Reservada';
+        let colorClase = 'bg-light text-muted';
+        let checked = '';
+        let disabled = '';
+
+        if (estado === 'Disponible') {
+            colorClase = 'bg-success text-white';
+            checked = 'checked';
+        } else if (estado === 'Reservada') {
+            colorClase = 'bg-warning text-dark';
+            checked = 'checked';
+        }
+
+        if (esBloqueada) {
+            // si además está en el centro actual, no lo bloqueamos (ya está arriba como "seleccionada")
+            if (!estado) {
+                colorClase = 'bg-success text-white'; // mostrar como verde
+            } else if (estado === 'Reservada') {
+                colorClase = 'bg-warning text-dark'; // mantener amarillo
+            }
+            disabled = 'disabled';
+        }
 
         const col = document.createElement('div');
         col.className = 'col';
-
-        const colorClase = esReservada ? 'bg-warning text-dark' : (isChecked ? 'bg-success text-white' : 'bg-light text-muted');
 
         col.innerHTML = `
             <div class="border rounded-3 shadow-sm d-flex align-items-center justify-content-center mx-auto ${colorClase}" 
                 style="height: 40px; max-width: 200px;">
                 <div class="form-check m-0">
                     <input class="form-check-input me-1" type="checkbox" value="${horaStr}" id="hora-${hora}"
-                        ${isChecked || esReservada ? 'checked' : ''}>
+                        ${checked} ${disabled}>
                     <label class="form-check-label small" for="hora-${hora}">${horaStr}</label>
                 </div>
             </div>
         `;
 
         contenedor.appendChild(col);
-
-        const hayReservadas = horasSeleccionadas.some(h => h.estado === 'Reservada');
-        const mensaje = document.getElementById('mensaje-reservadas');
-        if (mensaje) {
-            mensaje.style.display = hayReservadas ? 'block' : 'none';
-        }
     }
+
+    // Mostrar u ocultar advertencia si hay alguna reservada
+    const hayReservadas = horasSeleccionadas.some(h => h.estado === 'Reservada');
+    const mensaje = document.getElementById('mensaje-reservadas');
+    if (mensaje) {
+        mensaje.style.display = hayReservadas ? 'block' : 'none';
+    }
+
+    // Mostrar texto explicativo sobre bloqueo
+    let infoExtra = document.getElementById('mensaje-bloqueadas');
+    if (!infoExtra) {
+        infoExtra = document.createElement('div');
+        infoExtra.id = 'mensaje-bloqueadas';
+        infoExtra.className = 'form-text text-muted mt-2';
+        document.getElementById('bloques-horarios').before(infoExtra);
+    }
+    infoExtra.innerHTML = horasBloqueadas.length > 0
+        ? `<i class="fas fa-lock me-1"></i>Las horas en verde o amarillo deshabilitadas ya están asignadas en otro centro de atención.`
+        : '';
 }
 
-async function cargarHorasDesdeBD(fecha, id_nutricionista) {
+async function cargarHorasDesdeBD(fecha, id_nutricionista, id_centro) {
     try {
-        const response = await fetch('https://nutrilinkapi-production.up.railway.app/api_nutrilink/agenda/disponibilidad_por_fecha', {
+        // 1. Obtener horas del centro actual
+        const responseCentro = await fetch('https://nutrilinkapi-production.up.railway.app/api_nutrilink/agenda/disponibilidad_por_fecha', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ id_nutricionista, fecha })
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id_nutricionista, fecha, id_centro })
         });
 
-        const result = await response.json();
-
-        if (!response.ok || result.status === 'error') {
-            throw new Error(result.mensaje || 'No se pudieron obtener las horas.');
+        const resultCentro = await responseCentro.json();
+        if (!responseCentro.ok || resultCentro.status === 'error') {
+            throw new Error(resultCentro.mensaje || 'No se pudieron obtener las horas del centro.');
         }
 
-        const horas = result.horas || [];
+        const horasCentro = resultCentro.horas || [];
 
-        // ✅ Mostrar en consola las horas obtenidas
-        console.log(`🕒 Horas disponibles para ${fecha}:`, horas);
+        // 2. Obtener TODAS las horas del nutricionista (todos los centros)
+        const responseTodas = await fetch(`https://nutrilinkapi-production.up.railway.app/api_nutrilink/agenda/disponibilidad_nutricionista/${id_nutricionista}`);
+        const resultTodas = await responseTodas.json();
 
-        generarBloquesHorarios(horas); // Marcar automáticamente
+        const horasBloqueadas = (resultTodas.disponibilidades || []).filter(h => {
+            const mismaFecha = h.fecha.startsWith(fecha);
+            const otroCentro = parseInt(h.id_centro) !== parseInt(id_centro);
+            return mismaFecha && otroCentro;
+        });
+
+        console.log(`✅ Horas seleccionadas para centro ${id_centro}:`, horasCentro);
+        console.log(`🔒 Horas bloqueadas de otros centros:`, horasBloqueadas);
+
+        generarBloquesHorarios(horasCentro, horasBloqueadas);
+
     } catch (error) {
         console.error('Error al cargar horas:', error);
-        Swal.fire('Error', 'No se pudieron cargar las horas para esa fecha', 'error');
-        generarBloquesHorarios([]); // Fallback vacío
+        Swal.fire('Error', error.message || 'No se pudieron cargar las horas para esa fecha', 'error');
+        generarBloquesHorarios([]);
     }
 }
 
 async function cargarResumenAgenda(id_nutricionista) {
     const contenedor = document.getElementById('resumen-agenda');
     contenedor.innerHTML = '<p class="text-muted">Cargando resumen...</p>';
+
+    // Obtener mapa de centros desde el DOM
+    const selectCentro = document.getElementById('centroAtencion');
+    // const mapaCentros = {};
+    if (selectCentro) {
+        Array.from(selectCentro.options).forEach(option => {
+            if (option.value) {
+                mapaCentros[option.value] = option.textContent;
+            }
+        });
+    }
 
     try {
         const response = await fetch(`https://nutrilinkapi-production.up.railway.app/api_nutrilink/agenda/disponibilidad_nutricionista/${id_nutricionista}`);
@@ -93,27 +148,29 @@ async function cargarResumenAgenda(id_nutricionista) {
         hoy.setHours(0, 0, 0, 0);
 
         const porMes = {};
+
         for (const d of disponibilidades) {
             const [anio, mes, dia] = d.fecha.split('-');
             const fechaObj = new Date(parseInt(anio), parseInt(mes) - 1, parseInt(dia));
-            fechaObj.setHours(0, 0, 0, 0); // Asegura comparación sólo por fecha
-
-            if (fechaObj < hoy) continue; // 🔴 Omitir fechas pasadas
+            fechaObj.setHours(0, 0, 0, 0);
+            if (fechaObj < hoy) continue;
 
             const diaClave = `${anio}-${mes}-${dia}`;
             const mesNombre = fechaObj.toLocaleString('es-ES', { month: 'long' });
             const mesClave = `${mesNombre.charAt(0).toUpperCase() + mesNombre.slice(1)} de ${anio}`;
+            const idCentro = d.id_centro?.toString() || 'Sin Centro';
 
             if (!porMes[mesClave]) porMes[mesClave] = {};
-            if (!porMes[mesClave][diaClave]) porMes[mesClave][diaClave] = [];
+            if (!porMes[mesClave][diaClave]) porMes[mesClave][diaClave] = {};
+            if (!porMes[mesClave][diaClave][idCentro]) porMes[mesClave][diaClave][idCentro] = [];
 
-            porMes[mesClave][diaClave].push({
+            porMes[mesClave][diaClave][idCentro].push({
                 hora: d.hora.slice(0, 5),
                 estado: d.estado === 'Reservada' ? 'R' : 'D'
             });
         }
 
-        // Renderizar por mes > día
+        // Renderizar por mes > día > centro
         contenedor.innerHTML = '';
         Object.entries(porMes).forEach(([mesTitulo, dias]) => {
             const contMes = document.createElement('div');
@@ -124,7 +181,7 @@ async function cargarResumenAgenda(id_nutricionista) {
             tituloMes.innerHTML = `<i class="far fa-calendar-alt me-2"></i>${mesTitulo}`;
             contMes.appendChild(tituloMes);
 
-            Object.entries(dias).forEach(([diaISO, horas]) => {
+            Object.entries(dias).forEach(([diaISO, centros]) => {
                 const [anio, mes, dia] = diaISO.split('-');
                 const fechaObj = new Date(parseInt(anio), parseInt(mes) - 1, parseInt(dia));
                 const fechaFormateada = fechaObj.toLocaleDateString('es-ES', {
@@ -133,23 +190,33 @@ async function cargarResumenAgenda(id_nutricionista) {
                 });
 
                 const fechaContainer = document.createElement('div');
-                fechaContainer.className = 'mb-2';
+                fechaContainer.className = 'mb-3';
 
                 const fechaTitulo = document.createElement('h6');
                 fechaTitulo.innerHTML = `<i class="far fa-clock me-1"></i>${fechaFormateada.charAt(0).toUpperCase() + fechaFormateada.slice(1)}`;
                 fechaContainer.appendChild(fechaTitulo);
 
-                const bloqueHoras = document.createElement('div');
-                bloqueHoras.className = 'd-flex flex-wrap gap-2';
+                Object.entries(centros).forEach(([idCentro, horas]) => {
+                    const nombreCentro = mapaCentros[String(idCentro)] || 'Centro desconocido';
 
-                horas.sort((a, b) => a.hora.localeCompare(b.hora)).forEach(h => {
-                    const badge = document.createElement('span');
-                    badge.className = `badge rounded-pill px-3 py-2 ${h.estado === 'D' ? 'bg-success' : 'bg-warning text-dark'}`;
-                    badge.textContent = `${h.hora} [${h.estado}]`;
-                    bloqueHoras.appendChild(badge);
+                    const centroTitulo = document.createElement('div');
+                    centroTitulo.className = 'fw-semibold ms-3 mb-2';
+                    centroTitulo.textContent = `• ${nombreCentro}`;
+                    fechaContainer.appendChild(centroTitulo);
+
+                    const bloqueHoras = document.createElement('div');
+                    bloqueHoras.className = 'd-flex flex-wrap gap-2 ms-4';
+
+                    horas.sort((a, b) => a.hora.localeCompare(b.hora)).forEach(h => {
+                        const badge = document.createElement('span');
+                        badge.className = `badge rounded-pill px-3 py-2 ${h.estado === 'D' ? 'bg-success' : 'bg-warning text-dark'}`;
+                        badge.textContent = `${h.hora} [${h.estado}]`;
+                        bloqueHoras.appendChild(badge);
+                    });
+
+                    fechaContainer.appendChild(bloqueHoras);
                 });
 
-                fechaContainer.appendChild(bloqueHoras);
                 contMes.appendChild(fechaContainer);
             });
 
@@ -396,6 +463,32 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const inputFecha = document.getElementById('fecha');
     const btnGuardar = document.getElementById('guardarDisponibilidad');
+    const centroSelect = document.getElementById('centroAtencion');
+    const bloqueFecha = document.getElementById('bloque-fecha');
+
+if (centroSelect) {
+    centroSelect.addEventListener('change', () => {
+        const seleccion = centroSelect.value;
+
+        // Mostrar u ocultar el campo de fecha
+        if (seleccion) {
+            bloqueFecha.style.display = 'block';
+        } else {
+            bloqueFecha.style.display = 'none';
+        }
+
+        // Resetear selección de fecha
+        inputFecha.value = '';
+
+        // Borrar bloques horarios visibles
+        const contenedorBloques = document.getElementById('bloques-horarios');
+        if (contenedorBloques) contenedorBloques.innerHTML = '';
+
+        // Ocultar mensaje de horas reservadas
+        const mensaje = document.getElementById('mensaje-reservadas');
+        if (mensaje) mensaje.style.display = 'none';
+    });
+}
 
     // Establecer fecha mínima = hoy
     const hoy = new Date().toISOString().split('T')[0]; // Formato: YYYY-MM-DD
@@ -405,7 +498,10 @@ document.addEventListener('DOMContentLoaded', function () {
         inputFecha.addEventListener('change', () => {
             const fechaSeleccionada = inputFecha.value;
             const id_nutricionista = sessionStorage.getItem('id_nutricionista');
-            console.log('📦 ID del nutricionista desde sessionStorageeee:', id_nutricionista);
+            const id_centro = document.getElementById('centroAtencion')?.value;
+
+            console.log('📦 ID del nutricionista desde sessionStorage:', id_nutricionista);
+            console.log('🏥 ID del centro seleccionado:', id_centro);
 
             // Validar que no se seleccione una fecha pasada
             if (fechaSeleccionada < hoy) {
@@ -415,8 +511,15 @@ document.addEventListener('DOMContentLoaded', function () {
                 return;
             }
 
-            if (fechaSeleccionada && id_nutricionista) {
-                cargarHorasDesdeBD(fechaSeleccionada, parseInt(id_nutricionista));
+            if (!id_centro) {
+                Swal.fire('Centro requerido', 'Debe seleccionar un centro de atención.', 'info');
+                inputFecha.value = '';
+                generarBloquesHorarios([]);
+                return;
+            }
+
+            if (fechaSeleccionada && id_nutricionista && id_centro) {
+                cargarHorasDesdeBD(fechaSeleccionada, parseInt(id_nutricionista), parseInt(id_centro));
             }
         });
     }
@@ -444,16 +547,19 @@ document.addEventListener('DOMContentLoaded', function () {
                 return;
             }
 
-            const checkboxes = document.querySelectorAll('#bloques-horarios input[type="checkbox"]:checked');
-            const horas = Array.from(checkboxes).map(cb => cb.value + ':00');
+            const id_centro = document.getElementById('centroAtencion').value;
 
-            if (horas.length === 0) {
-                Swal.fire('Error', 'Seleccione al menos una hora disponible', 'warning');
+            if (!id_centro) {
+                Swal.fire('Error', 'Seleccione un centro de atención', 'warning');
                 return;
             }
 
+            const checkboxes = document.querySelectorAll('#bloques-horarios input[type="checkbox"]:checked');
+            const horas = Array.from(checkboxes).map(cb => cb.value + ':00');
+
             const disponibilidad = {
                 id_nutricionista: parseInt(id_nutricionista),
+                id_centro: parseInt(id_centro),
                 fecha: fecha,
                 horas: horas
             };
@@ -497,6 +603,7 @@ document.addEventListener('DOMContentLoaded', function () {
         cargarResumenAgenda(parseInt(id_nutricionista));
         console.log('Antes de la función cargar Nutri :', id_nutricionista);
         cargarResumenCitas(parseInt(id_nutricionista));
+        cargarCentrosAtencion(id_nutricionista);
         verificarCancelacionesPendientesNutricionista(parseInt(id_nutricionista));
         verificarSolicitudesPendientesNutricionista(parseInt(id_nutricionista));
     }
@@ -629,5 +736,40 @@ async function verificarSolicitudesPendientesNutricionista(id_nutricionista) {
         }
     } catch (error) {
         console.error('❌ Error al verificar solicitudes:', error);
+    }
+}
+
+async function cargarCentrosAtencion(id_nutricionista) {
+    const selectCentro = document.getElementById('centroAtencion');
+    selectCentro.innerHTML = '<option value="" disabled selected>Cargando...</option>';
+
+    try {
+        console.log("Cargando centros de atención con id_nutricionista = " + id_nutricionista)
+        const response = await fetch(`https://nutrilinkapi-production.up.railway.app/api_nutrilink/nutricionista/centros_atencion/${id_nutricionista}`);
+        const result = await response.json();
+
+        if (result.status === 'ok') {
+            if (result.centros.length === 0) {
+                selectCentro.innerHTML = '<option value="" disabled selected>No hay centros disponibles</option>';
+                return;
+            }
+
+            selectCentro.innerHTML = '<option value="" disabled selected>Selecciona un centro</option>';
+
+            result.centros.forEach(centro => {
+                const option = document.createElement('option');
+                option.value = centro.id_centro;
+                option.textContent = centro.nombre_centro;
+                selectCentro.appendChild(option);
+
+                // ✅ Guardar en diccionario global
+                mapaCentros[centro.id_centro] = centro.nombre_centro;
+            });
+        } else {
+            throw new Error(result.mensaje);
+        }
+    } catch (error) {
+        console.error('Error al cargar centros:', error);
+        selectCentro.innerHTML = '<option value="" disabled selected>Error al cargar</option>';
     }
 }
