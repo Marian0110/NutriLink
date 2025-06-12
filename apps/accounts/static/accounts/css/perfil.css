@@ -18,11 +18,11 @@ body {
 
 /* Contenedor general */
 .cards-wrapper {
-  width: calc(100% - 250px);
+  width: calc(100% - 200px);
   box-sizing: border-box;
   display: flex;
   padding: 1rem;
-  margin-left: 15%;
+  margin-left: 10%;
   gap: 1rem;
 }
 

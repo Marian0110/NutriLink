@@ -11,16 +11,19 @@
 /* Estilo para el Navbar */
 .navbar {
     background: var(--primary-color);
+    height: 55px;
     position: fixed;
     top: 0;
+    left: 200px;
     right: 0;
     width: calc(100% - 200px);
     display: flex;
     align-items: center;
-    padding: 0;
+    padding: 0 1rem;
     z-index: 100;
     color: var(--white);
     border-bottom: 1px solid #eee;
+    box-sizing: border-box;
 }
 
 .navbar-content {
@@ -34,7 +37,7 @@
 .page-title {
     font-size: 1.4rem;
     font-weight: 600;
-    color: var(--primary-color);
+    color: var(--white);
 }
 
 /* Estilos para el dropdown de perfil */
