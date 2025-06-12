@@ -316,32 +316,32 @@
         const encodedData = btoa(JSON.stringify(patientData));
 
         html += `
-        <tr>
-          <th scope="row">${index + 1}</th>
-          <td onclick="location.href='/patients/${paciente.id_paciente}/info-general/'" style="cursor: pointer;">${fullName}</td>
-          <td onclick="location.href='/patients/${paciente.id_paciente}/info-general/'" style="cursor: pointer;">${paciente.correo || ''}</td>
-          <td><span class="badge bg-statusA">Activo</span></td>
-            <td>
-              <button class="btn btn-sm btn-outline-primary me-2 edit-btn"
-                      data-bs-toggle="modal" 
-                      data-bs-target="#patientModal"
-                      data-patient-id="${paciente.id_paciente}"
-                      data-patient-data="${encodedData}">
-                <i class="fas fa-edit"></i>
-              </button>
+    <tr>
+      <th scope="row">${index + 1}</th>
+      <td onclick="location.href='/patients/${paciente.id_paciente}/info-general/'" style="cursor: pointer;">${fullName}</td>
+      <td onclick="location.href='/patients/${paciente.id_paciente}/info-general/'" style="cursor: pointer;">${paciente.correo || ''}</td>
+      <td onclick="location.href='/patients/${paciente.id_paciente}/info-general/'" style="cursor: pointer;">${rutDisplay}</td>
+        <td>
+          <button class="btn btn-sm btn-outline-primary me-2 edit-btn"
+                  data-bs-toggle="modal" 
+                  data-bs-target="#patientModal"
+                  data-patient-id="${paciente.id_paciente}"
+                  data-patient-data="${encodedData}">
+            <i class="fas fa-edit"></i>
+          </button>
 
-              <button class="btn btn-sm btn-outline-success me-2 agendar-btn"
-                      data-patient-id="${paciente.id_paciente}"
-                      data-patient-nombre="${fullName}">
-                <i class="fas fa-calendar-plus"></i>
-              </button>
+          <button class="btn btn-sm btn-outline-success me-2 agendar-btn"
+                  data-patient-id="${paciente.id_paciente}"
+                  data-patient-nombre="${fullName}">
+            <i class="fas fa-calendar-plus"></i>
+          </button>
 
-              <button class="btn btn-sm btn-outline-danger delete-btn" data-patient-id="${paciente.id_paciente}">
-                <i class="fas fa-trash-alt"></i>
-              </button>
-          </td>
-        </tr>
-      `;
+          <button class="btn btn-sm btn-outline-danger delete-btn" data-patient-id="${paciente.id_paciente}">
+            <i class="fas fa-trash-alt"></i>
+          </button>
+      </td>
+    </tr>
+  `;
       });
 
       pacientesTableBody.innerHTML = html;
