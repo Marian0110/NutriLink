@@ -14,221 +14,195 @@
 </div>
 
 <div class="contenedor-alimentos">
-  <div class="encabezado">
-    <h1>Alimentos</h1>
-    <button class="btn-agregar" type="button" data-bs-toggle="modal" data-bs-target="#agregarAlimentoModal">
-        <i class="fas fa-plus me-2"></i>Agregar
-    </button>
-  </div>
-  
-  <div class="filtros">
-    <form id="filtrosForm" class="d-flex flex-wrap justify-content-between w-100 gap-3">
-        <div class="input-group" style="max-width: 500px;">
-            <span class="input-group-text"><i class="fas fa-search"></i></span>
-            <input type="text" id="searchInput" class="form-control" placeholder="Buscar alimento...">
-            <button type="submit" class="btn btn-primary">Buscar</button>
-        </div>
-
-        <div class="ms-auto">
-            <select id="grupoSelect" class="form-select">
-                <option value="">Todos los grupos</option>
-            </select>
-        </div>
-    </form>
-  </div>
-
-  <!-- Contenedor donde se cargarán los alimentos -->
-  <div id="alimentosContainer">
-    <div class="text-center mt-4">
-      <i class="fas fa-spinner fa-spin fa-2x"></i>
-      <p class="mt-2">Cargando alimentos...</p>
+    <div class="encabezado">
+        <h1>Alimentos</h1>
+        <button class="btn-agregar" type="button" data-bs-toggle="modal" data-bs-target="#agregarAlimentoModal">
+            <i class="fas fa-plus me-2"></i>Agregar
+        </button>
     </div>
-  </div>
-
-  <!-- Modal para agregar alimento -->
-  <div class="modal fade" id="agregarAlimentoModal" tabindex="-1" aria-labelledby="agregarAlimentoModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-      <div class="modal-content">
-        <div class="modal-header background">
-          <h5 class="modal-title" id="agregarAlimentoModalLabel">
-            <i class="fas fa-plus-circle me-2"></i>
-            Agregar Nuevo Alimento
-          </h5>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          <form id="nuevoAlimentoForm">
-            {% csrf_token %}
-            
-            <fieldset class="info-basica-section mb-4">
-              <legend class="section-title">Información Básica</legend>
-              <div class="row g-3">
-                <div class="col-md-6">
-                  <label class="form-label">
-                    Nombre del alimento: <span class="text-danger">*</span>
-                  </label>
-                  <input type="text" class="form-control" name="nombre_alimento" required>
-                </div>
-                <div class="col-md-6">
-                  <label class="form-label">
-                    Grupo alimenticio: <span class="text-danger">*</span>
-                  </label>
-                  <select class="form-select" name="id_grupo_alimenticio" required>
-                    <option value="">Seleccionar grupo</option>
-                  </select>
-                </div>
-                <div class="col-md-4">
-                  <label class="form-label">Origen (ej: USDA, Envase):</label>
-                  <input type="text" class="form-control" name="origen" value="Personalizado">
-                </div>
-                <div class="col-md-4">
-                  <label class="form-label">
-                    Medida (ej: tazas): <span class="text-danger">*</span>
-                  </label>
-                  <input type="text" class="form-control" name="medida" required>
-                </div>
-                <div class="col-md-4">
-                  <label class="form-label">
-                    N° medidas por porción: <span class="text-danger">*</span>
-                  </label>
-                  <input type="number" step="0.01" min="0" class="form-control" name="numero_medida" required>
-                </div>
-                <div class="col-md-6">
-                  <label class="form-label">
-                    Masa (total por porción): <span class="text-danger">*</span>
-                  </label>
-                  <div class="input-group">
-                    <input type="number" step="0.01" min="0" class="form-control" name="cantidad_porcion" required>
-                    <span class="input-group-text">gr/ml</span>
-                  </div>
-                </div>
-              </div>
-            </fieldset>
-            
-            <fieldset class="macronutrientes-section mb-4">
-              <legend class="section-title">Macronutrientes (total por porción indicada)</legend>
-              <div class="row g-3">
-                <div class="col-md-3">
-                  <label class="form-label">
-                    Energía (kcal): <span class="text-danger">*</span>
-                  </label>
-                  <div class="input-group">
-                    <input type="number" step="0.1" min="0" class="form-control" name="kcal" required>
-                    <span class="input-group-text">kcal</span>
-                  </div>
-                </div>
-                <div class="col-md-3">
-                  <label class="form-label">
-                    Proteínas (g): <span class="text-danger">*</span>
-                  </label>
-                  <div class="input-group">
-                    <input type="number" step="0.01" min="0" class="form-control" name="proteinas_gr" required>
-                    <span class="input-group-text">g</span>
-                  </div>
-                </div>
-                <div class="col-md-3">
-                  <label class="form-label">
-                    Lípidos (g): <span class="text-danger">*</span>
-                  </label>
-                  <div class="input-group">
-                    <input type="number" step="0.01" min="0" class="form-control" name="lipidos_gr" required>
-                    <span class="input-group-text">g</span>
-                  </div>
-                </div>
-                <div class="col-md-3">
-                  <label class="form-label">
-                    Carbohidratos (g): <span class="text-danger">*</span>
-                  </label>
-                  <div class="input-group">
-                    <input type="number" step="0.01" min="0" class="form-control" name="carbohidratos_gr" required>
-                    <span class="input-group-text">g</span>
-                  </div>
-                </div>
-              </div>
-            </fieldset>
-            
-            <fieldset class="micronutrientes-section mb-4">
-              <legend class="section-title">Micronutrientes (opcionales, total por porción indicada)</legend>
-              <div class="row g-3">
-                <div class="col-md-4">
-                  <label class="form-label">Omega 3 (g):</label>
-                  <div class="input-group">
-                    <input type="number" step="0.01" min="0" class="form-control" name="omega_gr">
-                    <span class="input-group-text">g</span>
-                  </div>
-                </div>
-                <div class="col-md-4">
-                  <label class="form-label">Vitamina A (µg RE):</label>
-                  <div class="input-group">
-                    <input type="number" step="0.01" min="0" class="form-control" name="vitamina_a_mcg">
-                    <span class="input-group-text">µg RE</span>
-                  </div>
-                </div>
-                <div class="col-md-4">
-                  <label class="form-label">Vitamina B12 (µg):</label>
-                  <div class="input-group">
-                    <input type="number" step="0.01" min="0" class="form-control" name="vitamina_b12_mcg">
-                    <span class="input-group-text">µg</span>
-                  </div>
-                </div>
-                <div class="col-md-4">
-                  <label class="form-label">Calcio (mg):</label>
-                  <div class="input-group">
-                    <input type="number" step="0.01" min="0" class="form-control" name="calcio_mg">
-                    <span class="input-group-text">mg</span>
-                  </div>
-                </div>
-                <div class="col-md-4">
-                  <label class="form-label">Hierro (mg):</label>
-                  <div class="input-group">
-                    <input type="number" step="0.01" min="0" class="form-control" name="hierro_mg">
-                    <span class="input-group-text">mg</span>
-                  </div>
-                </div>
-                <div class="col-md-4">
-                  <label class="form-label">Selenio (µg):</label>
-                  <div class="input-group">
-                    <input type="number" step="0.01" min="0" class="form-control" name="selenio_mcg">
-                    <span class="input-group-text">µg</span>
-                  </div>
-                </div>
-                <div class="col-md-4">
-                  <label class="form-label">Zinc (mg):</label>
-                  <div class="input-group">
-                    <input type="number" step="0.01" min="0" class="form-control" name="zinc_mg">
-                    <span class="input-group-text">mg</span>
-                  </div>
-                </div>
-                <div class="col-md-4">
-                  <label class="form-label">Potasio (mg):</label>
-                  <div class="input-group">
-                    <input type="number" step="0.01" min="0" class="form-control" name="potasio_mg">
-                    <span class="input-group-text">mg</span>
-                  </div>
-                </div>
-                <div class="col-md-4">
-                  <label class="form-label">Sodio (mg):</label>
-                  <div class="input-group">
-                    <input type="number" step="0.01" min="0" class="form-control" name="sodio_mg">
-                    <span class="input-group-text">mg</span>
-                  </div>
-                </div>
-              </div>
-            </fieldset>
-            
-            <div class="d-flex justify-content-end gap-2 mt-4">
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                <i class="fas fa-times me-2"></i>Cancelar
-              </button>
-              <button type="submit" class="btn btn-primary">
-                <i class="fas fa-save me-2"></i>Guardar Alimento
-              </button>
+    <div class="filtros">
+        <form id="filtrosForm" class="d-flex flex-wrap justify-content-between w-100 gap-3">
+            <div class="input-group" style="max-width: 500px;">
+                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                <input type="text" id="searchInput" class="form-control" placeholder="Buscar alimento...">
+                <button type="submit" class="btn btn-primary">Buscar</button>
             </div>
-          </form>
-        </div>
-      </div>
+
+            <div class="ms-auto">
+                <select id="grupoSelect" class="form-select">
+                    <option value="">Todos los grupos</option>
+                </select>
+            </div>
+        </form>
     </div>
-  </div>
+    <!-- Contenedor donde se cargarán los alimentos -->
+    <div id="alimentosContainer">
+        <div class="text-center mt-4">
+            <i class="fas fa-spinner fa-spin fa-2x"></i>
+            <p class="mt-2">Cargando alimentos...</p>
+        </div>
+    </div>
+    <!-- Modal para agregar alimento -->
+    <div class="modal fade" id="agregarAlimentoModal" tabindex="-1" aria-labelledby="agregarAlimentoModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header background">
+                    <h5 class="modal-title" id="agregarAlimentoModalLabel">
+                        <i class="fas fa-plus-circle me-2"></i>
+                        Agregar Nuevo Alimento
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="nuevoAlimentoForm">
+                        {% csrf_token %}
+                        <fieldset class="info-basica-section mb-4">
+                            <legend class="section-title">Información Básica</legend>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Nombre del alimento: <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" name="nombre_alimento" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Grupo alimenticio: <span class="text-danger">*</span></label>
+                                    <select class="form-select" name="id_grupo_alimenticio" required>
+                                        <option value="">Seleccionar grupo</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Origen (ej: USDA, Envase):</label>
+                                    <input type="text" class="form-control" name="origen" value="Personalizado">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Medida (ej: tazas): <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" name="medida" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">N° medidas por porción: <span class="text-danger">*</span></label>
+                                    <input type="number" step="0.01" min="0" class="form-control" name="numero_medida" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Masa (total por porción): <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <input type="number" step="0.01" min="0" class="form-control" name="cantidad_porcion" required>
+                                        <span class="input-group-text">gr/ml</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </fieldset>
+                        <fieldset class="macronutrientes-section mb-4">
+                            <legend class="section-title">Macronutrientes (total por porción indicada)</legend>
+                            <div class="row g-3">
+                                <div class="col-md-3">
+                                    <label class="form-label">Energía (kcal): <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <input type="number" step="0.1" min="0" class="form-control" name="kcal" required>
+                                        <span class="input-group-text">kcal</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Proteínas (g): <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <input type="number" step="0.01" min="0" class="form-control" name="proteinas_gr" required>
+                                        <span class="input-group-text">g</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Lípidos (g): <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <input type="number" step="0.01" min="0" class="form-control" name="lipidos_gr" required>
+                                        <span class="input-group-text">g</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-3"><label class="form-label">Carbohidratos (g): <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <input type="number" step="0.01" min="0" class="form-control" name="carbohidratos_gr" required>
+                                        <span class="input-group-text">g</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </fieldset>
+                        <fieldset class="micronutrientes-section mb-4">
+                            <legend class="section-title">Micronutrientes (opcionales, total por porción indicada)</legend>
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <label class="form-label">Omega 3 (g):</label>
+                                    <div class="input-group">
+                                        <input type="number" step="0.01" min="0" class="form-control" name="omega_gr">
+                                        <span class="input-group-text">g</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Vitamina A (µg RE):</label>
+                                    <div class="input-group">
+                                        <input type="number" step="0.01" min="0" class="form-control" name="vitamina_a_mcg">
+                                        <span class="input-group-text">µg RE</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Vitamina B12 (µg):</label>
+                                    <div class="input-group">
+                                        <input type="number" step="0.01" min="0" class="form-control" name="vitamina_b12_mcg">
+                                        <span class="input-group-text">µg</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Calcio (mg):</label>
+                                    <div class="input-group">
+                                        <input type="number" step="0.01" min="0" class="form-control" name="calcio_mg">
+                                        <span class="input-group-text">mg</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Hierro (mg):</label>
+                                    <div class="input-group">
+                                        <input type="number" step="0.01" min="0" class="form-control" name="hierro_mg">
+                                        <span class="input-group-text">mg</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Selenio (µg):</label>
+                                    <div class="input-group">
+                                        <input type="number" step="0.01" min="0" class="form-control" name="selenio_mcg">
+                                        <span class="input-group-text">µg</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Zinc (mg):</label>
+                                    <div class="input-group">
+                                        <input type="number" step="0.01" min="0" class="form-control" name="zinc_mg">
+                                        <span class="input-group-text">mg</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Potasio (mg):</label>
+                                    <div class="input-group">
+                                        <input type="number" step="0.01" min="0" class="form-control" name="potasio_mg">
+                                        <span class="input-group-text">mg</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Sodio (mg):</label>
+                                    <div class="input-group">
+                                        <input type="number" step="0.01" min="0" class="form-control" name="sodio_mg">
+                                        <span class="input-group-text">mg</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </fieldset>
+                        <div class="d-flex justify-content-end gap-2 mt-4">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                <i class="fas fa-times me-2"></i>Cancelar
+                            </button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Guardar Alimento
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>

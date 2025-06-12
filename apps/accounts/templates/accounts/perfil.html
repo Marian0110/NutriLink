@@ -5,7 +5,7 @@
 {% block content %}
 <main class="cards-wrapper d-flex p-4">
   <!-- Card1 Perfil -->
-  <div class="form-sectionP me-3">
+  <div class="form-sectionP ms-3">
     <div class="profile-picture">
       <img src="{% static 'accounts/img/defaultPhoto.jpg' %}" id="profilePhoto" alt="Foto de perfil"
         class="default-photo" width="120" height="120" />
@@ -41,7 +41,7 @@
             <label for="email">Correo *</label>
             <input type="email" id="email" name="email" class="form-control" placeholder="correo" disabled />
             <span class="error-message" id="error-email"></span>
-          </div> <!-- Información adicional ahora en la misma card -->
+          </div>
           <div class="form-group col-md-6 mb-3">
             <label for="rut">RUT *</label>
             <input type="text" id="rut" name="rut" class="form-control" placeholder="Rut" disabled />
@@ -58,57 +58,8 @@
             <span class="error-message" id="error-telefono"></span>
           </div>
         </div>
-        <button class="btn btn-success mt-2 w-100" type="submit">Actualizar</button>
+        <button class="btn btn-success w-100" type="submit">Actualizar</button>
       </form>
-    </div>
-    <!-- Centros de Atención Registrados -->
-    <div id="centros-container"
-      style="background-color: white; border-radius: 15px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15); padding: 1.5rem;"
-      class="mb-3">
-      <div class="title mb-4">
-        <h5>Centros de atención registrados</h5>
-      </div>
-      <!-- Aquí se insertarán dinámicamente los centros desde JavaScript -->
-      <div id="lista-centros">
-        <p class="text-muted">Cargando centros registrados...</p>
-      </div>
-      <!-- Botón para abrir el modal -->
-      <div class="text-end mt-3">
-        <button class="btn btn-success mt-2 w-100" data-bs-toggle="modal" data-bs-target="#modalAgregarCentro">
-          + Agregar centro de atención
-        </button>
-      </div>
-      <!-- Modal para registrar centro de atención -->
-      <div class="modal fade" id="modalAgregarCentro" tabindex="-1" aria-labelledby="modalAgregarCentroLabel"
-        aria-hidden="true">
-        <div class="modal-dialog">
-          <div class="modal-content">
-            <form id="form-agregar-centro">
-              <input type="hidden" id="idCentroEditar" />
-              <div class="modal-header">
-                <h5 class="modal-title" id="modalAgregarCentroLabel">Agregar centro de atención</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-              </div>
-              <div class="modal-body">
-                <div class="mb-3">
-                  <label for="nombreCentro" class="form-label">Nombre del centro</label>
-                  <input type="text" class="form-control" id="nombreCentro" name="nombreCentro" required />
-                  <div class="invalid-feedback" id="error-nombreCentro"></div>
-                </div>
-                <div class="mb-3">
-                  <label for="direccionCentro" class="form-label">Dirección</label>
-                  <input type="text" class="form-control" id="direccionCentro" name="direccionCentro" required />
-                  <div class="invalid-feedback" id="error-direccionCentro"></div>
-                </div>
-              </div>
-              <div class="modal-footer">
-                <button type="submit" class="btn btn-success">Registrar</button>
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div>
     </div>
   </div>
   <!-- Cards laterales, especializacion -->
@@ -168,6 +119,55 @@
         </div>
         <button class="btn btn-success w-100" type="submit">Actualizar contraseña</button>
       </form>
+    </div>
+    <!-- Centros de Atención Registrados -->
+    <div id="centros-container"
+      style="background-color: white; border-radius: 15px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15); padding: 1.5rem;"
+      class="mb-3">
+      <div class="title mb-4">
+        <h5>Centros de atención registrados</h5>
+      </div>
+      <!-- Aquí se insertarán dinámicamente los centros desde JavaScript -->
+      <div id="lista-centros">
+        <p class="text-muted">Cargando centros registrados...</p>
+      </div>
+      <!-- Botón para abrir el modal -->
+      <div class="text-end mt-3">
+        <button class="btn btn-success mt-2 w-100" data-bs-toggle="modal" data-bs-target="#modalAgregarCentro">
+          + Agregar centro de atención
+        </button>
+      </div>
+      <!-- Modal para registrar centro de atención -->
+      <div class="modal fade" id="modalAgregarCentro" tabindex="-1" aria-labelledby="modalAgregarCentroLabel"
+        aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <form id="form-agregar-centro">
+              <input type="hidden" id="idCentroEditar" />
+              <div class="modal-header">
+                <h5 class="modal-title" id="modalAgregarCentroLabel">Agregar centro de atención</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+              </div>
+              <div class="modal-body">
+                <div class="mb-3">
+                  <label for="nombreCentro" class="form-label">Nombre del centro</label>
+                  <input type="text" class="form-control" id="nombreCentro" name="nombreCentro" required />
+                  <div class="invalid-feedback" id="error-nombreCentro"></div>
+                </div>
+                <div class="mb-3">
+                  <label for="direccionCentro" class="form-label">Dirección</label>
+                  <input type="text" class="form-control" id="direccionCentro" name="direccionCentro" required />
+                  <div class="invalid-feedback" id="error-direccionCentro"></div>
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button type="submit" class="btn btn-success">Registrar</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </main>

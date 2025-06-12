@@ -11,10 +11,8 @@
 /* Estilo para el Navbar */
 .navbar {
     background: var(--primary-color);
-    height: 50px;
     position: fixed;
     top: 0;
-    left: 200px;
     right: 0;
     width: calc(100% - 200px);
     display: flex;

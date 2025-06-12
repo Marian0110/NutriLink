@@ -67,11 +67,15 @@
 .contenedor-alimentos {
     background-color: white;
     border-radius: 12px;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05) !important;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
     max-width: 80%;
     margin-left: 240px;  /* margin del sidebar */
     margin-top: 20px;
-    padding: 20px;
+    padding: 0 20px;
+    margin-bottom: 20px;
   }
 
   .contenedor-alimentos h1 {
