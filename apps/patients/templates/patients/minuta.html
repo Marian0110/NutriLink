@@ -5,44 +5,50 @@
 {% block perfilcontent %}
 <!-- Incluir html2pdf.js desde un CDN -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<!-- CDN Flaticon (icons)-->
+<link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.1.0/uicons-regular-rounded/css/uicons-regular-rounded.css">
+
+
 <div class="minuta-creation-content patient-content"> 
 <div class="minuta-selector-container" style="margin-bottom: 20px;">
-    <label for="minuta-date-selector">Seleccionar minutas anteriores:</label>
-    <select id="minuta-date-selector" class="minuta-date-selector">
+    <label for="minuta-date-selector" style="color: #173b4c; font-weight: bold;">Seleccionar minutas anteriores:</label>
+    <select id="minuta-date-selector" class="minuta-date-selector" style="padding: 8px; border: 1px solid #173b4c; border-radius: 4px;">
       <option value="" selected disabled>Cargando fechas disponibles...</option>
     </select>
 </div>
-  <div id="adecuacion-minuta-section" style="margin-bottom: 25px;">
-    <h3>Resumen de Adecuación de Minuta Actual</h3>
-    <table id="tabla-adecuacion" class="adecuacion-table">
+
+  <div id="adecuacion-minuta-section" style="margin-bottom: 25px; background-color: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #e0e0e0;">
+    <h3 style="color: #173b4c; text-align: center; margin-bottom: 15px; border-bottom: 2px solid #62f485; padding-bottom: 8px;">Resumen de Adecuación de Minuta Actual</h3>
+    <table id="tabla-adecuacion" class="adecuacion-table" style="width: 100%; border-collapse: collapse; margin: 0 auto;">
         <thead>
-            <tr>
-                <th>Componente</th>
-                <th>Porcentaje de Adecuación</th>
+            <tr style="background-color: #173b4c; color: white;">
+                <th style="padding: 10px; text-align: left;">Componente</th>
+                <th style="padding: 10px; text-align: center;">Porcentaje de Adecuación</th>
             </tr>
         </thead>
         <tbody>
-            <tr>
-                <td>Calórico</td>
-                <td id="adecuacion-calorico">- %</td>
+            <tr style="border-bottom: 1px solid #e0e0e0;">
+                <td style="padding: 10px; font-weight: bold;">Calórico</td>
+                <td id="adecuacion-calorico" style="padding: 10px; text-align: center;">- %</td>
+            </tr>
+            <tr style="border-bottom: 1px solid #e0e0e0;">
+                <td style="padding: 10px; font-weight: bold;">Proteínas</td>
+                <td id="adecuacion-proteinas" style="padding: 10px; text-align: center;">- %</td>
+            </tr>
+            <tr style="border-bottom: 1px solid #e0e0e0;">
+                <td style="padding: 10px; font-weight: bold;">Carbohidratos</td>
+                <td id="adecuacion-carbohidratos" style="padding: 10px; text-align: center;">- %</td>
             </tr>
             <tr>
-                <td>Proteínas</td>
-                <td id="adecuacion-proteinas">- %</td>
-            </tr>
-            <tr>
-                <td>Carbohidratos</td>
-                <td id="adecuacion-carbohidratos">- %</td>
-            </tr>
-            <tr>
-                <td>Lípidos</td>
-                <td id="adecuacion-lipidos">- %</td>
+                <td style="padding: 10px; font-weight: bold;">Lípidos</td>
+                <td id="adecuacion-lipidos" style="padding: 10px; text-align: center;">- %</td>
             </tr>
         </tbody>
     </table>
-    <div id="adecuacion-status" style="font-style: italic; margin-top: 8px; font-size: 0.9em;">Cargando datos de adecuación...</div>
+    <div id="adecuacion-status" style="font-style: italic; margin-top: 15px; font-size: 0.9em; text-align: center; color: #173b4c;">Cargando datos de adecuación...</div>
 </div>
-    <h2>Porciones por tiempo de comida</h2>
+
+    <h2 style="color: #173b4c; text-align: center; margin: 25px 0; border-bottom: 2px solid #62f485; padding-bottom: 10px;">Porciones por tiempo de comida</h2>
 
     <script type="text/javascript">
       const PACIENTE_ID_FROM_DJANGO = JSON.parse('{{ paciente.id_paciente|escapejs }}');
@@ -51,28 +57,35 @@
       const minutaDateSelector = document.getElementById('minuta-date-selector');
     </script>    
 
-    <div id="meal-times-container">
+    <div id="meal-times-container" style="margin: 20px 0;">
         <!-- Las entradas de tiempo de comida se agregarán aquí dinámicamente -->
     </div>
 
-    <div style="margin-top: 25px; margin-bottom: 15px;">
-      <button id="add-meal-time-btn" class="button-secondary" style="display: none;">Agregar Tiempo de Comida</button>
-      <button id="generate-minuta-btn" class="button-primary" style="margin-left: 10px;">Generar Minuta</button>
+    <div style="margin-top: 25px; margin-bottom: 15px; text-align: center;">
+      <button id="add-meal-time-btn" class="button-secondary" style="display: none; background-color: #173b4c; color: #ffffff; border: none; padding: 10px 20px; border-radius: 4px; font-weight: bold; cursor: pointer;">Agregar Tiempo de Comida</button>
+      <button id="generate-minuta-btn" class="button-primary" style="margin-left: 10px; background-color: #62f485; color: rgb(0, 0, 0); border: none; padding: 10px 20px; border-radius: 4px; font-weight: bold; cursor: pointer;">Generar Minuta</button>
     </div>
-    <div id="general-status" style="min-height: 20px; font-weight: bold;"></div>
-    <div id="minuta-modal" class="modal" style="display:none;">
-        <div class="modal-content">
-            <span class="btn-close">×</span>
-            <h2>Minuta Generada</h2>
-            <h3 style="font-weight: normal; font-style: italic;">Escoja 1 de las opciones por cada grupo de alimentos</h3>
-            <div id="minuta-modal-body">
+    
+    <div id="general-status" style="min-height: 20px; font-weight: bold; text-align: center; margin: 15px 0;"></div>
+    
+    <div id="minuta-modal" class="modal" style="display:none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.4);">
+        <div class="modal-content" style="background-color: #fefefe; margin: 5% auto; padding: 25px; border: 1px solid #888; width: 80%; max-width: 800px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+            <span class="btn-close" style="color: #aaa; float: left; font-size: 28px; font-weight: bold; cursor: pointer;"></span>
+            
+            <h1 style="color: #173b4c; text-align: center; margin-bottom: 15px; border-bottom: 2px solid #62f485; padding-bottom: 10px;">Minuta Generada</h1>
+            
+            <h5 style="margin: 0 0 20px 0; text-align: center; color: #173b4c;">Escoja 1 de las opciones por cada grupo de alimentos</h5>
+            
+            <div id="minuta-modal-body" style="max-height: 60vh; overflow-y: auto; padding: 10px;">
                 <!-- El contenido de la minuta se insertará aquí -->
             </div>
-            <div class="modal-footer">
-                <button id="save-minuta-pdf-btn" class="button-primary">Guardar Minuta en PDF</button>
-                <button id="send-minuta-email-btn" class="button-secondary">Enviar Minuta por Correo</button>
+            
+            <div class="modal-footer" style="display: flex; justify-content: space-between; margin-top: 20px; border-top: 1px solid #e0e0e0; padding-top: 15px;">
+                <button id="save-minuta-pdf-btn" class="button-primary" style="background-color: #173b4c; color: white; border: none; padding: 10px 20px; border-radius: 4px; font-weight: bold; cursor: pointer;"> <i class="fi fi-rr-download" style="margin-right: 10px;"></i><span>Guardar en PDF</span></button>
+                <button id="send-minuta-email-btn" class="button-secondary" style="background-color: #62f485; color: #000000; border: none; padding: 10px 20px; border-radius: 4px; font-weight: bold; cursor: pointer;"><i class="fi fi-rr-envelope" style="margin-right: 10px;"></i><span>Enviar por Correo</span></button>
             </div>
-            <div id="minuta-modal-status" style="margin-top:10px; font-weight:bold;"></div>
+            
+            <div id="minuta-modal-status" style="margin-top:15px; font-weight:bold; text-align:center;"></div>
         </div>
     </div>
 </div>
@@ -254,7 +267,7 @@ document.addEventListener('DOMContentLoaded', () => {
             alert("No se puede generar la minuta sin un ID de paciente.");
             return;
         }
-        minutaModalBody.innerHTML = '<p>Cargando minuta...</p>';
+        minutaModalBody.innerHTML = '<p style="text-align:center;">Cargando minuta...</p>';
         if (minutaModalStatus) minutaModalStatus.textContent = '';
         minutaModal.style.display = 'block';
 
@@ -274,114 +287,145 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } catch (error) {
             console.error("Error al obtener minuta generada:", error);
-            minutaModalBody.innerHTML = `<p style="color:red;">Error al cargar la minuta: ${error.message}</p>`;
+            minutaModalBody.innerHTML = `<p style="color:red; text-align:center;">Error al cargar la minuta: ${error.message}</p>`;
         }
     }
 
     function renderGeneratedMinuta(data) {
-        // Ordenar los tiempos de comida por hora antes de renderizar
-        if (data.tiempos_de_comida && data.tiempos_de_comida.length > 0) {
-            data.tiempos_de_comida.sort((a, b) => {
-                const timeToMinutes = timeStr => {
-                    const [hours, minutes] = (timeStr || '00:00').split(':').map(Number);
-                    return hours * 60 + minutes;
-                };
-                return timeToMinutes(a.hora_sugerida) - timeToMinutes(b.hora_sugerida);
-            });
+    // Ordenar los tiempos de comida por hora antes de renderizar
+    if (data.tiempos_de_comida && data.tiempos_de_comida.length > 0) {
+        data.tiempos_de_comida.sort((a, b) => {
+            const timeToMinutes = timeStr => {
+                const [hours, minutes] = (timeStr || '00:00').split(':').map(Number);
+                return hours * 60 + minutes;
+            };
+            return timeToMinutes(a.hora_sugerida) - timeToMinutes(b.hora_sugerida);
+        });
+    }
+    
+    minutaModalBody.innerHTML = ''; 
+    if (!data.tiempos_de_comida || data.tiempos_de_comida.length === 0) {
+        minutaModalBody.innerHTML = '<p style="text-align:center;">No hay tiempos de comida definidos en la minuta generada.</p>';
+        return;
+    }
+    
+    const minutaTitle = document.createElement('h3');
+    minutaTitle.style.textAlign = 'center';
+    minutaTitle.style.marginBottom = '20px';
+    minutaTitle.style.color = '#173b4c';
+    minutaTitle.textContent = `Plan de Alimentación para ${PACIENTE_NOMBRE_COMPLETO_FROM_DJANGO || 'Paciente'}`;
+    minutaModalBody.appendChild(minutaTitle);
+
+    data.tiempos_de_comida.forEach(tiempo => {
+        const tiempoDiv = document.createElement('div');
+        tiempoDiv.classList.add('minuta-tiempo-comida');
+        tiempoDiv.style.marginBottom = '25px'; 
+        tiempoDiv.style.paddingBottom = '15px';
+        tiempoDiv.style.borderBottom = '1px solid #e0e0e0';
+        
+        // Contenedor para el título y la hora en la misma línea
+        const tiempoHeaderContainer = document.createElement('div');
+        tiempoHeaderContainer.style.display = 'flex';
+        tiempoHeaderContainer.style.justifyContent = 'space-between';
+        tiempoHeaderContainer.style.alignItems = 'center';
+        tiempoHeaderContainer.style.marginBottom = '10px';
+        
+        const tiempoHeader = document.createElement('h4');
+        tiempoHeader.textContent = `${tiempo.tiempo_comida}`;
+        tiempoHeader.style.margin = '0';
+        tiempoHeader.style.color = '#173b4c';
+        
+        if (tiempo.hora_sugerida) {
+            const horaP = document.createElement('span');
+            horaP.classList.add('hora-sugerida');
+            horaP.style.fontStyle = 'normal'; 
+            horaP.style.fontSize = '0.9em'; 
+            horaP.style.color = '#173b4c';
+            horaP.textContent = `Hora Sugerida: ${tiempo.hora_sugerida}`;
+            tiempoHeaderContainer.appendChild(tiempoHeader);
+            tiempoHeaderContainer.appendChild(horaP);
+        } else {
+            tiempoHeaderContainer.appendChild(tiempoHeader);
         }
         
-        minutaModalBody.innerHTML = ''; 
-        if (!data.tiempos_de_comida || data.tiempos_de_comida.length === 0) {
-            minutaModalBody.innerHTML = '<p>No hay tiempos de comida definidos en la minuta generada.</p>';
-            return;
-        }
-        const minutaTitle = document.createElement('h3');
-        minutaTitle.style.textAlign = 'center';
-        minutaTitle.style.marginBottom = '20px';
-        minutaModalBody.appendChild(minutaTitle);
+        tiempoDiv.appendChild(tiempoHeaderContainer);
 
-        data.tiempos_de_comida.forEach(tiempo => {
-            const tiempoDiv = document.createElement('div');
-            tiempoDiv.classList.add('minuta-tiempo-comida');
-            tiempoDiv.style.marginBottom = '15px'; 
-            
-            const tiempoHeader = document.createElement('h4');
-            tiempoHeader.textContent = `${tiempo.tiempo_comida}`;
-            tiempoHeader.style.borderBottom = "1px solid #eee"; // Estilo
-            tiempoHeader.style.paddingBottom = "5px"; // Estilo
-            tiempoDiv.appendChild(tiempoHeader);
+        if (tiempo.grupos && tiempo.grupos.length > 0) {
+            tiempo.grupos.forEach(grupo => {
+                const grupoDiv = document.createElement('div');
+                grupoDiv.classList.add('minuta-grupo-alimento');
+                grupoDiv.style.margin = '15px 0';
 
-            if (tiempo.hora_sugerida) {
-                const horaP = document.createElement('p');
-                horaP.classList.add('hora-sugerida');
-                horaP.style.fontStyle = 'italic'; 
-                horaP.style.fontSize = '0.9em'; 
-                horaP.textContent = `Hora Sugerida: ${tiempo.hora_sugerida}`;
-                tiempoDiv.appendChild(horaP);
-            }
+                const grupoHeader = document.createElement('h5');
+                grupoHeader.textContent = grupo.grupo_descripcion;
+                grupoHeader.style.color = '#173b4c';
+                grupoHeader.style.marginBottom = '8px';
+                grupoHeader.style.borderBottom = '1px solid #62f485';
+                grupoHeader.style.paddingBottom = '5px';
+                grupoDiv.appendChild(grupoHeader);
 
-            if (tiempo.grupos && tiempo.grupos.length > 0) {
-                tiempo.grupos.forEach(grupo => {
-                    const grupoDiv = document.createElement('div');
-                    grupoDiv.classList.add('minuta-grupo-alimento');
-                    grupoDiv.style.marginLeft = "10px"; 
+                // Crear un textarea para las opciones del grupo
+                const opcionesTextarea = document.createElement('textarea');
+                opcionesTextarea.rows = Math.max(4, grupo.opciones.length + 1);
+                opcionesTextarea.readOnly = false; 
+                opcionesTextarea.style.width = "95%";
+                opcionesTextarea.style.padding = "8px";
+                opcionesTextarea.style.border = "2px solid #62f485";
+                opcionesTextarea.style.borderRadius = "4px";
+                opcionesTextarea.style.fontFamily = "inherit";
+                opcionesTextarea.style.fontSize = "14px";
+                opcionesTextarea.style.backgroundColor = "#f9fff9"; // Fondo ligeramente verdoso
+                opcionesTextarea.style.color = "#173b4c";
+                opcionesTextarea.dataset.tiempoId = tiempo.id_tiempo_comida;
+                opcionesTextarea.dataset.grupoDesc = grupo.grupo_descripcion;
 
-                    const grupoHeader = document.createElement('h5');
-                    grupoHeader.textContent = grupo.grupo_descripcion;
-                    grupoDiv.appendChild(grupoHeader);
-
-                    const opcionesTextarea = document.createElement('textarea');
-                    opcionesTextarea.rows = Math.max(4, grupo.opciones.length + 1);
-                    opcionesTextarea.readOnly = false; 
-                    opcionesTextarea.style.width = "95%";
-                    opcionesTextarea.style.padding = "5px";
-                    opcionesTextarea.style.border = "1px solid #ccc";
-                    opcionesTextarea.dataset.tiempoId = tiempo.id_tiempo_comida;
-                    opcionesTextarea.dataset.grupoDesc = grupo.grupo_descripcion;
-
-                    let opcionesTexto = '';
-                    grupo.opciones.forEach(opcion => {
-                        opcionesTexto += `- ${opcion.cantidad} ${opcion.medida} de ${opcion.alimento}\n`;
-                    });
-                    opcionesTextarea.value = opcionesTexto.trim();
-
-                    grupoDiv.appendChild(opcionesTextarea);
-                    tiempoDiv.appendChild(grupoDiv);
+                // Construir el texto de las opciones
+                let opcionesTexto = '';
+                grupo.opciones.forEach(opcion => {
+                    opcionesTexto += `• ${opcion.cantidad} ${opcion.medida} de ${opcion.alimento}\n`;
                 });
-            }
-            minutaModalBody.appendChild(tiempoDiv);
-        });
-        // Div de indicaciones generales
-        const indicacionesGeneralesDiv = document.createElement('div');
-        indicacionesGeneralesDiv.id = 'minuta-indicaciones-generales-container'; 
-        indicacionesGeneralesDiv.style.marginTop = '25px'; 
-        indicacionesGeneralesDiv.style.paddingTop = '15px';
-        indicacionesGeneralesDiv.style.borderTop = '1px solid #eee';
+                opcionesTextarea.value = opcionesTexto.trim();
 
-        const indicacionesLabel = document.createElement('h4');
-        indicacionesLabel.textContent = 'Indicaciones Adicionales:';
-        indicacionesLabel.style.marginBottom = '8px';
-
-        const indicacionesTextarea = document.createElement('textarea');
-        indicacionesTextarea.id = 'minuta-indicaciones-generales-textarea'; 
-        indicacionesTextarea.rows = 4;
-        indicacionesTextarea.placeholder = 'Ej: Mantener una buena hidratación, realizar actividad física regularmente...';
-        indicacionesTextarea.style.width = '100%';
-        indicacionesTextarea.style.minHeight = '80px';
-        indicacionesTextarea.style.padding = '8px';
-        indicacionesTextarea.style.border = '1px solid #ccc';
-        indicacionesTextarea.style.borderRadius = '4px';
-        indicacionesTextarea.style.boxSizing = 'border-box';
-
-        // PRE-POBLAR SI YA EXISTEN INDICACIONES GENERALES GUARDADAS
-        if (data.indicaciones_generales_minuta) { 
-            indicacionesTextarea.value = data.indicaciones_generales_minuta;
+                grupoDiv.appendChild(opcionesTextarea);
+                tiempoDiv.appendChild(grupoDiv);
+            });
         }
+        minutaModalBody.appendChild(tiempoDiv);
+    });
+    
+    // Div de indicaciones generales
+    const indicacionesGeneralesDiv = document.createElement('div');
+    indicacionesGeneralesDiv.id = 'minuta-indicaciones-generales-container'; 
+    indicacionesGeneralesDiv.style.marginTop = '25px'; 
+    indicacionesGeneralesDiv.style.paddingTop = '15px';
+    indicacionesGeneralesDiv.style.borderTop = '1px solid #e0e0e0';
 
-        indicacionesGeneralesDiv.appendChild(indicacionesLabel);
-        indicacionesGeneralesDiv.appendChild(indicacionesTextarea);
-        minutaModalBody.appendChild(indicacionesGeneralesDiv);
+    const indicacionesLabel = document.createElement('h4');
+    indicacionesLabel.textContent = 'Indicaciones Adicionales:';
+    indicacionesLabel.style.marginBottom = '8px';
+    indicacionesLabel.style.color = '#173b4c';
+
+    const indicacionesTextarea = document.createElement('textarea');
+    indicacionesTextarea.id = 'minuta-indicaciones-generales-textarea'; 
+    indicacionesTextarea.rows = 4;
+    indicacionesTextarea.placeholder = 'Ej: Mantener una buena hidratación, realizar actividad física regularmente...';
+    indicacionesTextarea.style.width = '100%';
+    indicacionesTextarea.style.minHeight = '80px';
+    indicacionesTextarea.style.padding = '8px';
+    indicacionesTextarea.style.border = '2px solid #62f485';
+    indicacionesTextarea.style.borderRadius = '4px';
+    indicacionesTextarea.style.boxSizing = 'border-box';
+    indicacionesTextarea.style.backgroundColor = "#f9fff9"; // Fondo ligeramente verdoso
+
+    // PRE-POBLAR SI YA EXISTEN INDICACIONES GENERALES GUARDADAS
+    if (data.indicaciones_generales_minuta) { 
+        indicacionesTextarea.value = data.indicaciones_generales_minuta;
     }
+
+    indicacionesGeneralesDiv.appendChild(indicacionesLabel);
+    indicacionesGeneralesDiv.appendChild(indicacionesTextarea);
+    minutaModalBody.appendChild(indicacionesGeneralesDiv);
+}
 
     function closeMinutaModal() {
         minutaModal.style.display = 'none';
@@ -401,6 +445,64 @@ document.addEventListener('DOMContentLoaded', () => {
         const clonedTextarea = contentToExport.querySelector('#minuta-indicaciones-generales-textarea');
         if (originalTextarea && clonedTextarea) {
             clonedTextarea.value = originalTextarea.value;
+        }
+        
+
+        // AGREGAR FECHA
+        const titleElement = contentToExport.querySelector('h3');
+        if (titleElement) {
+            // Crear elemento de fecha
+            const dateP = document.createElement('p');
+            dateP.style.textAlign = 'left';
+            dateP.style.color = '#173b4c';
+            dateP.style.fontSize = '12px';
+            dateP.style.marginBottom = '10px';
+            dateP.style.fontWeight = 'normal';
+            
+            // Obtener fecha de la minuta actual
+            let fechaFormateada;
+            
+            // Si es una minuta histórica obtener la fecha del selector
+            if (isViewingHistoricalMinuta && minutaDateSelectorEl.value !== "current") {
+                const selectedOptionText = minutaDateSelectorEl.options[minutaDateSelectorEl.selectedIndex].text;
+                // Extraer la fecha del texto "Minuta del etc"
+                fechaFormateada = selectedOptionText.replace("Minuta del ", "");
+            }
+            // Si tenemos datos de la minuta actual editable
+            else if (currentGeneratedMinutaData && currentGeneratedMinutaData.fecha_minuta) {
+                const fecha = new Date(currentGeneratedMinutaData.fecha_minuta);
+                fechaFormateada = fecha.toLocaleDateString('es-ES', { 
+                    day: 'numeric', 
+                    month: 'long', 
+                    year: 'numeric' 
+                });
+            }
+            //fallback a fecha actual
+            else {
+                const today = new Date();
+                fechaFormateada = today.toLocaleDateString('es-ES', { 
+                    day: 'numeric', 
+                    month: 'long', 
+                    year: 'numeric' 
+                });
+            }
+            
+            dateP.textContent = `Fecha: ${fechaFormateada}`;
+            
+            // Insertar antes del título
+            titleElement.parentNode.insertBefore(dateP, titleElement);
+            
+            // AGREGAR INSTRUCCIÓNES
+            const instructionP = document.createElement('p');
+            instructionP.style.textAlign = 'center';
+            instructionP.style.fontStyle = 'normal';
+            instructionP.style.color = '#173b4c';
+            instructionP.style.marginBottom = '20px';
+            instructionP.style.fontSize = '14px';
+            instructionP.textContent = 'Escoja 1 de las opciones por cada grupo de alimentos';
+            
+            // Insertar después del título
+            titleElement.parentNode.insertBefore(instructionP, titleElement.nextSibling);
         }
         
         // Convertir textareas a divs con <pre> para preservar saltos de línea
@@ -454,7 +556,7 @@ document.addEventListener('DOMContentLoaded', () => {
             element.style.width = '100%';
             element.style.padding = '20px';
             element.style.fontFamily = 'Arial, sans-serif';
-            element.style.color = 'var(--text-color, #000000)';
+            element.style.color = '#173b4c';
             
             const contentClone = minutaModalBody.cloneNode(true);
             
@@ -462,7 +564,7 @@ document.addEventListener('DOMContentLoaded', () => {
             textareas.forEach(ta => {
                 const div = document.createElement('div');
                 div.style.whiteSpace = 'pre-wrap';
-                div.style.border = '1px solid var(--border-color, #e0e0e0)';
+                div.style.border = '1px solid #e0e0e0';
                 div.style.padding = '5px';
                 div.style.marginBottom = '10px';
                 div.style.backgroundColor = '#f9f9f9';
@@ -475,12 +577,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 <style>
                     body { 
                         font-family: Arial, sans-serif;
-                        color: var(--text-color, #000000);
+                        color: #173b4c;
                         font-size: 14px;
                         line-height: 1.4;
                     }
                     h2, h3, h4 { 
-                        color: var(--primary-color, #173b4c);
+                        color: #173b4c;
                         margin-bottom: 0.5em;
                     }
                     h2 { font-size: 1.3rem; }
@@ -489,7 +591,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     .minuta-tiempo-comida { 
                         margin-bottom: 20px; 
                         page-break-inside: avoid;
-                        border-bottom: 1px solid var(--border-color, #e0e0e0);
+                        border-bottom: 1px solid #e0e0e0;
                         padding-bottom: 15px;
                     }
                     .minuta-grupo-alimento { 
@@ -498,7 +600,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                     .hora-sugerida {
                         font-style: italic;
-                        color: var(--light-text, #747474);
+                        color: #62f485;
                         margin-bottom: 10px;
                     }
                     table {
@@ -507,19 +609,19 @@ document.addEventListener('DOMContentLoaded', () => {
                         margin: 15px 0;
                     }
                     th, td {
-                        border: 1px solid var(--border-color, #e0e0e0);
+                        border: 1px solid #e0e0e0;
                         padding: 8px 12px;
                         text-align: left;
                     }
                     th {
                         background-color: #f8f9fa;
-                        color: var(--secondary-color, #3f5c69);
+                        color: #173b4c;
                         font-weight: 600;
                     }
                     #minuta-indicaciones-generales-container {
                         margin-top: 25px;
                         padding-top: 15px;
-                        border-top: 1px solid var(--border-color, #e0e0e0);
+                        border-top: 1px solid #e0e0e0;
                     }
                     pre { /* Si getMinutaHtmlForExport ya convierte a <pre> */
                         white-space: pre-wrap;
@@ -536,13 +638,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 </style>
             `;
             
-            const title = document.createElement('h2');
-            title.textContent = `Plan de Alimentación para ${PACIENTE_NOMBRE_COMPLETO_FROM_DJANGO || 'Paciente'}`;
-            title.style.textAlign = 'center';
-            title.style.marginBottom = '20px';
-            title.style.color = 'var(--primary-color, #173b4c)';
             
-            element.appendChild(title);
             element.innerHTML += styles + getMinutaHtmlForExport();
 
 
@@ -568,10 +664,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     orientation: 'portrait',
                     compress: true
                 },
-                pagebreak: { 
-                    mode: ['avoid-all', 'css', 'legacy'],
-                    before: '.minuta-tiempo-comida'
-                }
+                // pagebreak: { 
+                //     mode: ['avoid-all', 'css', 'legacy'],
+                //     before: '.minuta-tiempo-comida'
+                // }
             };
 
             await new Promise(resolve => setTimeout(resolve, 300));
@@ -842,19 +938,36 @@ document.addEventListener('DOMContentLoaded', () => {
         entryDiv.classList.add('meal-time-entry');
         entryDiv.id = `meal-entry-${entryIdSuffix}`;
         entryDiv.dataset.entryId = entryIdSuffix;
+        entryDiv.style.background = '#f8f9fa';
+        entryDiv.style.padding = '15px';
+        entryDiv.style.marginBottom = '15px';
+        entryDiv.style.borderRadius = '8px';
+        entryDiv.style.border = '1px solid #e0e0e0';
 
         const mainContentDiv = document.createElement('div');
         mainContentDiv.classList.add('meal-entry-main-content');
 
         const selectorDiv = document.createElement('div');
         selectorDiv.classList.add('meal-time-selector');
+        selectorDiv.style.display = 'flex';
+        selectorDiv.style.gap = '15px';
+        selectorDiv.style.marginBottom = '15px';
+        selectorDiv.style.alignItems = 'center';
+        
         const selectLabel = document.createElement('label');
         selectLabel.htmlFor = `meal-time-select-${entryIdSuffix}`;
         selectLabel.textContent = `Tiempo de Comida:`;
+        selectLabel.style.fontWeight = 'bold';
+        selectLabel.style.color = '#173b4c';
+        
         const selectElement = document.createElement('select');
         selectElement.id = `meal-time-select-${entryIdSuffix}`;
         selectElement.classList.add('meal-time-select');
         selectElement.required = true;
+        selectElement.style.padding = '8px';
+        selectElement.style.border = '1px solid #173b4c';
+        selectElement.style.borderRadius = '4px';
+        selectElement.style.flex = '1';
         selectElement.disabled = isHistorical; // Deshabilitar select si es histórico
 
         const availableNow = getAvailableMealTimes();
@@ -871,9 +984,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const timeInputDiv = document.createElement('div');
         timeInputDiv.classList.add('time-input-container');
+        timeInputDiv.style.display = 'flex';
+        timeInputDiv.style.alignItems = 'center';
+        timeInputDiv.style.gap = '10px';
+        
         const timeLabel = document.createElement('label');
         timeLabel.htmlFor = `meal-hour-input-${entryIdSuffix}`;
         timeLabel.textContent = 'Hora:';
+        timeLabel.style.fontWeight = 'bold';
+        timeLabel.style.color = '#173b4c';
+        
         const timeInput = document.createElement('input');
         timeInput.type = 'time';
         timeInput.id = `meal-hour-input-${entryIdSuffix}`;
@@ -881,6 +1001,10 @@ document.addEventListener('DOMContentLoaded', () => {
         timeInput.required = true;
         timeInput.value = convertTo24HourFormat(hora);
         timeInput.readOnly = isHistorical; // Hacerlo readonly si es histórico
+        timeInput.style.padding = '8px';
+        timeInput.style.border = '1px solid #173b4c';
+        timeInput.style.borderRadius = '4px';
+        
         timeInputDiv.appendChild(timeLabel);
         timeInputDiv.appendChild(timeInput);
         selectorDiv.appendChild(timeInputDiv);
@@ -889,21 +1013,38 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const tableDiv = document.createElement('div');
         tableDiv.classList.add('food-portions-table');
+        tableDiv.style.overflowX = 'auto';
+        
         const table = document.createElement('table');
+        table.style.width = '100%';
+        table.style.borderCollapse = 'collapse';
+        table.style.marginTop = '10px';
+        
         const thead = document.createElement('thead');
         const headerRow = document.createElement('tr');
+        headerRow.style.backgroundColor = '#173b4c';
+        headerRow.style.color = 'white';
+        
         foodGroupsData.forEach(group => {
             const th = document.createElement('th');
             th.textContent = group.descripcion;
             th.dataset.grupoId = group.id_grupo_alimenticio;
+            th.style.padding = '10px';
+            th.style.textAlign = 'center';
             headerRow.appendChild(th);
         });
         thead.appendChild(headerRow);
         table.appendChild(thead);
+        
         const tbody = document.createElement('tbody');
         const inputRow = document.createElement('tr');
+        
         foodGroupsData.forEach(group => {
             const td = document.createElement('td');
+            td.style.padding = '10px';
+            td.style.textAlign = 'center';
+            td.style.borderBottom = '1px solid #e0e0e0';
+            
             const input = document.createElement('input');
             input.type = 'number';
             input.min = '0';
@@ -912,11 +1053,19 @@ document.addEventListener('DOMContentLoaded', () => {
             input.name = `minuta[${entryIdSuffix}][porciones][${group.id_grupo_alimenticio}]`;
             input.dataset.grupoId = group.id_grupo_alimenticio;
             input.readOnly = isHistorical; // Hacerlo readonly si es histórico
+            input.style.width = '80%';
+            input.style.padding = '8px';
+            input.style.border = '1px solid #173b4c';
+            input.style.borderRadius = '4px';
+            input.style.textAlign = 'center';
+            
             const savedPortion = portionsMap[group.id_grupo_alimenticio];
             if (savedPortion !== undefined && savedPortion !== null) input.value = savedPortion;
+            
             td.appendChild(input);
             inputRow.appendChild(td);
         });
+        
         tbody.appendChild(inputRow);
         table.appendChild(tbody);
         tableDiv.appendChild(table);
@@ -928,19 +1077,38 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!isHistorical) {
             const actionsDiv = document.createElement('div');
             actionsDiv.classList.add('meal-entry-actions');
+            actionsDiv.style.display = 'flex';
+            actionsDiv.style.justifyContent = 'flex-end';
+            actionsDiv.style.gap = '10px';
+            actionsDiv.style.marginTop = '15px';
 
             const saveButton = document.createElement('button');
-            saveButton.textContent = 'Guardar Tiempo de Comida';
+            saveButton.textContent = 'Guardar';
             saveButton.classList.add('save-single-meal-btn');
             saveButton.type = 'button';
+            saveButton.style.backgroundColor = '#173b4c';
+            saveButton.style.color = 'white';
+            saveButton.style.border = 'none';
+            saveButton.style.padding = '8px 16px';
+            saveButton.style.borderRadius = '4px';
+            saveButton.style.cursor = 'pointer';
 
             const deleteButton = document.createElement('button');
-            deleteButton.textContent = 'Eliminar Tiempo de Comida';
+            deleteButton.textContent = 'Eliminar';
             deleteButton.classList.add('delete-single-meal-btn');
             deleteButton.type = 'button';
+            deleteButton.style.backgroundColor = '#dc3545';
+            deleteButton.style.color = 'white';
+            deleteButton.style.border = 'none';
+            deleteButton.style.padding = '8px 16px';
+            deleteButton.style.borderRadius = '4px';
+            deleteButton.style.cursor = 'pointer';
 
             const statusDiv = document.createElement('div');
             statusDiv.classList.add('single-save-status');
+            statusDiv.style.flex = '1';
+            statusDiv.style.textAlign = 'right';
+            statusDiv.style.padding = '8px';
 
             saveButton.addEventListener('click', () => handleSaveSingleMealEntry(entryDiv, saveButton, deleteButton, statusDiv));
             deleteButton.addEventListener('click', () => handleDeleteSingleMealEntry(entryDiv, saveButton, deleteButton, statusDiv));
@@ -949,7 +1117,6 @@ document.addEventListener('DOMContentLoaded', () => {
             actionsDiv.appendChild(deleteButton);
             actionsDiv.appendChild(statusDiv);
 
-            // <--- CAMBIO: ahora lo agregamos después de la tabla, no al final del entryDiv
             entryDiv.appendChild(actionsDiv);
         }
 
@@ -1035,34 +1202,64 @@ document.addEventListener('DOMContentLoaded', () => {
          entryDiv.classList.add('meal-time-entry');
          entryDiv.id = `meal-entry-${entryIdSuffix}`;
          entryDiv.dataset.entryId = entryIdSuffix;
+         entryDiv.style.background = '#f8f9fa';
+         entryDiv.style.padding = '15px';
+         entryDiv.style.marginBottom = '15px';
+         entryDiv.style.borderRadius = '8px';
+         entryDiv.style.border = '1px solid #e0e0e0';
 
          const contentAboveActionsDiv = document.createElement('div');
          contentAboveActionsDiv.classList.add('meal-entry-content-above-actions');
 
          const selectorDiv = document.createElement('div');
          selectorDiv.classList.add('meal-time-selector');
+         selectorDiv.style.display = 'flex';
+         selectorDiv.style.gap = '15px';
+         selectorDiv.style.marginBottom = '15px';
+         selectorDiv.style.alignItems = 'center';
+         
          const selectLabel = document.createElement('label');
          selectLabel.htmlFor = `meal-time-select-${entryIdSuffix}`;
          selectLabel.textContent = `Nuevo Tiempo de Comida:`;
+         selectLabel.style.fontWeight = 'bold';
+         selectLabel.style.color = '#173b4c';
+         
          const selectElement = document.createElement('select');
          selectElement.id = `meal-time-select-${entryIdSuffix}`;
          selectElement.classList.add('meal-time-select');
          selectElement.required = true;
+         selectElement.style.padding = '8px';
+         selectElement.style.border = '1px solid #173b4c';
+         selectElement.style.borderRadius = '4px';
+         selectElement.style.flex = '1';
+         
          const availableTimes = getAvailableMealTimes();
          populateSelectWithOptions(selectElement, availableTimes, null); 
+         
          selectorDiv.appendChild(selectLabel);
          selectorDiv.appendChild(selectElement);
 
          const timeInputDiv = document.createElement('div');
          timeInputDiv.classList.add('time-input-container');
+         timeInputDiv.style.display = 'flex';
+         timeInputDiv.style.alignItems = 'center';
+         timeInputDiv.style.gap = '10px';
+         
          const timeLabel = document.createElement('label');
          timeLabel.htmlFor = `meal-hour-input-${entryIdSuffix}`;
          timeLabel.textContent = 'Hora:';
+         timeLabel.style.fontWeight = 'bold';
+         timeLabel.style.color = '#173b4c';
+         
          const timeInput = document.createElement('input');
          timeInput.type = 'time';
          timeInput.id = `meal-hour-input-${entryIdSuffix}`;
          timeInput.classList.add('meal-hour-input');
          timeInput.required = true;
+         timeInput.style.padding = '8px';
+         timeInput.style.border = '1px solid #173b4c';
+         timeInput.style.borderRadius = '4px';
+         
          timeInputDiv.appendChild(timeLabel);
          timeInputDiv.appendChild(timeInput);
          selectorDiv.appendChild(timeInputDiv);
@@ -1070,21 +1267,38 @@ document.addEventListener('DOMContentLoaded', () => {
 
          const tableDiv = document.createElement('div');
          tableDiv.classList.add('food-portions-table');
+         tableDiv.style.overflowX = 'auto';
+         
          const table = document.createElement('table');
+         table.style.width = '100%';
+         table.style.borderCollapse = 'collapse';
+         table.style.marginTop = '10px';
+         
          const thead = document.createElement('thead');
          const headerRow = document.createElement('tr');
+         headerRow.style.backgroundColor = '#173b4c';
+         headerRow.style.color = 'white';
+         
          foodGroupsData.forEach(group => {
              const th = document.createElement('th');
              th.textContent = group.descripcion;
              th.dataset.grupoId = group.id_grupo_alimenticio;
+             th.style.padding = '10px';
+             th.style.textAlign = 'center';
              headerRow.appendChild(th);
          });
          thead.appendChild(headerRow);
          table.appendChild(thead);
+         
          const tbody = document.createElement('tbody');
          const inputRow = document.createElement('tr');
+         
          foodGroupsData.forEach(group => {
              const td = document.createElement('td');
+             td.style.padding = '10px';
+             td.style.textAlign = 'center';
+             td.style.borderBottom = '1px solid #e0e0e0';
+             
              const input = document.createElement('input');
              input.type = 'number';
              input.min = '0';
@@ -1092,9 +1306,16 @@ document.addEventListener('DOMContentLoaded', () => {
              input.placeholder = '0';
              input.name = `minuta[${entryIdSuffix}][porciones][${group.id_grupo_alimenticio}]`;
              input.dataset.grupoId = group.id_grupo_alimenticio;
+             input.style.width = '80%';
+             input.style.padding = '8px';
+             input.style.border = '1px solid #173b4c';
+             input.style.borderRadius = '4px';
+             input.style.textAlign = 'center';
+             
              td.appendChild(input);
              inputRow.appendChild(td);
          });
+         
          tbody.appendChild(inputRow);
          table.appendChild(tbody);
          tableDiv.appendChild(table);
@@ -1103,18 +1324,42 @@ document.addEventListener('DOMContentLoaded', () => {
 
          const actionsDiv = document.createElement('div');
          actionsDiv.classList.add('meal-entry-actions');
+         actionsDiv.style.display = 'flex';
+         actionsDiv.style.justifyContent = 'flex-end';
+         actionsDiv.style.gap = '10px';
+         actionsDiv.style.marginTop = '15px';
+         
          const saveButton = document.createElement('button');
-         saveButton.textContent = 'Guardar Tiempo de Comida';
+         saveButton.textContent = 'Guardar';
          saveButton.classList.add('save-single-meal-btn');
          saveButton.type = 'button';
+         saveButton.style.backgroundColor = '#173b4c';
+         saveButton.style.color = 'white';
+         saveButton.style.border = 'none';
+         saveButton.style.padding = '8px 16px';
+         saveButton.style.borderRadius = '4px';
+         saveButton.style.cursor = 'pointer';
+         
          const deleteButton = document.createElement('button'); 
-         deleteButton.textContent = 'Eliminar Tiempo de Comida';
+         deleteButton.textContent = 'Eliminar';
          deleteButton.classList.add('delete-single-meal-btn');
          deleteButton.type = 'button';
+         deleteButton.style.backgroundColor = '#dc3545';
+         deleteButton.style.color = 'white';
+         deleteButton.style.border = 'none';
+         deleteButton.style.padding = '8px 16px';
+         deleteButton.style.borderRadius = '4px';
+         deleteButton.style.cursor = 'pointer';
+         
          const statusDiv = document.createElement('div');
          statusDiv.classList.add('single-save-status');
+         statusDiv.style.flex = '1';
+         statusDiv.style.textAlign = 'right';
+         statusDiv.style.padding = '8px';
+         
          saveButton.addEventListener('click', () => handleSaveSingleMealEntry(entryDiv, saveButton, deleteButton, statusDiv));
          deleteButton.addEventListener('click', () => handleDeleteSingleMealEntry(entryDiv, saveButton, deleteButton, statusDiv));
+         
          actionsDiv.appendChild(saveButton);
          actionsDiv.appendChild(deleteButton);
          actionsDiv.appendChild(statusDiv);
