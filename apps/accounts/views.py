@@ -66,5 +66,5 @@ def perfil(request):
 def login(request):
     return render(request, 'accounts/login.html')
 
-def redirectPerfil(request):
-    return render(request, 'accounts/perfil.html') #por el momento
+def dashboard(request):
+    return render(request, 'accounts/dashboard.html')
