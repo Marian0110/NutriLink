@@ -331,6 +331,7 @@ async function cargarResumenCitas(id_nutricionista) {
                 li.innerHTML = `
                     <strong>${cita.primer_nombre} ${cita.apellido_paterno}</strong><br>
                     <small>${cita.correo}</small><br>
+                    <i class="fas fa-map-marker-alt me-1 text-muted"></i><small class="text-muted">${cita.nombre_centro}</small><br>
                     ${horaTexto}<br>
                     <span class="badge ${badgeClass}">${cita.estado}</span>
                     ${cita.estado === 'Reservada' ? `
@@ -458,7 +459,7 @@ async function cargarResumenCitas(id_nutricionista) {
 }
 
 // DOM
-document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', async function () {
     console.log('✅ DOMContentLoaded se ejecutó');
 
     const inputFecha = document.getElementById('fecha');
@@ -603,7 +604,7 @@ if (centroSelect) {
         cargarResumenAgenda(parseInt(id_nutricionista));
         console.log('Antes de la función cargar Nutri :', id_nutricionista);
         cargarResumenCitas(parseInt(id_nutricionista));
-        cargarCentrosAtencion(id_nutricionista);
+        await cargarCentrosAtencion(id_nutricionista);
         verificarCancelacionesPendientesNutricionista(parseInt(id_nutricionista));
         verificarSolicitudesPendientesNutricionista(parseInt(id_nutricionista));
     }
