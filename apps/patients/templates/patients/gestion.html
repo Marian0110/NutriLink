@@ -7,18 +7,20 @@
 <div class="container-fluid">
   <div class="row">
     <main>
-      <div class="encabezado d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+      <div
+        class="encabezado d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
         <h1 class="h3 mb-0">
           <i class="fas fa-users me-2"></i>Gestión de pacientes
         </h1>
         <div class="d-flex align-items-center">
           <span id="patientCounter" class="text-muted me-3">Total: 0</span>
-          <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#patientModal" id="addPatientBtn">
+          <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#patientModal"
+            id="addPatientBtn">
             <i class="fas fa-user-plus me-2"></i>Agregar
           </button>
         </div>
       </div>
-      
+
       <div class="card shadow-lg mt-3" style="border-radius: 15px; border: none;">
         <div class="card-body">
           <div class="table-responsive">
@@ -43,7 +45,7 @@
               </tbody>
             </table>
           </div>
-          
+
           <nav aria-label="Page navigation" id="pagination-container">
             <ul class="pagination justify-content-end mt-4"></ul>
           </nav>
@@ -79,7 +81,7 @@
                 <label class="form-label">Segundo nombre:</label>
                 <input type="text" class="form-control" id="segundo_nombre" name="segundo_nombre">
               </div>
-              
+
               <div class="col-md-6">
                 <label class="form-label">Apellido paterno: <span class="text-danger">*</span></label>
                 <input type="text" class="form-control" id="apellido_paterno" name="apellido_paterno" required>
@@ -88,18 +90,20 @@
                 <label class="form-label">Apellido materno:</label>
                 <input type="text" class="form-control" id="apellido_materno" name="apellido_materno">
               </div>
-              
+
               <div class="col-md-3">
                 <label class="form-label">R.U.T: <span class="text-danger">*</span></label>
                 <div class="input-group">
-                  <input type="text" class="form-control" id="rut_paciente" name="rut_paciente" required minlength="7" maxlength="8" >
+                  <input type="text" class="form-control" id="rut_paciente" name="rut_paciente" required minlength="7"
+                    maxlength="8">
                   <span class="input-group-text"><i class="fas fa-id-card"></i></span>
                 </div>
               </div>
               <div class="col-md-2">
                 <label class="form-label">Digito: <span class="text-danger">*</span></label>
                 <div class="input-group">
-                  <input type="text" class="form-control" id="dv" name="dv" placeholder="verificador" required  maxlength="1">
+                  <input type="text" class="form-control" id="dv" name="dv" placeholder="verificador" required
+                    maxlength="1">
                 </div>
               </div>
               <div class="col-md-3">
@@ -118,14 +122,15 @@
               </div>
             </div>
           </fieldset>
-          
+
           <fieldset class="contact-info-section mb-4">
             <legend class="section-title">Información de Contacto</legend>
             <div class="row g-3">
               <div class="col-md-6">
                 <label class="form-label">Teléfono:</label>
                 <div class="input-group">
-                  <input type="tel" class="form-control" id="telefono" name="telefono" placeholder="Ej: 944556688" maxlength="9">
+                  <input type="tel" class="form-control" id="telefono" name="telefono" placeholder="Ej: 944556688"
+                    maxlength="9">
                   <span class="input-group-text"><i class="fas fa-phone"></i></span>
                 </div>
               </div>
@@ -138,7 +143,7 @@
               </div>
             </div>
           </fieldset>
-          
+
           <div class="d-flex justify-content-end gap-2 mt-4">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
               <i class="fas fa-times me-2"></i>Cancelar
@@ -167,35 +172,25 @@
         <form id="form-agendar-cita">
           <input type="hidden" id="input-id-paciente">
           <div class="mb-3">
+            <label class="form-label">Centro de atención:</label>
+            <select class="form-select" id="select-centro-atencion" required>
+              <option value="">Seleccione un centro...</option>
+            </select>
+          </div>
+          <div class="mb-3">
             <label class="form-label">Seleccionar hora disponible:</label>
             <select class="form-select" id="select-disponibilidad" required>
               <option value="">Seleccione una hora...</option>
             </select>
           </div>
-
           <div class="mb-3">
             <label class="form-label">Motivo de consulta:</label>
             <input type="text" class="form-control" id="input-motivo">
           </div>
-
           <div class="mb-3">
             <label class="form-label">Notas adicionales:</label>
             <textarea type="text" class="form-control" id="input-notas"></textarea>
           </div>
-          <!--
-          <div class="mb-3">
-            <label class="form-label">Hecho relevante:</label>
-            <textarea class="form-control" id="input-hecho" rows="2"></textarea>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Compromiso acordado:</label>
-            <textarea class="form-control" id="input-compromiso" rows="2"></textarea>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Adherencia a medicamentos:</label>
-            <textarea class="form-control" id="input-adherencia" rows="2"></textarea>
-          </div>
-          -->
           <div class="d-flex justify-content-end">
             <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">Cancelar</button>
             <button type="submit" class="btn btn-success">Confirmar cita</button>
@@ -208,6 +203,37 @@
 
 <script>
   document.addEventListener('DOMContentLoaded', function () {
+    async function cargarCentrosEnModal(id_nutricionista) {
+      const selectCentro = document.getElementById('select-centro-atencion');
+      selectCentro.innerHTML = '<option value="">Cargando centros...</option>';
+
+      try {
+        const respuesta = await fetch(`https://nutrilinkapi-production.up.railway.app/api_nutrilink/nutricionista/centros_atencion/${id_nutricionista}`);
+        const data = await respuesta.json();
+
+        if (data.status === 'ok') {
+          if (data.centros.length === 0) {
+            selectCentro.innerHTML = '<option value="">No hay centros disponibles</option>';
+            return;
+          }
+
+          selectCentro.innerHTML = '<option value="">Seleccione un centro...</option>';
+          data.centros.forEach(centro => {
+            const option = document.createElement('option');
+            option.value = centro.id_centro;
+            option.textContent = centro.nombre_centro;
+            selectCentro.appendChild(option);
+          });
+
+        } else {
+          throw new Error(data.mensaje);
+        }
+      } catch (error) {
+        console.error('Error al cargar centros en modal:', error);
+        selectCentro.innerHTML = '<option value="">Error al cargar</option>';
+      }
+    }
+
     // Elementos del DOM con validacion
     const pacientesTableBody = document.getElementById('pacientes-table-body');
     const form = document.getElementById('paciente-form');
@@ -219,6 +245,68 @@
     const agendarCitaModal = agendarCitaModalElement ? new bootstrap.Modal(agendarCitaModalElement) : null;
     const formAgendarCita = document.getElementById('form-agendar-cita');
     const selectDisponibilidad = document.getElementById('select-disponibilidad');
+
+    const selectCentro = document.getElementById('select-centro-atencion');
+
+    // Listener: cuando cambia el centro, carga las horas disponibles filtradas por ese centro
+    selectCentro?.addEventListener('change', async function () {
+      const idCentroSeleccionado = this.value;
+      const idNutricionista = sessionStorage.getItem('id_nutricionista');
+      selectDisponibilidad.innerHTML = '<option value="">Cargando horas...</option>';
+      mapaDisponibilidades = {};
+
+      if (!idCentroSeleccionado || !idNutricionista) {
+        selectDisponibilidad.innerHTML = '<option value="">Seleccione un centro válido</option>';
+        return;
+      }
+
+      try {
+        const res = await fetch(`https://nutrilinkapi-production.up.railway.app/api_nutrilink/agenda/disponibilidad_nutricionista/${idNutricionista}`);
+        const data = await res.json();
+
+        if (!res.ok || data.status !== 'ok') throw new Error(data.mensaje || 'No se pudo obtener disponibilidad');
+
+        const ahora = new Date();
+        const siguienteHora = new Date(ahora);
+        siguienteHora.setMinutes(0, 0, 0);
+        siguienteHora.setHours(ahora.getHours() + 1);
+
+        const opciones = data.disponibilidades
+          .filter(d => {
+            if (d.estado !== 'Disponible') return false;
+            if (parseInt(d.id_centro) !== parseInt(idCentroSeleccionado)) return false;
+
+            const [anio, mes, dia] = d.fecha.split('T')[0].split('-');
+            const fechaObj = new Date(parseInt(anio), parseInt(mes) - 1, parseInt(dia));
+            const [horaStr, minutosStr] = d.hora.split(':');
+
+            fechaObj.setHours(parseInt(horaStr), parseInt(minutosStr), 0, 0);
+            return fechaObj >= siguienteHora;
+          })
+          .map(d => {
+            const [anio, mes, dia] = d.fecha.split('T')[0].split('-');
+            const fechaObj = new Date(parseInt(anio), parseInt(mes) - 1, parseInt(dia));
+            const fechaTexto = fechaObj.toLocaleDateString('es-CL', {
+              weekday: 'long',
+              day: 'numeric',
+              month: 'long'
+            });
+
+            const horaTexto = d.hora.slice(0, 5);
+            const label = `${fechaTexto.charAt(0).toUpperCase() + fechaTexto.slice(1)}, ${horaTexto}`;
+            mapaDisponibilidades[label] = d.id_disponibilidad;
+            return `<option value="${label}">${label}</option>`;
+          });
+
+        selectDisponibilidad.innerHTML = opciones.length > 0
+          ? '<option value="">Seleccione una hora...</option>' + opciones.join('')
+          : '<option value="">No hay horas disponibles</option>';
+      } catch (error) {
+        console.error('Error al cargar horas:', error);
+        selectDisponibilidad.innerHTML = '<option value="">Error al cargar horas</option>';
+      }
+    });
+
     // Para almacenar mapa de ID disponibilidad
     let mapaDisponibilidades = {};
 
@@ -244,6 +332,7 @@
     // Funcion principal cargar lista de pacientes
     async function fetchPacientes() {
       const idNutricionista = sessionStorage.getItem('id_nutricionista');
+      cargarCentrosEnModal(idNutricionista);
 
       if (!idNutricionista) {
         showError('Debe iniciar sesión como nutricionista');
@@ -649,73 +738,78 @@
     }
 
     // Función para recuperar las horas
-document.addEventListener('click', async function (e) {
-  const btn = e.target.closest('.agendar-btn');
-  if (btn) {
-    const idPaciente = btn.getAttribute('data-patient-id');
-    if (!idPaciente) return;
+    document.addEventListener('click', async function (e) {
+      const btn = e.target.closest('.agendar-btn');
+      if (btn) {
+        const idPaciente = btn.getAttribute('data-patient-id');
+        if (!idPaciente) return;
 
-    document.getElementById('input-id-paciente').value = idPaciente;
-    selectDisponibilidad.innerHTML = '<option value="">Cargando...</option>';
-    mapaDisponibilidades = {};
+        document.getElementById('input-id-paciente').value = idPaciente;
 
-    const idNutricionista = sessionStorage.getItem('id_nutricionista');
-    if (!idNutricionista) {
-      Swal.fire('Error', 'No se encontró sesión de nutricionista', 'error');
-      return;
-    }
+        const idNutricionista = sessionStorage.getItem('id_nutricionista');
+        if (!idNutricionista) {
+          Swal.fire('Error', 'No se encontró sesión de nutricionista', 'error');
+          return;
+        }
 
-    try {
-      const res = await fetch(`https://nutrilinkapi-production.up.railway.app/api_nutrilink/agenda/disponibilidad_nutricionista/${idNutricionista}`);
-      const data = await res.json();
+        await cargarCentrosEnModal(idNutricionista);
 
-      if (!res.ok || data.status !== 'ok') throw new Error(data.mensaje || 'No se pudo obtener disponibilidad');
+        document.getElementById('select-disponibilidad').innerHTML = '<option value="">Seleccione un centro primero</option>';
+        mapaDisponibilidades = {};
 
-      // Definir la siguiente hora redondeada (ej: si son 18:56 → 19:00)
-      const ahora = new Date();
-      const siguienteHora = new Date(ahora);
-      siguienteHora.setMinutes(0, 0, 0);
-      siguienteHora.setHours(ahora.getHours() + 1);
+        agendarCitaModal.show();
 
-      const opciones = data.disponibilidades
-        .filter(d => {
-          if (d.estado !== 'Disponible') return false; // ❌ Excluir si está Reservado
-
-          const [anio, mes, dia] = d.fecha.split('T')[0].split('-');
-          const fechaObj = new Date(parseInt(anio), parseInt(mes) - 1, parseInt(dia));
-          const [horaStr, minutosStr] = d.hora.split(':');
-
-          fechaObj.setHours(parseInt(horaStr), parseInt(minutosStr), 0, 0);
-
-          return fechaObj >= siguienteHora;
-        })
-        .map(d => {
-          const [anio, mes, dia] = d.fecha.split('T')[0].split('-');
-          const fechaObj = new Date(parseInt(anio), parseInt(mes) - 1, parseInt(dia));
-          const fechaTexto = fechaObj.toLocaleDateString('es-CL', {
-            weekday: 'long',
-            day: 'numeric',
-            month: 'long'
-          });
-
-          const horaTexto = d.hora.slice(0, 5); // "08:00"
-          const label = `${fechaTexto.charAt(0).toUpperCase() + fechaTexto.slice(1)}, ${horaTexto}`;
-          mapaDisponibilidades[label] = d.id_disponibilidad;
-          return `<option value="${label}">${label}</option>`;
-        });
-
-      selectDisponibilidad.innerHTML = opciones.length > 0
-        ? '<option value="">Seleccione una hora...</option>' + opciones.join('')
-        : '<option value="">No hay horas disponibles</option>';
-
-      agendarCitaModal.show();
-
-    } catch (error) {
-      console.error(error);
-      Swal.fire('Error', error.message || 'No se pudo obtener disponibilidad', 'error');
-    }
-  }
-});
+        /*try {
+          const res = await fetch(`https://nutrilinkapi-production.up.railway.app/api_nutrilink/agenda/disponibilidad_nutricionista/${idNutricionista}`);
+          const data = await res.json();
+    
+          if (!res.ok || data.status !== 'ok') throw new Error(data.mensaje || 'No se pudo obtener disponibilidad');
+    
+          // Definir la siguiente hora redondeada (ej: si son 18:56 → 19:00)
+          const ahora = new Date();
+          const siguienteHora = new Date(ahora);
+          siguienteHora.setMinutes(0, 0, 0);
+          siguienteHora.setHours(ahora.getHours() + 1);
+    
+          const opciones = data.disponibilidades
+            .filter(d => {
+              if (d.estado !== 'Disponible') return false; // ❌ Excluir si está Reservado
+    
+              const [anio, mes, dia] = d.fecha.split('T')[0].split('-');
+              const fechaObj = new Date(parseInt(anio), parseInt(mes) - 1, parseInt(dia));
+              const [horaStr, minutosStr] = d.hora.split(':');
+    
+              fechaObj.setHours(parseInt(horaStr), parseInt(minutosStr), 0, 0);
+    
+              return fechaObj >= siguienteHora;
+            })
+            .map(d => {
+              const [anio, mes, dia] = d.fecha.split('T')[0].split('-');
+              const fechaObj = new Date(parseInt(anio), parseInt(mes) - 1, parseInt(dia));
+              const fechaTexto = fechaObj.toLocaleDateString('es-CL', {
+                weekday: 'long',
+                day: 'numeric',
+                month: 'long'
+              });
+    
+              const horaTexto = d.hora.slice(0, 5); // "08:00"
+              const label = `${fechaTexto.charAt(0).toUpperCase() + fechaTexto.slice(1)}, ${horaTexto}`;
+              mapaDisponibilidades[label] = d.id_disponibilidad;
+              return `<option value="${label}">${label}</option>`;
+            });
+    
+          selectDisponibilidad.innerHTML = opciones.length > 0
+            ? '<option value="">Seleccione una hora...</option>' + opciones.join('')
+            : '<option value="">No hay horas disponibles</option>';
+    
+          agendarCitaModal.show();
+    
+        } catch (error) {
+          console.error(error);
+          Swal.fire('Error', error.message || 'No se pudo obtener disponibilidad', 'error');
+        }*/
+      }
+    });
 
     if (formAgendarCita) {
       formAgendarCita.addEventListener('submit', async function (event) {
@@ -723,27 +817,28 @@ document.addEventListener('click', async function (e) {
 
         const idPaciente = document.getElementById('input-id-paciente')?.value;
         const horaSeleccionada = selectDisponibilidad.value;
+        const idCentro = document.getElementById('select-centro-atencion')?.value;
 
         if (!idPaciente || !horaSeleccionada || !mapaDisponibilidades[horaSeleccionada]) {
           Swal.fire('Error', 'Debe seleccionar una hora válida para agendar la cita', 'error');
           return;
         }
 
+        if (!idCentro) {
+          Swal.fire('Error', 'Debe seleccionar un centro de atención', 'error');
+          return;
+        }
+
         const idDisponibilidad = mapaDisponibilidades[horaSeleccionada];
         const motivo = document.getElementById('input-motivo')?.value.trim() || null;
         const nota = document.getElementById('input-notas')?.value.trim() || null;
-        // const hecho = document.getElementById('input-hecho')?.value.trim() || null;
-        // const compromiso = document.getElementById('input-compromiso')?.value.trim() || null;
-        // const adherencia = document.getElementById('input-adherencia')?.value.trim() || null;
 
         const body = {
           id_paciente: parseInt(idPaciente),
           id_disponibilidad: idDisponibilidad,
-          motivo_consulta: motivo || null,
-          notas: nota || null 
-          // notas: hecho || null,
-          // compromiso_acordado: compromiso || null,
-          // adherencia_medicamentos: adherencia || null
+          motivo_consulta: motivo,
+          notas: nota,
+          id_centro: parseInt(idCentro)  // ✅ Nuevo campo incorporado
         };
 
         try {
