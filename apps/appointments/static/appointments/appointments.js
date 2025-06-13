@@ -705,13 +705,14 @@ async function verificarSolicitudesPendientesNutricionista(id_nutricionista) {
                 });
 
                 if (alerta.isConfirmed) {
+                    const fechaISO = cita.fecha.split('T')[0];  // ✅ DEFINICIÓN AQUÍ
+
                     const datos = {
                         id_paciente: cita.id_paciente,
                         id_nutricionista: id_nutricionista,
-                        fecha_hora: `${cita.fecha}T${cita.hora}`
+                        fecha_hora: `${fechaISO} ${cita.hora}`
                     };
 
-                    // ✅ Mostrar los datos que se van a enviar
                     console.log('🔄 Enviando solicitud PATCH a /confirmar_solicitud_cita con:', datos);
 
                     const confirmar = await fetch('https://nutrilinkapi-production.up.railway.app/api_nutrilink/agenda/confirmar_solicitud_cita', {
