@@ -48,8 +48,8 @@
     <a href="{% url 'patients:metricas' id_paciente=paciente.id_paciente %}" class="nav-button {% if section == 'metricas' %}active{% endif %}" data-section="metricas">
       <i class="bi bi-graph-up"></i> Antropometría y requerimientos
     </a>
-    <a href="{% url 'patients:registro-dietario' id_paciente=paciente.id_paciente %}" class="nav-button {% if section == 'indicaciones' %}active{% endif %}" data-section="indicaciones">
-      <i class="bi bi-list-check"></i> Registro dietario
+    <a href="{% url 'patients:registro-dietario' id_paciente=paciente.id_paciente %}" class="nav-button {% if section == 'registro-dietario' %}active{% endif %}" data-section="registro-dietario">
+      <i class="bi bi-list-ul"></i> Registro dietario
     </a>
     <a href="{% url 'patients:minuta' id_paciente=paciente.id_paciente %}" class="nav-button {% if section == 'indicaciones' %}active{% endif %}" data-section="indicaciones">
       <i class="bi bi-list-check"></i> Indicaciones

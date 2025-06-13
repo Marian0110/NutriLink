@@ -183,7 +183,7 @@ def minuta(request, id_paciente):
     
     return render(request, 'patients/minuta.html', {
         'paciente': paciente,
-        'section': 'minuta'
+        'section': 'indicaciones'
     })
     
 def registroDietario(request, id_paciente):
