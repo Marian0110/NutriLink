@@ -528,6 +528,7 @@ centroForm.addEventListener("submit", async function (e) {
         if (data.status === 'ok') {
           if (data.centros.length === 0) {
             contenedor.innerHTML = '<p class="text-muted">No tienes centros registrados aún.</p>';
+
             return;
           }
 
@@ -560,6 +561,28 @@ centroForm.addEventListener("submit", async function (e) {
 
         } else {
           contenedor.innerHTML = `<p class="text-danger">${data.mensaje}</p>`;
+          // Mostrar advertencia con Swal de forma diferida
+          setTimeout(() => {
+            Swal.fire({
+              title: '¡Atención!',
+              html: `
+    <p>Aún no has registrado ningún centro de atención. Es necesario agregar al menos uno para agendar citas.</p>
+    <button id="btnAgregarCentroSwal" class="btn btn-success mt-3">+ Agregar centro de atención</button>
+  `,
+              icon: 'warning',
+              showConfirmButton: false,
+              didRender: () => {
+                const btn = document.getElementById('btnAgregarCentroSwal');
+                if (btn) {
+                  btn.addEventListener('click', () => {
+                    Swal.close(); // Cierra la alerta
+                    const modal = new bootstrap.Modal(document.getElementById("modalAgregarCentro"));
+                    modal.show(); // Abre el modal de agregar centro
+                  });
+                }
+              }
+            });
+          }, 100);
         }
 
       } catch (error) {
