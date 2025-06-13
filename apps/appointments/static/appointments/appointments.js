@@ -287,73 +287,82 @@ async function cargarResumenCitas(id_nutricionista) {
 
             listaCitas.sort((a, b) => a.hora.localeCompare(b.hora)); // Ordenar por hora
 
-            listaCitas.forEach((cita, index) => {
-                console.log(`➡️ Procesando cita ${index + 1}:`, cita);
+listaCitas.forEach((cita, index) => {
+    console.log(`➡️ Procesando cita ${index + 1}:`, cita);
 
-                const horaTexto = cita.hora?.substring(0, 5) ?? '--:--';
+    // Aseguramos formato YYYY-MM-DD
+    const fechaISO = cita.fecha?.split('T')[0] ?? '';
+    // Aseguramos formato HH:mm
+    const horaISO = cita.hora?.substring(0, 5) ?? '';
+    const fechaHora = `${fechaISO}T${horaISO}:00`;
 
-                let borderClass = 'border-secondary';
-                let badgeClass = 'bg-secondary';
-                let backgroundClass = 'bg-light';
+    // Logs de depuración claros
+    console.log(`🗓 Fecha ISO cita ${index + 1}:`, fechaISO);
+    console.log(`⏰ Hora ISO cita ${index + 1}:`, horaISO);
+    console.log(`📦 FechaHora compuesta cita ${index + 1}:`, fechaHora);
 
-                switch (cita.estado) {
-                    case 'Reservada':
-                        borderClass = 'border-success';
-                        badgeClass = 'bg-success';
-                        backgroundClass = 'bg-success bg-opacity-25';
-                        break;
-                    case 'Completada':
-                        borderClass = 'border-info';
-                        badgeClass = 'bg-info';
-                        backgroundClass = 'bg-info bg-opacity-25';
-                        break;
-                    case 'Cancelada':
-                        borderClass = 'border-danger';
-                        badgeClass = 'bg-danger';
-                        backgroundClass = 'bg-danger bg-opacity-25';
-                        break;
-                    case 'Cancelada por Nutricionista':
-                    case 'Cancelada por Paciente':
-                        borderClass = 'border-burdeo';
-                        badgeClass = 'badge-burdeo';
-                        backgroundClass = 'bg-burdeo';
-                        break;
-                    case 'Solicitada':
-                        borderClass = 'border-primary';
-                        badgeClass = 'bg-primary';
-                        backgroundClass = 'bg-primary bg-opacity-25';
-                        break;
-                }
+    let borderClass = 'border-secondary';
+    let badgeClass = 'bg-secondary';
+    let backgroundClass = 'bg-light';
 
-                const li = document.createElement('li');
-                li.className = `list-group-item ${backgroundClass} border-start border-4 ${borderClass} mb-2 rounded shadow-sm`;
+    switch (cita.estado) {
+        case 'Reservada':
+            borderClass = 'border-success';
+            badgeClass = 'bg-success';
+            backgroundClass = 'bg-success bg-opacity-25';
+            break;
+        case 'Completada':
+            borderClass = 'border-info';
+            badgeClass = 'bg-info';
+            backgroundClass = 'bg-info bg-opacity-25';
+            break;
+        case 'Cancelada':
+            borderClass = 'border-danger';
+            badgeClass = 'bg-danger';
+            backgroundClass = 'bg-danger bg-opacity-25';
+            break;
+        case 'Cancelada por Nutricionista':
+        case 'Cancelada por Paciente':
+            borderClass = 'border-burdeo';
+            badgeClass = 'badge-burdeo';
+            backgroundClass = 'bg-burdeo';
+            break;
+        case 'Solicitada':
+            borderClass = 'border-primary';
+            badgeClass = 'bg-primary';
+            backgroundClass = 'bg-primary bg-opacity-25';
+            break;
+    }
 
-                li.innerHTML = `
-                    <strong>${cita.primer_nombre} ${cita.apellido_paterno}</strong><br>
-                    <small>${cita.correo}</small><br>
-                    <i class="fas fa-map-marker-alt me-1 text-muted"></i><small class="text-muted">${cita.nombre_centro}</small><br>
-                    ${horaTexto}<br>
-                    <span class="badge ${badgeClass}">${cita.estado}</span>
-                    ${cita.estado === 'Reservada' ? `
-                        <div class="d-flex flex-column align-items-start gap-2 mt-3">
-                            <button class="btn btn-sm btn-outline-danger cancelar-cita-btn"
-                                data-paciente-id="${cita.id_paciente}"
-                                data-nutricionista-id="${id_nutricionista}"
-                                data-fecha-hora="${cita.fecha}T${cita.hora}">
-                                <i class="fas fa-times-circle me-1"></i>Cancelar cita
-                            </button>
-                            <button class="btn btn-sm btn-outline-primary completar-cita-btn"
-                                data-paciente-id="${cita.id_paciente}"
-                                data-nutricionista-id="${id_nutricionista}"
-                                data-fecha-hora="${cita.fecha}T${cita.hora}">
-                                <i class="fas fa-check-circle me-1"></i>Marcar como completada
-                            </button>
-                        </div>
-                    ` : ''}
-                    `;
+    const li = document.createElement('li');
+    li.className = `list-group-item ${backgroundClass} border-start border-4 ${borderClass} mb-2 rounded shadow-sm`;
 
-                lista.appendChild(li);
-            });
+    li.innerHTML = `
+        <strong>${cita.primer_nombre} ${cita.apellido_paterno}</strong><br>
+        <small>${cita.correo}</small><br>
+        <i class="fas fa-map-marker-alt me-1 text-muted"></i><small class="text-muted">${cita.nombre_centro}</small><br>
+        ${horaISO}<br>
+        <span class="badge ${badgeClass}">${cita.estado}</span>
+        ${cita.estado === 'Reservada' ? `
+            <div class="d-flex flex-column align-items-start gap-2 mt-3">
+                <button class="btn btn-sm btn-outline-danger cancelar-cita-btn"
+                    data-paciente-id="${cita.id_paciente}"
+                    data-nutricionista-id="${id_nutricionista}"
+                    data-fecha-hora="${fechaHora}">
+                    <i class="fas fa-times-circle me-1"></i>Cancelar cita
+                </button>
+                <button class="btn btn-sm btn-outline-primary completar-cita-btn"
+                    data-paciente-id="${cita.id_paciente}"
+                    data-nutricionista-id="${id_nutricionista}"
+                    data-fecha-hora="${fechaHora}">
+                    <i class="fas fa-check-circle me-1"></i>Marcar como completada
+                </button>
+            </div>
+        ` : ''}
+    `;
+
+    lista.appendChild(li);
+});
 
             contenedor.appendChild(lista);
         });
@@ -643,20 +652,34 @@ async function verificarCancelacionesPendientesNutricionista(id_nutricionista) {
                 });
 
                 if (alerta.isConfirmed) {
+                    const fechaISO = cita.fecha.split('T')[0]; // ✅ Asegura que esté sin zona horaria
+                    const horaISO = cita.hora?.substring(0, 5); // ✅ 'HH:mm'
+                    const fechaHora = `${fechaISO}T${horaISO}:00`;
+
+                    // 🔍 Logs de depuración
+                    console.log('🗓 Fecha ISO:', fechaISO);
+                    console.log('⏰ Hora ISO:', horaISO);
+                    console.log('📅 Composición final fecha_hora:', fechaHora);
+
+                    const payload = {
+                        id_paciente: cita.id_paciente,
+                        id_nutricionista: id_nutricionista,
+                        fecha_hora: fechaHora,
+                        rol: 'nutricionista'
+                    };
+
+                    console.log('📤 Enviando PATCH /confirmar_notificacion_cancelacion con:', JSON.stringify(payload));
+
                     const confirmar = await fetch('https://nutrilinkapi-production.up.railway.app/api_nutrilink/agenda/confirmar_notificacion_cancelacion', {
                         method: 'PATCH',
                         headers: {
                             'Content-Type': 'application/json'
                         },
-                        body: JSON.stringify({
-                            id_paciente: cita.id_paciente,
-                            id_nutricionista: id_nutricionista,
-                            fecha_hora: `${cita.fecha}T${cita.hora}`,
-                            rol: 'nutricionista'
-                        })
+                        body: JSON.stringify(payload)
                     });
 
                     const resConfirmacion = await confirmar.json();
+
                     if (resConfirmacion.status === 'ok') {
                         await Swal.fire('Notificación confirmada', 'El estado de la cita ha sido actualizado.', 'success');
                     } else {
