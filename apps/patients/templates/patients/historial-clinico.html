@@ -5,11 +5,14 @@
 {% block perfilcontent %}
 <div class="row">
   <div class="container-fluid">
-    <div class="row g-3  align-items-start">
-      <!-- Columna izquierda: Perfil clínico -->
-      <div class="col-md-7">
-        <form method="#" action="#">
-          {% csrf_token %}
+    <form id="perfilClinicoCompletoForm" method="POST">
+      {% csrf_token %}
+      <input type="hidden" name="id_paciente" id="id_paciente_hidden" value="{{ paciente.id_paciente }}">
+
+      <div class="row g-3 align-items-start">
+        <!-- Columna izquierda: Perfil clínico -->
+        <div class="col-md-7">
+          <!-- EL FORM INTERNO SE ELIMINA, YA ESTÁ ENVUELTO POR perfilClinicoCompletoForm -->
           <div class="clinical-card">
             <h1 class="card-title mb-2">
                 Perfil clínico
@@ -23,17 +26,14 @@
               <label class="clinical-label d-block">Notas:</label>
               <textarea class="form-control" name="notas_varias" id="notas_varias"></textarea>
             </div>
-
             <div class="mb-3">
               <label class="clinical-label d-block">Etapa de cambio psicológico:</label>
-              <input type="text" class="form-control form-control-custom" name="cambio_psicologico" id="cambio_psicologico"/>
+              <input type="text" class="form-control form-control-custom" name="etapa_cambio_psicologico" id="cambio_psicologico"/>
             </div>
-            
             <div class="mb-3">
               <label class="clinical-label d-block">Medicamentos actuales:</label>
               <input type="text" class="form-control form-control-custom" name="medicamentos_actuales" id="medicamentos_actuales"/>
             </div>
-
             <div class="mb-3">
               <label class="clinical-label d-block">Actividad física:</label>
               <select class="form-select form-control-custom" name="actividad_fisica" id="actividadFisicaSelect">
@@ -47,58 +47,40 @@
                 {% endfor %}
               </select>
             </div>
-            
-            <!-- Factores patológicos -->
             <div class="mb-3 factors" style="width: 60%;">
               <h2 class="section-title h5">Factores patológicos <span>(Seleccione una opción)</span></h2>
-              
               {% if error_factores %}
-              <div class="alert alert-danger">
-                  Error al cargar factores: {{ error_factores }}
-              </div>
+              <div class="alert alert-danger">Error al cargar factores: {{ error_factores }}</div>
               {% endif %}
-              
               {% for factor in factores_patologicos %}
               <div class="form-check mb-2" style="margin-left: 5%;">
                   <input class="form-check-input" type="radio" 
                          name="factor_patologico" 
                          id="factor{{ factor.id_factor_patologico }}"
                          value="{{ factor.id_factor_patologico }}"
-                         {% if forloop.first %}checked{% endif %}>
+                         {% if not factores_patologicos_seleccionado and forloop.first %}checked{% elif factor.id_factor_patologico == factores_patologicos_seleccionado %}checked{% endif %}>
                   <label class="form-check-label" for="factor{{ factor.id_factor_patologico }}">
                       {{ factor.descripcion }} ({{ factor.valor_factor }})
                   </label>
               </div>
               {% empty %}
-              <div class="alert alert-warning">
-                  No se encontraron factores patológicos disponibles
-              </div>
+              <div class="alert alert-warning">No se encontraron factores patológicos disponibles</div>
               {% endfor %}
             </div>
-            
-            <div class="d-flex justify-content-center">
-                <button type="button" class="btn btn-save">ACTUALIZAR</button>
-            </div>
           </div>
-        </form>
-      </div>
-      
-      <!-- Columna derecha: Condición de embarazo -->
-      <div class="col-md-5">
-        <form id="embarazoForm" method="PATCH">
-          {% csrf_token %}
-          <input type="hidden" name="id_paciente" value="{{ paciente.id_paciente }}">
+        </div>
+        
+        <!-- Columna derecha: Condición de embarazo -->
+        <div class="col-md-5">
           <div class="pregnancy-card" style="margin-top: 0%;">
             <div class="card-header d-flex justify-content-between align-items-center">
               <h1 class="card-title mb-0">¿Condición de embarazo?</h1>
               <div class="radio-group">
                 <label class="radio-option">
-                  <input type="radio" name="condicion_embarazo" value="S" {% if paciente.condicion_embarazo == 'S' %}checked{% endif %}>
-                  SI
+                  <input type="radio" name="condicion_embarazo" value="S" id="embarazo_si" {% if paciente.condicion_embarazo == 'S' %}checked{% endif %}> SI
                 </label>
                 <label class="radio-option">
-                  <input type="radio" name="condicion_embarazo" value="N" {% if paciente.condicion_embarazo != 'S' %}checked{% endif %}>
-                  NO
+                  <input type="radio" name="condicion_embarazo" value="N" id="embarazo_no" {% if paciente.condicion_embarazo != 'S' %}checked{% endif %}> NO
                 </label>
               </div>
             </div>
@@ -110,109 +92,62 @@
             </div>
             <div class="form-group">
               <label class="form-label">Trimestre calculado:</label>
-              <div class="readonly-field p-2 bg-light rounded" id="trimestreCalculado">
-                {% if paciente.condicion_embarazo == 'S' and paciente.semana_gestacion %}
-                  {% if paciente.semana_gestacion <= 12 %}1er trimestre
-                  {% elif paciente.semana_gestacion <= 28 %}2do trimestre
-                  {% else %}3er trimestre
-                  {% endif %}
-                {% else %}N/A{% endif %}
-              </div>
+              <div class="readonly-field p-2 bg-light rounded" id="trimestreCalculado">N/A</div>
             </div>
             <div class="form-group">
               <label class="form-label">Energía extra:</label>
-              <div class="readonly-field p-2 bg-light rounded" id="energiaExtra">
-                {% if paciente.condicion_embarazo == 'S' and paciente.semana_gestacion %}
-                  {% if paciente.semana_gestacion <= 12 %}0 kcal
-                  {% elif paciente.semana_gestacion <= 28 %}340 kcal
-                  {% else %}452 kcal
-                  {% endif %}
-                {% else %}0 kcal{% endif %}
-              </div>
+              <div class="readonly-field p-2 bg-light rounded" id="energiaExtra">0 kcal</div>
             </div>
             <div class="divider"></div>
-            <button type="submit" class="btn btn-save2 w-100">ACTUALIZAR</button>
           </div>
-        </form>
+
+          <!-- NUEVO: Selector de Historial Clínico -->
+          <div class="historical-selector-card mt-3">
+              <label for="historialDateSelector" class="form-label fw-bold">Seleccionar Historial Anterior:</label>
+              <select id="historialDateSelector" class="form-select">
+                  <option value="current" selected>Registro Actual (Editable)</option>
+                  <!-- Las fechas se cargarán aquí por JS -->
+              </select>
+          </div>
+        </div>
+        <!-- FIN Columna derecha -->
       </div>
-    </div>
-    
-    <!-- Información nutricional -->
-    <div class="row mt-3">
-      <div class="col-md-12">
-        <form method="#" action="#">
-          <div class="rejection-card" style="width: 50%;">
+      
+      <div class="row mt-3">
+        <div class="col-12 d-flex justify-content-center">
+          <button type="button" class="btn btn-save" id="btnActualizarPerfilCompleto">ACTUALIZAR DATOS</button>
+        </div>
+      </div>
+    </form> <!-- FIN de perfilClinicoCompletoForm -->
+
+    <!-- Información nutricional (separada) -->
+    <div class="row mt-4">
+      <div class="col-md-7"> <!-- Ajustado para que no sea tan ancho -->
+        <form id="formRechazoAlimentario" method="POST">
+          {% csrf_token %}
+          <div class="rejection-card"> <!-- Quitado width: 50% para que se ajuste mejor -->
             <h1 class="h4 card-title mb-2">Información nutricional</h1>
             <p class="text-muted card-subtitle mb-4">Los rechazos alimenticios serán excluidos en los planes alimenticios.</p>
-            <!--<div class="mb-4">
-              <label class="form-label">Alergias:</label>
-              <div class="selection-group">
-                <select class="form-select mb-2">
-                  <option selected disabled>Seleccione una alergia</option>
-                  <option>Alergia al maní</option>
-                  <option>Alergia a los mariscos</option>
-                  <option>Alergia al pescado</option>
-                  <option>Alergia al huevo</option>
-                  <option>Alergia a la leche</option>
-                  <option>Alergia al trigo</option>
-                  <option>Alergia a la soya</option>
-                  <option>Alergia a los frutos secos (nueces, almendras, etc.)</option>
-                  <option>Alergia al sésamo</option>
-                  <option>Alergia al maíz</option>
-                </select>
-                <div class="selected-items-container" id="allergies-container"></div>
-                <button type="button" class="btn btn-sm btn-secondary mt-2" onclick="addAnother('allergies')">
-                  + Agregar otra alergia
-                </button>
-              </div>
-            </div>
-            <div class="mb-4">
-              <label class="form-label">Intolerancias:</label>
-              <div class="selection-group">
-                <select class="form-select mb-2">
-                  <option selected disabled>Seleccione una intolerancia</option>
-                  <option>Intolerancia a la lactosa</option>
-                  <option>Intolerancia al gluten (no celíaca)</option>
-                  <option>Intolerancia a la fructosa</option>
-                  <option>Intolerancia a la sacarosa</option>
-                  <option>Intolerancia a la histamina</option>
-                  <option>Intolerancia a los sulfitos</option>
-                  <option>Intolerancia a los aditivos alimentarios</option>
-                  <option>Intolerancia al alcohol</option>
-                  <option>Intolerancia a la cafeína</option>
-                </select>
-                <div class="selected-items-container" id="intolerances-container"></div>
-                <button type="button" class="btn btn-sm btn-secondary mt-2" onclick="addAnother('intolerances')">
-                  + Agregar otra intolerancia
-                </button>
-              </div>
-            </div>-->
-             <!-- Rechazos alimenticios -->
             <div class="mb-4">
               <label class="form-label">Rechazo alimenticio</label>
               <div class="selection-group">
                 <select name="rechazo_alimenticio" id="rechazo-alimenticio" class="form-select">
-                    <option value="">Seleccione un alimento</option>
-                    {% for alimento in alimentos %}
-                        <option value="{{ alimento.id_alimento }}">{{ alimento.nombre_alimento }}</option>
-                    {% endfor %}
+                  <option value="">Seleccione un alimento</option>
+                  {% for alimento in alimentos %}
+                    <option value="{{ alimento.id_alimento }}">{{ alimento.nombre_alimento }}</option>
+                  {% endfor %}
                 </select>
-                
-                <!--<div class="selected-items-container" id="rejected-foods-container"></div>
-                <button type="button" class="btn btn-sm btn-secondary mt-2" onclick="addAnother('rejected-foods')">
-                  + Agregar otro rechazo
-                </button> -->
               </div>
             </div>
             <div class="mb-2">
-                <label class="form-label">Motivo rechazo:</label>
-                <select class="form-select" name="motivo_rechazo" id="motivo_rechazo">
-                  <option value="rechazo">Rechazo</option>
-                  <option value="intolerancia">Intolerancia</option>
-                  <option value="alergia">Alergia</option>
-                </select>
+              <label class="form-label">Motivo rechazo:</label>
+              <select class="form-select" name="motivo_rechazo" id="motivo_rechazo">
+                <option value="rechazo">Rechazo</option>
+                <option value="intolerancia">Intolerancia</option>
+                <option value="alergia">Alergia</option>
+              </select>
             </div>
-            <button type="button" class="btn btn-save3 w-100">REGISTRAR</button>
+            <button type="button" class="btn btn-save3 w-100" id="btnRegistrarRechazo">REGISTRAR</button>
           </div>
         </form>
       </div>
@@ -220,52 +155,265 @@
   </div>
 </div>
 
-<!-- Script aqui por el momento -->
 <script>
-// SweetAlert: success para el boton GUARDAR (Perfil clinico)
-document.querySelector('.btn-save').addEventListener('click', function (e) {
-    e.preventDefault();
-    Swal.fire({
-      title: '¿Estás segura/o?',
-      text: 'Se guardarán los datos del perfil clínico.',
-      icon: 'question',
-      showCancelButton: true,
-      confirmButtonText: 'Sí, guardar',
-      cancelButtonText: 'Cancelar'
-    }).then((result) => {
-      if (result.isConfirmed) {
-        actualizarPerfilClinico();
-      }
-    });
-  });
+ const PACIENTE_ID = "{{ paciente.id_paciente }}"; // Definir globalmente para fácil acceso
 
-  // Funcion guardar perfil clinico
-  async function actualizarPerfilClinico() {
-    const form = document.querySelector('.clinical-card').closest('form');
+ // --- Selectores de Elementos DOM ---
+ const notasVariasEl = document.getElementById('notas_varias');
+ const cambioPsicologicoEl = document.getElementById('cambio_psicologico');
+ const medicamentosActualesEl = document.getElementById('medicamentos_actuales');
+ const actividadFisicaSelectEl = document.getElementById('actividadFisicaSelect');
+ // Para factor patológico, necesitarás iterar o tener una forma de seleccionar el correcto
+ const inputSemanasEl = document.getElementById('inputSemanas');
+ const trimestreCalculadoEl = document.getElementById('trimestreCalculado');
+ const energiaExtraEl = document.getElementById('energiaExtra');
+ const historialDateSelectorEl = document.getElementById('historialDateSelector');
+ const btnActualizarPerfilEl = document.getElementById('btnActualizarPerfilCompleto');
+
+ // --- Funciones de Utilidad ---
+ async function fetchAPI(url, options = {}) {
+     const response = await fetch(url, options);
+     if (!response.ok) {
+         const errorData = await response.json().catch(() => ({ mensaje: `Error HTTP ${response.status}` }));
+         throw new Error(errorData.mensaje || `Error HTTP ${response.status}`);
+     }
+     return response.json();
+ }
+
+ function setFormEditable(isEditable) {
+     notasVariasEl.readOnly = !isEditable;
+     cambioPsicologicoEl.readOnly = !isEditable;
+     medicamentosActualesEl.readOnly = !isEditable;
+     actividadFisicaSelectEl.disabled = !isEditable;
+     document.querySelectorAll('input[name="factor_patologico"]').forEach(radio => radio.disabled = !isEditable);
+     document.querySelectorAll('input[name="condicion_embarazo"]').forEach(radio => radio.disabled = !isEditable);
+     
+     if (isEditable && document.querySelector('input[name="condicion_embarazo"]:checked')?.value === 'S') {
+         inputSemanasEl.readOnly = false;
+     } else {
+         inputSemanasEl.readOnly = true;
+     }
+     btnActualizarPerfilEl.style.display = isEditable ? 'inline-block' : 'none';
+ }
+
+ // --- Carga de Fechas del Historial ---
+ async function loadHistorialDates() {
+     try {
+            const result = await fetchAPI(`https://nutrilinkapi-production.up.railway.app/api_nutrilink/paciente/obtener_fechas_historial_clinico/${PACIENTE_ID}`);
+            historialDateSelectorEl.querySelectorAll('option:not([value="current"])').forEach(opt => opt.remove()); // Limpiar opciones previas
+            
+            if (result.status === 'success' && result.data && result.data.length > 0) {
+                const sortedDates = result.data.sort((a,b) => new Date(b) - new Date(a)); // Ordenar más reciente primero
+
+                sortedDates.forEach(fechaStr => {
+                    const option = document.createElement('option');
+                    option.value = fechaStr;
+                    const fechaObj = new Date(fechaStr + 'T00:00:00');
+                    option.textContent = `Historial del ${fechaObj.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}`;
+                    historialDateSelectorEl.appendChild(option);
+                });
+                return sortedDates; // Devolver las fechas ordenadas
+            } else {
+                console.warn('No se encontraron fechas de historial o hubo un error:', result.mensaje);
+                return []; // Devolver array vacío si no hay fechas
+            }
+        } catch (error) {
+            console.error('Error al cargar fechas del historial:', error);
+            return []; // Devolver array vacío en caso de error de fetch
+        }
+    }
+
+ // --- Carga y Muestra de Datos del Perfil (Actual o Histórico) ---
+ function populateFormWithData(data, isEditableContext) { // Añadido isEditableContext
+        notasVariasEl.value = data.notas_varias || '';
+        cambioPsicologicoEl.value = data.etapa_cambio_psicologico || '';
+        medicamentosActualesEl.value = data.medicamentos_actuales || '';
+        
+        actividadFisicaSelectEl.value = data.id_actividad_fisica || "";
+
+        document.querySelectorAll('input[name="factor_patologico"]').forEach(radio => radio.checked = false);
+        if (data.id_factor_patologico) {
+            const factorRadio = document.getElementById(`factor${data.id_factor_patologico}`);
+            if (factorRadio) factorRadio.checked = true;
+        } else {
+            // Si es editable y no hay factor, seleccionar el primero por defecto
+            if (isEditableContext) {
+                 const primerFactor = document.querySelector('input[name="factor_patologico"]');
+                 if (primerFactor) primerFactor.checked = true;
+            }
+        }
+
+        const embarazoSiRadio = document.getElementById('embarazo_si');
+        const embarazoNoRadio = document.getElementById('embarazo_no');
+        if (data.condicion_embarazo === 'S') {
+            if(embarazoSiRadio) embarazoSiRadio.checked = true;
+            inputSemanasEl.value = data.semana_gestacion !== null ? data.semana_gestacion : '';
+        } else {
+            if(embarazoNoRadio) embarazoNoRadio.checked = true;
+            inputSemanasEl.value = '';
+        }
+        // Asegurar que el estado de solo lectura se aplique después de poblar, basado en isEditableContext
+        setFormEditable(isEditableContext); 
+        actualizarInputEmbarazo(); // Esto también considera si el form es editable
+    }
+
+    function resetAndPrepareNewEntryForm() {
+        console.warn('Preparando formulario para nueva entrada de historial clínico.');
+        document.getElementById('perfilClinicoCompletoForm').reset();
+        
+        const primerFactor = document.querySelector('input[name="factor_patologico"]');
+        if (primerFactor) primerFactor.checked = true;
+        
+        const embarazoNoRadio = document.getElementById('embarazo_no');
+        if (embarazoNoRadio) embarazoNoRadio.checked = true;
+        
+        actividadFisicaSelectEl.value = "";
+
+        setFormEditable(true);
+        actualizarInputEmbarazo();
+    }
+
+
+    async function loadClinicalProfileData(fecha = null, allDates = []) { // allDates es opcional
+        let url;
+        let isEditableContext = false;
+
+        if (fecha && fecha !== 'current') { // Cargando un historial específico
+            url = `https://nutrilinkapi-production.up.railway.app/api_nutrilink/paciente/obtener_historial_clinico/${PACIENTE_ID}/${fecha}`;
+            isEditableContext = false;
+        } else { // Cargando "Registro Actual (Editable)"
+            isEditableContext = true;
+            if (allDates.length > 0) {
+                const fechaMasReciente = allDates[0]; // Ya están ordenadas descendente
+                url = `https://nutrilinkapi-production.up.railway.app/api_nutrilink/paciente/obtener_historial_clinico/${PACIENTE_ID}/${fechaMasReciente}`;
+                console.log(`Cargando "Registro Actual" desde el historial más reciente: ${fechaMasReciente}`);
+            } else {
+                // No hay historial previo, es un paciente nuevo o sin registros.
+                // Preparamos el formulario para una nueva entrada. No hay URL para llamar.
+                resetAndPrepareNewEntryForm();
+                return; // Salir de la función, no hay nada que fetchear
+            }
+        }
+
+        try {
+            const result = await fetchAPI(url);
+            if (result.status === 'success' && result.data) {
+                populateFormWithData(result.data, isEditableContext);
+            } else {
+                // Este 'else' ahora sería para un error inesperado del API al buscar una fecha específica,
+                // o si el API devuelve un 'status' no 'success' incluso con datos.
+                console.error('Error al cargar datos del perfil:', result.mensaje || 'Respuesta inesperada de la API.');
+                Swal.fire('Error', `No se pudieron cargar los datos para ${fecha === 'current' ? 'el registro actual' : fecha}: ${result.mensaje || 'Respuesta inesperada.'}`, 'error');
+                if (isEditableContext) { // Si falla al cargar el "actual" desde el último historial, permitir nueva entrada
+                    resetAndPrepareNewEntryForm();
+                }
+            }
+        } catch (error) { // Errores de red o excepciones en fetchAPI
+            console.error('Error en fetch al cargar perfil:', error);
+            Swal.fire('Error de Conexión', `Error al obtener datos para ${fecha === 'current' ? 'el registro actual' : fecha}: ${error.message}`, 'error');
+            if (isEditableContext) { // Si falla por red, permitir nueva entrada
+                resetAndPrepareNewEntryForm();
+            }
+        }
+    }
+ 
+ // --- Lógica de Actualización de Embarazo ---
+ function calcularDatosEmbarazo() {
+     const semanas = parseInt(inputSemanasEl.value) || 0;
+     const condicionEmbarazo = document.querySelector('input[name="condicion_embarazo"]:checked')?.value;
+
+     if (condicionEmbarazo === 'S' && semanas > 0) {
+         if (semanas <= 12) {
+             trimestreCalculadoEl.textContent = '1er trimestre';
+             energiaExtraEl.textContent = '0 kcal';
+         } else if (semanas <= 28) {
+             trimestreCalculadoEl.textContent = '2do trimestre';
+             energiaExtraEl.textContent = '340 kcal';
+         } else {
+             trimestreCalculadoEl.textContent = '3er trimestre';
+             energiaExtraEl.textContent = '452 kcal';
+         }
+     } else {
+         trimestreCalculadoEl.textContent = 'N/A';
+         energiaExtraEl.textContent = '0 kcal';
+         if (condicionEmbarazo !== 'S') {
+             inputSemanasEl.value = ''; // Limpiar semanas si no está embarazada
+         }
+     }
+ }
+
+ function actualizarInputEmbarazo() {
+     const valorSeleccionado = document.querySelector('input[name="condicion_embarazo"]:checked')?.value;
+     const isEditable = historialDateSelectorEl.value === 'current'; // Solo editable si es el registro actual
+
+     if (valorSeleccionado === "S" && isEditable) {
+         inputSemanasEl.readOnly = false;
+         // inputSemanasEl.focus(); // Evitar focus automático al cargar
+     } else {
+         inputSemanasEl.readOnly = true;
+     }
+     calcularDatosEmbarazo();
+ }
+ 
+ // --- Event Listeners ---
+ document.getElementById('btnActualizarPerfilCompleto').addEventListener('click', function (e) {
+     e.preventDefault();
+     Swal.fire({
+       title: '¿Estás segura/o?',
+       text: 'Se guardarán los datos del perfil clínico y condición de embarazo.',
+       icon: 'question',
+       showCancelButton: true,
+       confirmButtonText: 'Sí, guardar',
+       cancelButtonText: 'Cancelar'
+     }).then((result) => {
+       if (result.isConfirmed) {
+         actualizarPerfilClinicoCompleto();
+       }
+     });
+ });
+
+async function actualizarPerfilClinicoCompleto() {
+    const form = document.getElementById('perfilClinicoCompletoForm');
     const formData = new FormData(form);
-      
-    const id_paciente = "{{ paciente.id_paciente }}";
     
-    // Obtener la descripcion del factor sin el valor
-    const factorLabel = document.querySelector('input[name="factor_patologico"]:checked')?.nextElementSibling;
-    const descripcion_factor = factorLabel ? factorLabel.textContent.split(' (')[0].trim() : null;
-    
-    const descripcion_naf = document.querySelector('select[name="actividad_fisica"] option:checked')?.textContent.trim() || null;
-    const etapa_cambio_psicologico = document.querySelector('.form-control-custom[name="cambio_psicologico"]').value.trim() || null;
-    const medicamentos_actuales = document.querySelector('.form-control-custom[name="medicamentos_actuales"]').value.trim() || null;
-    const notas_varias= document.querySelector('.form-control[name="notas_varias"]').value.trim() || null;
+    const actividadFisicaSelect = document.getElementById('actividadFisicaSelect');
+    const actividadFisicaOption = actividadFisicaSelect.options[actividadFisicaSelect.selectedIndex];
+
+    const factorSeleccionado = document.querySelector('input[name="factor_patologico"]:checked');
+
+    // Validar que la actividad física ha sido seleccionada
+    if (!actividadFisicaOption || !actividadFisicaOption.value) {
+        Swal.fire('Campo Requerido', 'Por favor, seleccione un nivel de actividad física.', 'warning');
+        return; 
+    }
 
     const data = {
-        id_paciente: parseInt(id_paciente),
-        descripcion_factor: descripcion_factor,
-        descripcion_naf: descripcion_naf,
-        etapa_cambio_psicologico: etapa_cambio_psicologico,
-        medicamentos_actuales: medicamentos_actuales,
-        notas_varias: notas_varias,
+        id_paciente: parseInt(PACIENTE_ID),
+        descripcion_factor: factorSeleccionado ? factorSeleccionado.nextElementSibling.textContent.split(' (')[0].trim() : null,
+        descripcion_naf: actividadFisicaOption.textContent.trim(), // Se envía la descripción
+        etapa_cambio_psicologico: document.getElementById('cambio_psicologico').value.trim() || null,
+        medicamentos_actuales: document.getElementById('medicamentos_actuales').value.trim() || null,
+        notas_varias: document.getElementById('notas_varias').value.trim() || null,
+        condicion_embarazo: document.querySelector('input[name="condicion_embarazo"]:checked')?.value || 'N',
     };
 
+    let semana_gestacion_valor = document.getElementById('inputSemanas').value;
+    if (data.condicion_embarazo === 'S' && semana_gestacion_valor) {
+        data.semana_gestacion = parseInt(semana_gestacion_valor);
+    } else {
+        data.semana_gestacion = null; 
+    }
+    
+    // Limpiar campos nulos si es necesario para el backend
+    for (const key in data) {
+        if (data[key] === null && key !== 'semana_gestacion') { // semana_gestacion puede ser legítimamente null
+            delete data[key]; // O asignar string vacío "" si el backend prefiere eso a omitir la clave
+        }
+    }
+
+
     try {
-        const response = await fetch('https://nutrilinkapi-production.up.railway.app/api_nutrilink/paciente/actualizar_perfil_clinico', {
+        const result = await fetchAPI('https://nutrilinkapi-production.up.railway.app/api_nutrilink/paciente/actualizar_perfil_clinico', {
             method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json',
@@ -273,354 +421,109 @@ document.querySelector('.btn-save').addEventListener('click', function (e) {
             },
             body: JSON.stringify(data)
         });
-
-        const result = await response.json();
-
-        if (response.ok) {
+        
+        if (result.status === 'success') {
             Swal.fire({
-                title: 'Perfil clínico actualizado',
+                title: 'Perfil actualizado',
+                text: result.mensaje || 'Datos actualizados correctamente.',
                 icon: 'success',
                 timer: 2000,
                 showConfirmButton: false
-            }).then(() => {
-                window.location.reload();
+            }).then(async () => { 
+                const updatedDates = await loadHistorialDates(); 
+                historialDateSelectorEl.value = 'current'; 
+                await loadClinicalProfileData('current', updatedDates); 
             });
         } else {
-            Swal.fire({
-                title: 'Error',
-                text: result.mensaje || 'Error al actualizar el perfil clínico',
-                icon: 'error'
-            });
+            Swal.fire('Error', result.mensaje || 'Error al actualizar el perfil', 'error');
         }
     } catch (error) {
-        console.error('Error:', error);
-        Swal.fire({
-            title: 'Error',
-            text: 'Error de conexión al servidor',
-            icon: 'error'
-        });
+        Swal.fire('Error de Conexión', `Error al enviar datos: ${error.message}`, 'error');
     }
-  }
-  // SweetAlert: success para el boton Actualizar (Condicion de embarazo)
-  document.querySelector('.btn-save2').addEventListener('click', function (e) {
-    e.preventDefault();
-    Swal.fire({
-      title: '¿Confirmar actualización?',
-      text: 'Se actualizará la condición de embarazo.',
-      icon: 'question',
-      showCancelButton: true,
-      confirmButtonText: 'Sí, actualizar',
-      cancelButtonText: 'Cancelar'
-    }).then((result) => {
-      if (result.isConfirmed) {
-        actualizarCondicionEmbarazo();
-      }
-    });
-  });
+}
 
-  // SweetAlert: success para el boton REGISTRAR (Informacion nutricional)
-  document.querySelector('.btn-save3').addEventListener('click', function (e) {
-    e.preventDefault();
-    Swal.fire({
-      title: '¿Confirmar registro?',
-      text: 'Se guardará el alimento rechazado.',
-      icon: 'question',
-      showCancelButton: true,
-      confirmButtonText: 'Sí, registrar',
-      cancelButtonText: 'Cancelar'
-    }).then((result) => {
-      if (result.isConfirmed) {
-        guardarRechazoAlimentario();
-      }
-    });
+ document.getElementById('btnRegistrarRechazo').addEventListener('click', function (e) {
+     e.preventDefault();
+     Swal.fire({
+       title: '¿Confirmar registro?',
+       text: 'Se guardará el alimento rechazado.',
+       icon: 'question',
+       showCancelButton: true,
+       confirmButtonText: 'Sí, registrar',
+       cancelButtonText: 'Cancelar'
+     }).then((result) => {
+       if (result.isConfirmed) {
+         guardarRechazoAlimentario();
+       }
+     });
+ });
+ 
+inputSemanasEl.addEventListener('input', calcularDatosEmbarazo);
+document.querySelectorAll('input[name="condicion_embarazo"]').forEach(radio => {
+    radio.addEventListener('change', actualizarInputEmbarazo);
 });
 
-  // Funcion para actualizar la condicion de embarazo
-  async function actualizarCondicionEmbarazo() {
-    const form = document.getElementById('embarazoForm');
-    const formData = new FormData(form);
-    const data = {
-      id_paciente: formData.get('id_paciente'),
-      condicion_embarazo: formData.get('condicion_embarazo'),
-      semana_gestacion: formData.get('semana_gestacion')
-    };
-
-    try {
-      const response = await fetch('https://nutrilinkapi-production.up.railway.app/api_nutrilink/paciente/actualizar_condicion_embarazo', {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRFToken': formData.get('csrfmiddlewaretoken')
-        },
-        body: JSON.stringify(data)
-      });
-
-      const result = await response.json();
-
-      if (response.ok) {
-          Swal.fire({
-              title: 'Actualizado correctamente',
-              icon: 'success',
-              timer: 2000,
-              showConfirmButton: false
-          }).then(() => {
-             window.location.reload();
-          });
-      } else {
-        Swal.fire({
-          title: 'Error',
-          text: result.mensaje || 'Error al actualizar la condición de embarazo',
-          icon: 'error'
-        });
-      }
-    } catch (error) {
-      console.error('Error:', error);
-      Swal.fire({
-        title: 'Error',
-        text: 'Error de conexión al servidor',
-        icon: 'error'
-      });
-    }
-  }
-  // script de condicion de embarazo para campos calculados
-  const radios = document.querySelectorAll('input[name="condicion_embarazo"]');
-  const inputSemanas = document.getElementById('inputSemanas');
-
-  function calcularDatosEmbarazo() {
-    const semanas = parseInt(inputSemanas.value) || 0;
-    const trimestreField = document.getElementById('trimestreCalculado');
-    const energiaField = document.getElementById('energiaExtra');
-    
-    if (semanas <= 0) {
-      trimestreField.textContent = 'N/A';
-      energiaField.textContent = '0 kcal';
-      return;
-    }
-    
-    if (semanas <= 12) {
-      trimestreField.textContent = '1er trimestre';
-      energiaField.textContent = '0 kcal';
-    } else if (semanas <= 28) {
-      trimestreField.textContent = '2do trimestre';
-      energiaField.textContent = '340 kcal';
+historialDateSelectorEl.addEventListener('change', async function() { // Hacerla async
+    const selectedDate = this.value;
+    if (selectedDate === 'current') {
+        // Necesitamos las fechas para saber cuál es la más reciente para 'current'
+        const dates = await loadHistorialDates(); // Asegura que las fechas estén cargadas y actualizadas
+        loadClinicalProfileData('current', dates);
     } else {
-      trimestreField.textContent = '3er trimestre';
-      energiaField.textContent = '452 kcal';
+        loadClinicalProfileData(selectedDate);
     }
-  }
+});
 
-  // Funcion para actualizar el readonly (campos calculados condicion embarazo)
-  function actualizarInput() {
-    const valorSeleccionado = document.querySelector('input[name="condicion_embarazo"]:checked').value;
-    if (valorSeleccionado === "S") {
-      inputSemanas.removeAttribute('readonly');
-      inputSemanas.focus();
-    } else {
-      inputSemanas.setAttribute('readonly', true);
-      inputSemanas.value = "";
-      calcularDatosEmbarazo(); // Actualizar los campos calculados
-    }
-  }
+// --- Inicialización al Cargar la Página ---
+document.addEventListener('DOMContentLoaded', async () => {
+    const loadedDates = await loadHistorialDates(); // Cargar y obtener fechas
+    await loadClinicalProfileData('current', loadedDates); // Cargar perfil actual usando la más reciente si existe
+});
 
-  // evento para calcular al cambiar semanas
-  inputSemanas.addEventListener('input', calcularDatosEmbarazo);
+ // --- Función para guardar el rechazo alimentario ---
+ async function guardarRechazoAlimentario() {
+     // ... (tu función guardarRechazoAlimentario existente, sin cambios)
+     const alimentoSelect = document.getElementById('rechazo-alimenticio');
+     const alimentoId = alimentoSelect.value;
+     const motivoRechazo = document.getElementById('motivo_rechazo').value.trim();
+     const csrfTokenRechazo = document.querySelector('#formRechazoAlimentario [name=csrfmiddlewaretoken]').value;
 
-  actualizarInput();
+     if (!alimentoId) {
+         Swal.fire('Error', 'Debes seleccionar un alimento.', 'error');
+         return;
+     }
 
-  // evento a cada radio
-  radios.forEach(radio => {
-    radio.addEventListener('change', actualizarInput);
-  });
+     try {
+         const result = await fetchAPI('https://nutrilinkapi-production.up.railway.app/api_nutrilink/minuta/guardar_alimento_rechazo', {
+             method: 'POST',
+             headers: {
+                 'Content-Type': 'application/json',
+                 'X-CSRFToken': csrfTokenRechazo,
+             },
+             body: JSON.stringify({
+                 pacienteId: PACIENTE_ID,
+                 alimentoId: alimentoId,
+                 motivoRechazo: motivoRechazo || 'rechazo'
+             })
+         });
 
-  // script de informacion nutricional manejo de comboboxes
-  document.querySelectorAll('.form-select').forEach(select => {
-    select.addEventListener('change', function () {
-      if (this.value && !this.disabled) {
-        const containerId = this.closest('.selection-group').querySelector('.selected-items-container').id;
-        const container = document.getElementById(containerId);
-
-        const existingValues = Array.from(container.querySelectorAll('input[type="hidden"]')).map(input => input.value);
-
-        if (!existingValues.includes(this.value)) {
-          const selectedText = this.options[this.selectedIndex].text; // Captura el texto visible
-          addSelectedItem(containerId, this.value, selectedText); // Pásalo a la función
-          disableSelectedOptions(this);
-        } else {
-          alert('Esta opción ya fue seleccionada');
-        }
-
-        this.selectedIndex = 0;
-      }
-    });
-  });
-
-  function disableSelectedOptions(selectElement) {
-    const containerId = selectElement.closest('.selection-group').querySelector('.selected-items-container').id;
-    const selectedValues = Array.from(document.getElementById(containerId).querySelectorAll('input[type="hidden"]')).map(input => input.value);
-
-    Array.from(selectElement.options).forEach(option => {
-      if (selectedValues.includes(option.value)) {
-        option.disabled = true;
-      }
-    });
-  }
-
-//   //Funciones para manejar rechazos alimenticios multiples
-//   function addSelectedItem(containerId, value, displayText) {
-//   const container = document.getElementById(containerId);
-//   const itemId = 'item-' + Math.random().toString(36).substr(2, 9);
-
-//   const itemElement = document.createElement('div');
-//   itemElement.className = 'selected-item';
-//   itemElement.id = itemId;
-//   itemElement.innerHTML = `
-//     ${displayText}
-//     <span class="remove-item" onclick="removeItem('${itemId}', '${containerId}', '${value}')">×</span>
-//     <input type="hidden" name="${containerId.replace('-container', '')}[]" value="${value}">
-//   `;
-
-//   container.appendChild(itemElement);
-//  }
-
-//   function removeItem(itemId, containerId, value) {
-//     document.getElementById(itemId).remove();
-
-//     // Rehabilitar la opcion en el combobox
-//     const select = document.getElementById(containerId).closest('.selection-group').querySelector('.form-select');
-//     Array.from(select.options).forEach(option => {
-//       if (option.value === value) {
-//         option.disabled = false;
-//       }
-//     });
-//   }
-
-//   // El actual select se mantenga actualizado
-//   function addAnother(type) {
-//     const select = document.getElementById(`${type}-container`).closest('.selection-group').querySelector('.form-select');
-//     disableSelectedOptions(select); // refrescar disabled
-//     select.focus();
-//   }
-
-  // Función para cargar el perfil clínico completo
-  document.addEventListener('DOMContentLoaded', async function() {
-    try {
-      const idPaciente = "{{ paciente.id_paciente }}";
-      const URL = `https://nutrilinkapi-production.up.railway.app/api_nutrilink/paciente/obtener_perfil_clinico/${idPaciente}`;
-      
-      const response = await fetch(URL);
-      if (!response.ok) throw new Error('Error al cargar perfil clínico');
-      
-      const perfilClinico = await response.json();
-      
-      if (perfilClinico.status !== 'ok' || !perfilClinico.datos) {
-        throw new Error('Datos del perfil clínico no disponibles');
-      }
-      
-      const datos = perfilClinico.datos;
-      
-      //Cargar factor patológico
-      if (datos.id_factor_patologico) {
-        const radioButtons = document.querySelectorAll('[name="factor_patologico"]');
-        radioButtons.forEach(radio => {
-          const label = radio.nextElementSibling;
-          if (label.textContent.includes(datos.factor_patologico_descripcion)) {
-            radio.checked = true;
-          }
-        });
-      }
-      
-      //Cargar actividad física
-      const selectActividad = document.getElementById('actividadFisicaSelect');
-      if (datos.id_actividad_fisica) {
-        const defaultOption = selectActividad.querySelector('option[value=""]');
-        if (defaultOption) defaultOption.disabled = false;
-        
-        selectActividad.value = datos.id_actividad_fisica;
-        
-        if (defaultOption) defaultOption.disabled = true;
-      }
-      
-      if (datos.etapa_cambio_psicologico) {
-        document.getElementById('cambio_psicologico').value = datos.etapa_cambio_psicologico;
-      }
-      
-      if (datos.medicamentos_actuales) {
-        document.getElementById('medicamentos_actuales').value = datos.medicamentos_actuales;
-      }
-      
-      if (datos.notas_varias) {
-        document.getElementById('notas_varias').value = datos.notas_varias;
-      }
-      
-    } catch (error) {
-      console.error('Error al cargar perfil clínico:', error);
-    }
-  });
-
-  // Función para guardar el rechazo alimenticio
-  async function guardarRechazoAlimentario() {
-    const alimentoSelect = document.getElementById('rechazo-alimenticio');
-    const alimentoId = alimentoSelect.value;
-    const motivoRechazo = document.getElementById('motivo_rechazo').value.trim();
-    const pacienteId = "{{ paciente.id_paciente }}";
-    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-
-    if (!alimentoId || !motivoRechazo) {
-        Swal.fire({
-            title: 'Error',
-            text: 'Debes seleccionar un alimento y especificar el motivo de rechazo',
-            icon: 'error'
-        });
-        return;
-    }
-
-    try {
-        const response = await fetch('https://nutrilinkapi-production.up.railway.app/api_nutrilink/minuta/guardar_alimento_rechazo', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': csrfToken,
-            },
-            body: JSON.stringify({
-                pacienteId: pacienteId,
-                alimentoId: alimentoId,
-                motivoRechazo: motivoRechazo
-            })
-        });
-
-        const result = await response.json();
-
-        if (response.ok) {
-            Swal.fire({
-                title: 'Registrado correctamente',
-                text: 'El alimento rechazado se ha guardado exitosamente',
-                icon: 'success',
-                timer: 2000,
-                showConfirmButton: false
-            }).then(() => {
-                // Limpiar el formulario
-                alimentoSelect.value = '';
-                document.getElementById('motivo_rechazo').value = '';
-            });
-        } else {
-            let errorMsg = result.mensaje || 'Error al guardar el alimento rechazado';
-            if (result.detalle_db) {
-                errorMsg += ` (Detalle: ${result.detalle_db})`;
-            }
-            Swal.fire({
-                title: 'Error',
-                text: errorMsg,
-                icon: 'error'
-            });
-        }
-    } catch (error) {
-        console.error('Error:', error);
-        Swal.fire({
-            title: 'Error de conexión',
-            text: 'No se pudo conectar con el servidor',
-            icon: 'error'
-        });
-    }
+         if (result.status === 'success') {
+             Swal.fire({
+                 title: 'Registrado correctamente',
+                 text: result.mensaje || 'El alimento rechazado se ha guardado exitosamente',
+                 icon: 'success',
+                 timer: 2000,
+                 showConfirmButton: false
+             }).then(() => {
+                 alimentoSelect.value = '';
+                 document.getElementById('motivo_rechazo').value = 'rechazo';
+             });
+         } else {
+             Swal.fire('Error', result.mensaje || 'Error al guardar el alimento rechazado', 'error');
+         }
+     } catch (error) {
+         Swal.fire('Error de conexión', `No se pudo conectar con el servidor: ${error.message}`, 'error');
+     }
  }
 </script>
 {% endblock %}
