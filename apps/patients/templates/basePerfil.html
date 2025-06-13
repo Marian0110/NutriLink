@@ -16,7 +16,7 @@
   <div class="patient-card">
     <div class="profile-header">
       <div class="avatar-section">
-        <div class="avatar-icon"><i class="bi bi-person-fill"></i></div>
+        <img class="avatar-icon" id="userAvatar" src="{{ paciente.avatar_url }}" alt="Avatar de {{ paciente.nombre_completo }}">
         <div>
           <div class="patient-name" id="patient-name">{{ paciente.nombre_completo }}</div>
           <div class="patient-rut" id="patient-rut">RUT: {{ paciente.rut_paciente }}</div>

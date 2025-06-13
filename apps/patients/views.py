@@ -39,6 +39,12 @@ def get_paciente_data(id_paciente):
             apellidos.append(paciente_data['apellido_materno'])
         
         nombre_completo = ' '.join(nombres + apellidos).strip()
+
+        iniciales = (paciente_data['primer_nombre'][0].upper() if paciente_data['primer_nombre'] else '') + \
+                    (paciente_data['apellido_paterno'][0].upper() if paciente_data['apellido_paterno'] else '')
+
+        paciente_data['iniciales'] = iniciales  # Se agregan las iniciales al diccionario
+        paciente_data['avatar_url'] = f"https://ui-avatars.com/api/?name={iniciales}&background=random&color=fff&size=200"
         
         return {
             'id_paciente': paciente_data['id_paciente'],
@@ -48,7 +54,9 @@ def get_paciente_data(id_paciente):
             'sexo': 'Masculino' if paciente_data['sexo'] == 'M' else 'Femenino',
             'telefono': paciente_data.get('telefono'),
             'correo': paciente_data['correo'],
-            'fecha_nacimiento': paciente_data['fechanac']
+            'fecha_nacimiento': paciente_data['fechanac'],
+            'iniciales': iniciales,  # Añade esto
+            'avatar_url': paciente_data['avatar_url'] # Añade esto
         }
     except requests.Timeout:
         raise Http404("Tiempo de espera agotado al conectar con la API")
