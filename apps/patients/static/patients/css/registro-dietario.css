@@ -521,3 +521,47 @@
   min-width: 1400px; /* Ajusta según la cantidad de columnas */
 }
 
+.button-nuevo-alimento {
+    background-color: #28a745; /* Verde, por ejemplo */
+    color: white;
+    border: none;
+    padding: 5px 8px; /* Ajustar tamaño */
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8em; /* Más pequeño */
+}
+.button-nuevo-alimento:hover {
+    background-color: #218838;
+}
+.button-nuevo-alimento i,
+.button-eliminar-alimento i { /* Para que los iconos se vean bien sin texto */
+    margin-right: 0 !important; 
+}
+
+/* Si los botones de acción de la fila se ven muy grandes con solo iconos */
+ .alimentos-tabla-block .button-eliminar-fila, 
+ .alimentos-tabla-block .button-nuevo-alimento {
+     padding: 0.25rem 0.5rem; /* Más pequeño */
+     font-size: 0.875rem; /* Ligeramente más pequeño */
+     line-height: 1.5;
+ }
+ .alimentos-tabla-block .button-eliminar-fila i,
+ .alimentos-tabla-block .button-nuevo-alimento i {
+     pointer-events: none; /* Para que el click vaya al botón */
+ }
+
+ /* Estilos para el modal de agregar alimento (copiados de bdcrud.css o adaptados) */
+ #agregarAlimentoModal .modal-header.background {
+     background-color: var(--primary-color, #007bff); /* Ajusta el color primario */
+     color: white;
+ }
+ #agregarAlimentoModal .modal-header .btn-close { /* Si usas el btn-close de bootstrap 5 */
+     filter: invert(1) grayscale(100%) brightness(200%); /* Para hacerlo blanco */
+ }
+ #agregarAlimentoModal .section-title {
+     font-size: 1.1rem;
+     color: var(--secondary-color, #333);
+     border-bottom: 1px solid #eee;
+     padding-bottom: 0.5rem;
+     margin-bottom: 1rem;
+ }

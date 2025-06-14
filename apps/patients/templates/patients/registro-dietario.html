@@ -72,6 +72,117 @@
     <textarea id="notas-generales-registro" name="notas_generales_registro" class="textarea-notas" rows="4" placeholder="Suplementos / agua consumida / etc."></textarea>
   </div>
 
+  <!-- Modal para agregar alimento -->
+  <div class="modal fade" id="agregarAlimentoModal" tabindex="-1" aria-labelledby="agregarAlimentoModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered modal-lg">
+          <div class="modal-content">
+              <div class="modal-header background"> <!-- Asegúrate que la clase 'background' esté definida o usa una genérica -->
+                  <h5 class="modal-title" id="agregarAlimentoModalLabel">
+                      <i class="fas fa-plus-circle me-2"></i>
+                      Agregar Nuevo Alimento
+                  </h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button> <!-- Ajustar clase si es necesario -->
+              </div>
+              <div class="modal-body">
+                  <form id="nuevoAlimentoFormRegistro"> <!-- ID ÚNICO para este form -->
+                      {% csrf_token %} <!-- Ya tienes uno global, pero no hace daño tenerlo específico aquí -->
+                      <fieldset class="info-basica-section mb-4">
+                          <legend class="section-title">Información Básica</legend>
+                          <div class="row g-3">
+                              <div class="col-md-6">
+                                  <label class="form-label">Nombre del alimento: <span class="text-danger">*</span></label>
+                                  <input type="text" class="form-control" name="nombre_alimento" required>
+                              </div>
+                              <div class="col-md-6">
+                                  <label class="form-label">Grupo alimenticio: <span class="text-danger">*</span></label>
+                                  <select class="form-select" name="id_grupo_alimenticio" required>
+                                      <option value="">Seleccionar grupo</option>
+                                      <!-- Los grupos se cargarán por JS -->
+                                  </select>
+                              </div>
+                              <div class="col-md-4">
+                                  <label class="form-label">Origen (ej: USDA, Envase):</label>
+                                  <input type="text" class="form-control" name="origen" value="Personalizado">
+                              </div>
+                              <div class="col-md-4">
+                                  <label class="form-label">Medida (ej: tazas): <span class="text-danger">*</span></label>
+                                  <input type="text" class="form-control" name="medida" required>
+                              </div>
+                              <div class="col-md-4">
+                                  <label class="form-label">N° medidas por porción: <span class="text-danger">*</span></label>
+                                  <input type="number" step="0.01" min="0" class="form-control" name="numero_medida" required>
+                              </div>
+                              <div class="col-md-6"> <!-- Era col-md-6, no había 12 -->
+                                  <label class="form-label">Masa (total por porción): <span class="text-danger">*</span></label>
+                                  <div class="input-group">
+                                      <input type="number" step="0.01" min="0" class="form-control" name="cantidad_porcion" required>
+                                      <span class="input-group-text">gr/ml</span>
+                                  </div>
+                              </div>
+                          </div>
+                      </fieldset>
+                      <fieldset class="macronutrientes-section mb-4">
+                          <legend class="section-title">Macronutrientes (total por porción indicada)</legend>
+                          <div class="row g-3">
+                              <div class="col-md-3">
+                                  <label class="form-label">Energía (kcal): <span class="text-danger">*</span></label>
+                                  <div class="input-group">
+                                    <input type="number" step="0.1" min="0" class="form-control" name="kcal" required>
+                                    <span class="input-group-text">kcal</span>
+                                  </div>
+                              </div>
+                              <div class="col-md-3">
+                                  <label class="form-label">Proteínas (g): <span class="text-danger">*</span></label>
+                                  <div class="input-group">
+                                    <input type="number" step="0.01" min="0" class="form-control" name="proteinas_gr" required>
+                                    <span class="input-group-text">g</span>
+                                  </div>
+                              </div>
+                              <div class="col-md-3">
+                                  <label class="form-label">Lípidos (g): <span class="text-danger">*</span></label>
+                                  <div class="input-group">
+                                    <input type="number" step="0.01" min="0" class="form-control" name="lipidos_gr" required>
+                                    <span class="input-group-text">g</span>
+                                  </div>
+                              </div>
+                              <div class="col-md-3">
+                                  <label class="form-label">Carbohidratos (g): <span class="text-danger">*</span></label>
+                                  <div class="input-group">
+                                    <input type="number" step="0.01" min="0" class="form-control" name="carbohidratos_gr" required>
+                                    <span class="input-group-text">g</span>
+                                  </div>
+                              </div>
+                          </div>
+                      </fieldset>
+                      <fieldset class="micronutrientes-section mb-4">
+                          <legend class="section-title">Micronutrientes (opcionales, total por porción indicada)</legend>
+                          <div class="row g-3">
+                              <!-- Inputs para micronutrientes (igual que en bdcrud.html) -->
+                              <div class="col-md-4"><label class="form-label">Omega 3 (g):</label><div class="input-group"><input type="number" step="0.01" min="0" class="form-control" name="omega_gr"><span class="input-group-text">g</span></div></div>
+                              <div class="col-md-4"><label class="form-label">Vitamina A (µg RE):</label><div class="input-group"><input type="number" step="0.01" min="0" class="form-control" name="vitamina_a_mcg"><span class="input-group-text">µg RE</span></div></div>
+                              <div class="col-md-4"><label class="form-label">Vitamina B12 (µg):</label><div class="input-group"><input type="number" step="0.01" min="0" class="form-control" name="vitamina_b12_mcg"><span class="input-group-text">µg</span></div></div>
+                              <div class="col-md-4"><label class="form-label">Calcio (mg):</label><div class="input-group"><input type="number" step="0.01" min="0" class="form-control" name="calcio_mg"><span class="input-group-text">mg</span></div></div>
+                              <div class="col-md-4"><label class="form-label">Hierro (mg):</label><div class="input-group"><input type="number" step="0.01" min="0" class="form-control" name="hierro_mg"><span class="input-group-text">mg</span></div></div>
+                              <div class="col-md-4"><label class="form-label">Selenio (µg):</label><div class="input-group"><input type="number" step="0.01" min="0" class="form-control" name="selenio_mcg"><span class="input-group-text">µg</span></div></div>
+                              <div class="col-md-4"><label class="form-label">Zinc (mg):</label><div class="input-group"><input type="number" step="0.01" min="0" class="form-control" name="zinc_mg"><span class="input-group-text">mg</span></div></div>
+                              <div class="col-md-4"><label class="form-label">Potasio (mg):</label><div class="input-group"><input type="number" step="0.01" min="0" class="form-control" name="potasio_mg"><span class="input-group-text">mg</span></div></div>
+                              <div class="col-md-4"><label class="form-label">Sodio (mg):</label><div class="input-group"><input type="number" step="0.01" min="0" class="form-control" name="sodio_mg"><span class="input-group-text">mg</span></div></div>
+                          </div>
+                      </fieldset>
+                      <div class="d-flex justify-content-end gap-2 mt-4">
+                          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                              <i class="fas fa-times me-2"></i>Cancelar
+                          </button>
+                          <button type="submit" class="btn btn-primary">
+                              <i class="fas fa-save me-2"></i>Guardar Alimento
+                          </button>
+                      </div>
+                  </form>
+              </div>
+          </div>
+      </div>
+  </div>
+
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -88,7 +199,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     const adecuacionStatusDiv = document.getElementById('adecuacion-status');
     const registroDateSelectorEl = document.getElementById('registro-date-selector');
     let graficoAdecuacionContainerEl = document.querySelector('.grafico-adecuacion-container');
+    let ALL_GRUPOS_ALIMENTICIOS_DATA = []; // Para el modal de nuevo alimento
+    const ID_NUTRICIONISTA_REGISTRO = sessionStorage.getItem('id_nutricionista'); 
 
+    let currentTargetFoodRowForNewAlimento = null; // Para saber qué fila actualizar
+
+    const nuevoAlimentoFormElRegistro = document.getElementById('nuevoAlimentoFormRegistro');
+    if (nuevoAlimentoFormElRegistro) {
+        nuevoAlimentoFormElRegistro.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            await guardarNuevoAlimentoDesdeModal(this);
+        });
+    }
 
     let ALL_TIEMPOS_COMIDA_DATA = [];
     let ALL_ALIMENTOS_DATA = [];
@@ -409,11 +531,33 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
 
         const cellAcciones = nuevaFilaAlimento.insertCell();
+        cellAcciones.style.display = 'flex'; // Para alinear botones
+        cellAcciones.style.gap = '5px';
         const btnEliminarAlimentoRow = document.createElement('button');
         btnEliminarAlimentoRow.type = 'button';
         btnEliminarAlimentoRow.classList.add('button-eliminar-fila', 'button-eliminar-alimento');
-        btnEliminarAlimentoRow.textContent = 'Eliminar';
-        cellAcciones.appendChild(btnEliminarAlimentoRow);
+        btnEliminarAlimentoRow.innerHTML = '<i class="fas fa-trash-alt"></i>'; // Icono
+        btnEliminarAlimentoRow.title = "Eliminar alimento";
+        const btnNuevoAlimentoRow = document.createElement('button');
+      btnNuevoAlimentoRow.type = 'button';
+      btnNuevoAlimentoRow.classList.add('button-accion-fila', 'button-nuevo-alimento'); // Nueva clase
+      btnNuevoAlimentoRow.innerHTML = '<i class="fas fa-plus"></i>'; // Icono
+      btnNuevoAlimentoRow.title = "Crear nuevo alimento";
+      btnNuevoAlimentoRow.dataset.bsToggle = "modal"; // Atributo para Bootstrap
+      btnNuevoAlimentoRow.dataset.bsTarget = "#agregarAlimentoModal"; // Target del modal
+
+      btnNuevoAlimentoRow.addEventListener('click', () => {
+          if (isViewingHistoricalRegistro) return;
+          currentTargetFoodRowForNewAlimento = nuevaFilaAlimento; // Guardar referencia a la fila
+          document.getElementById('nuevoAlimentoFormRegistro').reset(); // Limpiar form del modal
+          // Asegurar que los grupos estén cargados en el modal
+          if (ALL_GRUPOS_ALIMENTICIOS_DATA.length === 0) {
+              cargarGruposAlimenticiosParaModal(); // Cargar si aún no se han cargado
+          }
+      });
+
+      cellAcciones.appendChild(btnEliminarAlimentoRow);
+      cellAcciones.appendChild(btnNuevoAlimentoRow); // AÑADIR EL NUEVO BOTÓN
 
         const otherCellsHTML = `
             <td><input type="text" class="input-tabla input-medida-equiv" name="medida_equiv_${foodRowId}" readonly></td>
@@ -469,6 +613,104 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         });
     });
+
+        async function guardarNuevoAlimentoDesdeModal(formElement) {
+        const submitButton = formElement.querySelector('button[type="submit"]');
+        const originalButtonText = submitButton.innerHTML;
+        submitButton.disabled = true;
+        submitButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Guardando...';
+
+        const formData = new FormData(formElement);
+        const csrfTokenModal = formElement.querySelector('[name=csrfmiddlewaretoken]').value;
+
+        const parseFloatOrNull = (value) => (value === null || String(value).trim() === '') ? null : parseFloat(value);
+        const parseIntOrNull = (value) => (value === null || String(value).trim() === '') ? null : parseInt(value, 10);
+
+        const data = {
+            nombre_alimento: formData.get('nombre_alimento'),
+            origen: formData.get('origen') || 'Personalizado',
+            id_grupo_alimenticio: parseIntOrNull(formData.get('id_grupo_alimenticio')),
+            medida: formData.get('medida'),
+            numero_medida: parseFloatOrNull(formData.get('numero_medida')),
+            masa: parseFloatOrNull(formData.get('cantidad_porcion')),
+            kcal: parseFloatOrNull(formData.get('kcal')),
+            proteinas_gr: parseFloatOrNull(formData.get('proteinas_gr')),
+            carbohidratos_gr: parseFloatOrNull(formData.get('carbohidratos_gr')),
+            lipidos_gr: parseFloatOrNull(formData.get('lipidos_gr')),
+            n3_gr: parseFloatOrNull(formData.get('omega_gr')),
+            vit_a_mcg: parseFloatOrNull(formData.get('vitamina_a_mcg')),
+            vit_b12_mcg: parseFloatOrNull(formData.get('vitamina_b12_mcg')),
+            calcio_mg: parseFloatOrNull(formData.get('calcio_mg')),
+            hierro_mg: parseFloatOrNull(formData.get('hierro_mg')),
+            selenio_mcg: parseFloatOrNull(formData.get('selenio_mcg')),
+            zinc_mg: parseFloatOrNull(formData.get('zinc_mg')),
+            potasio_mg: parseFloatOrNull(formData.get('potasio_mg')),
+            sodio_mg: parseFloatOrNull(formData.get('sodio_mg')),
+            id_nutricionista: ID_NUTRICIONISTA_REGISTRO
+        };
+
+        if (!data.nombre_alimento || !data.id_grupo_alimenticio || !data.medida || data.numero_medida === null || data.masa === null || data.kcal === null || data.proteinas_gr === null || data.lipidos_gr === null || data.carbohidratos_gr === null) {
+            Swal.fire('Campos Incompletos', 'Por favor, complete todos los campos obligatorios (*) del nuevo alimento.', 'warning');
+            submitButton.disabled = false;
+            submitButton.innerHTML = originalButtonText;
+            return;
+        }
+
+        let rawResponse; // Para inspeccionar la respuesta cruda si es necesario
+
+        try {
+            // NO usar fetchAPI aquí para tener más control sobre la respuesta y evitar que lance error si el status interno no es "success"
+            rawResponse = await fetch('https://nutrilinkapi-production.up.railway.app/api_nutrilink/alimento/guardar_alimento', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfTokenModal 
+                },
+                body: JSON.stringify(data)
+            });
+
+            const result = await rawResponse.json(); // Intentar parsear JSON siempre
+
+            if (rawResponse.ok) { // Éxito HTTP (200-299) - El alimento DEBERÍA estar guardado
+                Swal.fire({
+                    icon: 'success',
+                    title: '¡Alimento Guardado!',
+                    text: result.mensaje || 'El alimento ha sido procesado. La página se recargará.',
+                    timer: 2000, 
+                    showConfirmButton: false
+                }).then(() => {
+                    const modalElement = formElement.closest('.modal');
+                    if (modalElement) {
+                        const modalInstance = bootstrap.Modal.getInstance(modalElement);
+                        if (modalInstance) modalInstance.hide();
+                        
+                        modalElement.addEventListener('hidden.bs.modal', function onModalHidden() {
+                            window.location.reload();
+                            modalElement.removeEventListener('hidden.bs.modal', onModalHidden);
+                        }, { once: true });
+                    } else {
+                        window.location.reload();
+                    }
+                });
+            } else {
+                // Error HTTP (4xx, 5xx)
+                let errorMessage = `Error ${rawResponse.status}: `;
+                errorMessage += result.mensaje || result.detail || 'Error al guardar el alimento.';
+                Swal.fire('Error', errorMessage, 'error');
+                submitButton.disabled = false;
+                submitButton.innerHTML = originalButtonText;
+            }
+        } catch (error) { // Errores de red, o si rawResponse.json() falla
+            console.error('Error al crear alimento desde modal:', error);
+            let errorMsg = 'No se pudo conectar con el servidor o procesar la respuesta.';
+            if (error.message) {
+                errorMsg = `Error: ${error.message}`;
+            }
+            Swal.fire('Error de Conexión', errorMsg, 'error');
+            submitButton.disabled = false;
+            submitButton.innerHTML = originalButtonText;
+        }
+    }
 
     function getSelectedMealTimeIdsDOM() {
         const selected = [];
@@ -1249,6 +1491,33 @@ document.addEventListener('DOMContentLoaded', async () => {
         reorderMealTimeBlocksByTime(); // Reordena si es necesario
     }
 
+    async function cargarGruposAlimenticiosParaModal() {
+      try {
+          const response = await fetchAPI('https://nutrilinkapi-production.up.railway.app/api_nutrilink/alimento/obtener_grupos_alimenticios_con_id', 'grupos alimenticios para modal');
+          if (response && Array.isArray(response)) { // Asumiendo que la API devuelve un array directamente
+              ALL_GRUPOS_ALIMENTICIOS_DATA = response;
+              const nuevoGrupoSelect = document.querySelector('#nuevoAlimentoFormRegistro select[name="id_grupo_alimenticio"]');
+              if (nuevoGrupoSelect) {
+                  nuevoGrupoSelect.innerHTML = '<option value="">Seleccionar grupo</option>';
+                  ALL_GRUPOS_ALIMENTICIOS_DATA
+                      .sort((a, b) => a.descripcion.localeCompare(b.descripcion))
+                      .forEach(grupo => {
+                          const option = document.createElement('option');
+                          option.value = grupo.id_grupo_alimenticio;
+                          option.textContent = grupo.descripcion;
+                          nuevoGrupoSelect.appendChild(option);
+                      });
+                    }
+                } else {
+                    console.error('Respuesta inesperada al cargar grupos para modal:', response);
+                    ALL_GRUPOS_ALIMENTICIOS_DATA = [];
+                }
+            } catch (error) {
+                console.error('Error cargando grupos alimenticios para modal:', error);
+                Swal.fire('Error', 'No se pudieron cargar los grupos alimenticios para el nuevo alimento.', 'error');
+            }
+        }
+
     async function initializePage() {
         if (adecuacionStatusDiv) {
             adecuacionStatusDiv.textContent = "Cargando datos base...";
@@ -1256,6 +1525,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         try {
             await cargarDatosBase();
+            await cargarGruposAlimenticiosParaModal(); 
             await loadRegistroDates();
             // Por defecto, se carga el registro actual (editable)
             // cargarYMostrarResumenNutricionalYDetalles ya se encarga de llamar a toggleEditableStateRegistro
