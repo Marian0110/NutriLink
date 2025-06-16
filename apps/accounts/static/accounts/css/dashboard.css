@@ -1,0 +1,62 @@
+.card-citas-del-dia  {
+    background-color: white;
+    border-radius: 10px;
+    border:#d7d7d7 1px solid;
+    width: 95%;
+    padding: 0 20px;
+}
+.container-dash {
+    margin-left: 230px;
+    min-height: calc(100vh - 55px);
+    width: calc(100% - 230px); 
+    overflow: hidden;
+}
+
+.encabezado-dash {
+    background: linear-gradient(135deg, #4e73df 0%, #224abe 100%);
+    color: white;
+    border-radius: 10px;
+    width: 100%;
+}
+.cita-card {
+    border-left: 4px solid #4e73df;
+    margin-bottom: 15px;
+    transition: all 0.3s;
+    border-radius: 10px;
+}
+.cita-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+.patient-avatar {
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
+}
+.btn-consult {
+    width: 100%;
+    margin-bottom: 5px;
+    font-size: 0.8rem;
+}
+.expand-btn {
+    color: #4e73df;
+    cursor: pointer;
+}
+.hidden-citas {
+    display: none;
+}
+.graph-placeholder {
+    background-color: #f8f9fa;
+    border: 1px dashed #dee2e6;
+    border-radius: 5px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #6c757d;
+}
+.card-header-citas {
+    padding: 1rem 1.25rem;
+    background-color: #fff;
+    border-bottom: 1px solid rgba(0,0,0,.125);
+}

@@ -3,5 +3,156 @@
 {% block title %}Dashboard{% endblock %}
 
 {% block content %}
+<div class="container-dash">
+    <!-- Fila principal que contiene encabezado y citas -->
+    <div class="row mb-4">
+        <!-- Encabezado (70%) -->
+        <div class="col-lg-7 mt-3" >
+            <div class="encabezado-dash">
+                <div class="card-body" style="padding: 15px;">
+                    <div>
+                        <h4 class="mb-1"><i class="fas fa-heartbeat me-2"></i>Bienvenido, Nutricionista</h4>
+                        <p class="mb-0">NutriLink - Tu sistema de gestión nutricional</p>
+                    </div>
+                </div>
+            </div>
+                
+            <!-- Gráficos principales -->
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="graph-placeholder" style="min-height: 400px;">
+                        <div class="text-center">
+                            <i class="fas fa-chart-line fa-4x mb-3"></i>
+                            <h5>Gráficos principales</h5>
+                            <p class="text-muted">Visualizaciones con Plotly/Pandas</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row mt-4">
+                <div class="col-md-6 mb-4">
+                    <div class="graph-placeholder" style="min-height: 250px;">
+                        <i class="fas fa-chart-pie fa-3x mb-3"></i>
+                        <p>Gráfico secundario 1</p>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-4">
+                    <div class="graph-placeholder" style="min-height: 250px;">
+                        <i class="fas fa-chart-bar fa-3x mb-3"></i>
+                        <p>Gráfico secundario 2</p>
+                    </div>
+                </div>
+            </div>
+        </div>
 
+        <!-- Columna derecha (30% - Citas) -->
+        <div class="col-lg-5 mt-3">
+            <div class="card-citas-del-dia">
+                <div class="card-header-citas">
+                    <h5 class="mb-0"><i class="far fa-calendar-alt me-2"></i>Tus citas de hoy</h5>
+                </div>
+                <div class="card-body mt-2">
+                    <!-- Cita 1 -->
+                    <div class="cita-card">
+                        <div class="py-3">
+                            <div class="row align-items-center p-2">
+                                <div class="col-3 text-center">
+                                    <img src="https://ui-avatars.com/api/?name=Maria+Garcia&background=4e73df&color=fff" alt="Paciente" class="patient-avatar rounded-circle">
+                                </div>
+                                <div class="col-5">
+                                    <h6 class="mb-1">María García</h6>
+                                    <p class="text-muted small mb-1"><i class="far fa-clock me-1"></i>09:00 - 10:00 AM</p>
+                                    <p class="text-muted small mb-0"><i class="fas fa-notes-medical me-1"></i>Control de peso</p>
+                                </div>
+                                <div class="col-4">
+                                    <a href="/paciente/1" class="btn btn-primary btn-sm btn-consult">
+                                        <i class="fas fa-play me-1"></i> Iniciar
+                                    </a>
+                                    <button class="btn btn-success btn-sm btn-consult" disabled>
+                                        <i class="fas fa-check me-1"></i> Terminar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Cita 2 -->
+                    <div class="cita-card">
+                        <div class="card-body py-3">
+                            <div class="row align-items-center p-2">
+                                <div class="col-3 text-center">
+                                    <img src="https://ui-avatars.com/api/?name=Juan+Perez&background=1cc88a&color=fff" alt="Paciente" class="patient-avatar rounded-circle">
+                                </div>
+                                <div class="col-5">
+                                    <h6 class="mb-1">Juan Pérez</h6>
+                                    <p class="text-muted small mb-1"><i class="far fa-clock me-1"></i>11:30 - 12:30 PM</p>
+                                    <p class="text-muted small mb-0"><i class="fas fa-notes-medical me-1"></i>Plan diabético</p>
+                                </div>
+                                <div class="col-4">
+                                    <button class="btn btn-secondary btn-sm btn-consult" disabled>
+                                        <i class="fas fa-play me-1"></i> Iniciar
+                                    </button>
+                                    <button class="btn btn-success btn-sm btn-consult">
+                                        <i class="fas fa-check me-1"></i> Terminar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Citas ocultas -->
+                    <div class="cita-card hidden-citas">
+                        <div class="card-body py-3">
+                            <div class="row align-items-center p-2">
+                                <div class="col-3 text-center">
+                                    <img src="https://ui-avatars.com/api/?name=Ana+Lopez&background=f6c23e&color=000" alt="Paciente" class="patient-avatar rounded-circle">
+                                </div>
+                                <div class="col-5">
+                                    <h6 class="mb-1">Ana López</h6>
+                                    <p class="text-muted small mb-1"><i class="far fa-clock me-1"></i>04:00 - 05:00 PM</p>
+                                    <p class="text-muted small mb-0"><i class="fas fa-notes-medical me-1"></i>Primera consulta</p>
+                                </div>
+                                <div class="col-4">
+                                    <a href="/paciente/3" class="btn btn-primary btn-sm btn-consult">
+                                        <i class="fas fa-play me-1"></i> Iniciar
+                                    </a>
+                                    <button class="btn btn-success btn-sm btn-consult" disabled>
+                                        <i class="fas fa-check me-1"></i> Terminar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-center mt-3">
+                        <button id="toggleCitas" class="btn btn-link expand-btn">
+                            <i class="fas fa-chevron-down me-1"></i> Ver todas las citas de hoy (3)
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap JS + Popper -->
+    <script>
+        // Mostrar/ocultar citas adicionales
+        document.getElementById('toggleCitas').addEventListener('click', function() {
+            const hiddenCitas = document.querySelectorAll('.hidden-citas');
+            const icon = this.querySelector('i');
+            
+            hiddenCitas.forEach(cita => {
+                if (cita.style.display === 'none' || !cita.style.display) {
+                    cita.style.display = 'block';
+                    icon.classList.replace('fa-chevron-down', 'fa-chevron-up');
+                    this.innerHTML = '<i class="fas fa-chevron-up me-1"></i> Ocultar citas';
+                } else {
+                    cita.style.display = 'none';
+                    icon.classList.replace('fa-chevron-up', 'fa-chevron-down');
+                    this.innerHTML = '<i class="fas fa-chevron-down me-1"></i> Ver todas las citas de hoy (3)';
+                }
+            });
+        });
+    </script>
 {% endblock %}
