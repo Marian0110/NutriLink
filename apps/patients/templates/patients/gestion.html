@@ -163,8 +163,8 @@
   <div class="modal-dialog modal-dialog-centered modal-lg">
     <div class="modal-content">
       <div class="modal-header bg-success text-white">
-        <h5 class="modal-title" id="agendarCitaModalLabel">
-          <i class="fas fa-calendar-plus me-2"></i>Agendar Cita
+        <h5 class="modal-title text-center w-100" id="agendarCitaModalLabel">
+          <i class="fas fa-calendar-plus me-2"></i>Reservar Cita
         </h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
       </div>
@@ -172,13 +172,13 @@
         <form id="form-agendar-cita">
           <input type="hidden" id="input-id-paciente">
           <div class="mb-3">
-            <label class="form-label">Centro de atención:</label>
+            <label class="form-label">Centro de atención: <span class="text-danger">*</span></label>
             <select class="form-select" id="select-centro-atencion" required>
               <option value="">Seleccione un centro...</option>
             </select>
           </div>
           <div class="mb-3">
-            <label class="form-label">Seleccionar hora disponible:</label>
+            <label class="form-label">Seleccionar hora disponible: <span class="text-danger">*</span></label>
             <select class="form-select" id="select-disponibilidad" required>
               <option value="">Seleccione una hora...</option>
             </select>
@@ -192,7 +192,7 @@
             <textarea type="text" class="form-control" id="input-notas"></textarea>
           </div>
           <div class="d-flex justify-content-end">
-            <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">Cancelar</button>
+            <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal"><i class="fas fa-times me-2"></i>Cancelar</button>
             <button type="submit" class="btn btn-success">Confirmar cita</button>
           </div>
         </form>
@@ -307,10 +307,10 @@
       }
     });
 
-    // Para almacenar mapa de ID disponibilidad
+    // Mapa de ID disponibilidad
     let mapaDisponibilidades = {};
 
-    // Variable
+    // Variable global para la paginación
     let currentPage = 1;
 
     // Inicializacion con validacion
@@ -372,21 +372,21 @@
 
       if (pacientes.length === 0) {
         pacientesTableBody.innerHTML = `
-    <tr>
-      <td colspan="5" class="text-center">No se encontraron pacientes registrados</td>
-    </tr>
-  `;
+        <tr>
+          <td colspan="5" class="text-center">No se encontraron pacientes registrados</td>
+        /tr>
+        `;
         return;
       }
 
       let html = '';
       pacientes.forEach((paciente, index) => {
         const fullName = `
-    ${paciente.primer_nombre || ''} 
-    ${paciente.segundo_nombre || ''} 
-    ${paciente.apellido_paterno || ''} 
-    ${paciente.apellido_materno || ''}
-  `.replace(/\s+/g, ' ').trim();
+          ${paciente.primer_nombre || ''} 
+          ${paciente.segundo_nombre || ''} 
+          ${paciente.apellido_paterno || ''} 
+          ${paciente.apellido_materno || ''}
+        `.replace(/\s+/g, ' ').trim();
         const rutDisplay = `${paciente.rut_paciente || ''}-${paciente.dv || ''}`.replace(/(\d{1,3})(?=(\d{3})+(?!\d))/g, '$1.');
 
         const patientData = {
@@ -405,32 +405,32 @@
         const encodedData = btoa(JSON.stringify(patientData));
 
         html += `
-    <tr>
-      <th scope="row">${index + 1}</th>
-      <td onclick="location.href='/patients/${paciente.id_paciente}/info-general/'" style="cursor: pointer;">${fullName}</td>
-      <td onclick="location.href='/patients/${paciente.id_paciente}/info-general/'" style="cursor: pointer;">${paciente.correo || ''}</td>
-      <td onclick="location.href='/patients/${paciente.id_paciente}/info-general/'" style="cursor: pointer;">${rutDisplay}</td>
-        <td>
-          <button class="btn btn-sm btn-outline-primary me-2 edit-btn"
+          <tr>
+            <th scope="row">${index + 1}</th>
+            <td onclick="location.href='/patients/${paciente.id_paciente}/info-general/'" style="cursor: pointer;">${fullName}</td>
+            <td onclick="location.href='/patients/${paciente.id_paciente}/info-general/'" style="cursor: pointer;">${paciente.correo || ''}</td>
+            <td onclick="location.href='/patients/${paciente.id_paciente}/info-general/'" style="cursor: pointer;">${rutDisplay}</td>
+            <td>
+              <button class="btn btn-sm btn-outline-primary me-2 edit-btn"
                   data-bs-toggle="modal" 
                   data-bs-target="#patientModal"
                   data-patient-id="${paciente.id_paciente}"
                   data-patient-data="${encodedData}">
-            <i class="fas fa-edit"></i>
-          </button>
+                <i class="fas fa-edit"></i>
+              </button>
 
-          <button class="btn btn-sm btn-outline-success me-2 agendar-btn"
+              <button class="btn btn-sm btn-outline-success me-2 agendar-btn"
                   data-patient-id="${paciente.id_paciente}"
                   data-patient-nombre="${fullName}">
-            <i class="fas fa-calendar-plus"></i>
-          </button>
+                <i class="fas fa-calendar-plus"></i>
+              </button>
 
-          <button class="btn btn-sm btn-outline-danger delete-btn" data-patient-id="${paciente.id_paciente}">
-            <i class="fas fa-trash-alt"></i>
-          </button>
-      </td>
-    </tr>
-  `;
+              <button class="btn btn-sm btn-outline-danger delete-btn" data-patient-id="${paciente.id_paciente}">
+                <i class="fas fa-trash-alt"></i>
+              </button>
+            </td>
+          </tr>
+        `;
       });
 
       pacientesTableBody.innerHTML = html;
@@ -541,12 +541,10 @@
         actionText.textContent = 'Registrar';
         submitText.textContent = 'Registrar';
         modalIcon.className = 'fas fa-user-plus me-2';
-        document.getElementById('modalTitle').textContent = 'Registrar Paciente';
       } else {
         actionText.textContent = 'Editar';
         submitText.textContent = 'Actualizar';
         modalIcon.className = 'fas fa-user-edit me-2';
-        document.getElementById('modalTitle').textContent = 'Editar Paciente';
       }
     }
 
@@ -561,14 +559,14 @@
       if (!pacientesTableBody) return;
 
       pacientesTableBody.innerHTML = `
-  <tr>
-    <td colspan="5" class="text-center">
-      <div class="spinner-border text-primary" role="status">
-        <span class="visually-hidden">Cargando...</span>
-      </div>
-    </td>
-  </tr>
-  `;
+      <tr>
+        <td colspan="5" class="text-center">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Cargando...</span>
+          </div>
+        </td>
+      </tr>
+      `;
     }
 
     // Mensaje error de la api, pacientes vinculados al nutricionista
@@ -576,10 +574,10 @@
       if (!pacientesTableBody) return;
 
       pacientesTableBody.innerHTML = `
-  <tr>
-    <td colspan="5" class="text-center text-danger">${message}</td>
-  </tr>
-  `;
+      <tr>
+        <td colspan="5" class="text-center text-danger">${message}</td>
+      </tr>
+      `;
     }
 
     function redirectToLogin() {
@@ -737,7 +735,7 @@
       });
     }
 
-    // Función para recuperar las horas
+    // Función agendar nueva cita
     document.addEventListener('click', async function (e) {
       const btn = e.target.closest('.agendar-btn');
       if (btn) {
@@ -758,56 +756,6 @@
         mapaDisponibilidades = {};
 
         agendarCitaModal.show();
-
-        /*try {
-          const res = await fetch(`https://nutrilinkapi-production.up.railway.app/api_nutrilink/agenda/disponibilidad_nutricionista/${idNutricionista}`);
-          const data = await res.json();
-    
-          if (!res.ok || data.status !== 'ok') throw new Error(data.mensaje || 'No se pudo obtener disponibilidad');
-    
-          // Definir la siguiente hora redondeada (ej: si son 18:56 → 19:00)
-          const ahora = new Date();
-          const siguienteHora = new Date(ahora);
-          siguienteHora.setMinutes(0, 0, 0);
-          siguienteHora.setHours(ahora.getHours() + 1);
-    
-          const opciones = data.disponibilidades
-            .filter(d => {
-              if (d.estado !== 'Disponible') return false; // ❌ Excluir si está Reservado
-    
-              const [anio, mes, dia] = d.fecha.split('T')[0].split('-');
-              const fechaObj = new Date(parseInt(anio), parseInt(mes) - 1, parseInt(dia));
-              const [horaStr, minutosStr] = d.hora.split(':');
-    
-              fechaObj.setHours(parseInt(horaStr), parseInt(minutosStr), 0, 0);
-    
-              return fechaObj >= siguienteHora;
-            })
-            .map(d => {
-              const [anio, mes, dia] = d.fecha.split('T')[0].split('-');
-              const fechaObj = new Date(parseInt(anio), parseInt(mes) - 1, parseInt(dia));
-              const fechaTexto = fechaObj.toLocaleDateString('es-CL', {
-                weekday: 'long',
-                day: 'numeric',
-                month: 'long'
-              });
-    
-              const horaTexto = d.hora.slice(0, 5); // "08:00"
-              const label = `${fechaTexto.charAt(0).toUpperCase() + fechaTexto.slice(1)}, ${horaTexto}`;
-              mapaDisponibilidades[label] = d.id_disponibilidad;
-              return `<option value="${label}">${label}</option>`;
-            });
-    
-          selectDisponibilidad.innerHTML = opciones.length > 0
-            ? '<option value="">Seleccione una hora...</option>' + opciones.join('')
-            : '<option value="">No hay horas disponibles</option>';
-    
-          agendarCitaModal.show();
-    
-        } catch (error) {
-          console.error(error);
-          Swal.fire('Error', error.message || 'No se pudo obtener disponibilidad', 'error');
-        }*/
       }
     });
 
@@ -838,7 +786,7 @@
           id_disponibilidad: idDisponibilidad,
           motivo_consulta: motivo,
           notas: nota,
-          id_centro: parseInt(idCentro)  // ✅ Nuevo campo incorporado
+          id_centro: parseInt(idCentro)
         };
 
         try {
