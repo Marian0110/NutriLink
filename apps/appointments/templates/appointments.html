@@ -24,42 +24,43 @@
                     <!-- Columna izquierda: calendario + resumen de agenda -->
                     <div class="col-lg-8">
                         <!-- Calendario y disponibilidad de horas -->
-                        <div class="card shadow-lg mt-3"
-                            style="border-radius: 15px; border: none; height: auto !important; min-height: unset;">
+                        <div class="card shadow-lg mt-3" style="border-radius: 15px; border: none; height: auto !important; min-height: unset;">
                             <div class="card-body">
-                                <!-- Centro de atención -->
-                                <div class="mb-3">
-                                    <h5 class="card-title mb-3">
-                                        <i class="fas fa-calendar-alt me-2"></i>Configuración de horas
-                                    </h5>
-                                    <div class="form-text text-muted mb-2">
-                                        <i class="fas fa-info-circle me-1"></i>Seleccione un centro de atención y luego marque las horas
-                                        deseadas
+                                <!-- Título y descripción -->
+                                <h5 class="card-title mb-3">
+                                    <i class="fas fa-calendar-alt me-2"></i>Configuración de horas
+                                </h5>
+                                <div class="form-text text-muted mb-3">
+                                    <i class="fas fa-info-circle me-1"></i>Seleccione un centro de atención y luego marque las horas deseadas
+                                </div>
+
+                                <!-- Fila para Centro + Fecha -->
+                                <div class="row g-3 align-items-end mb-4">  <!-- align-items-end para alinear verticalmente -->
+                                    <!-- Columna Centro -->
+                                    <div class="col-md-6">
+                                        <label for="centroAtencion" class="form-label">Centro de atención:</label>
+                                        <select id="centroAtencion" class="form-select" required>
+                                            <option value="" disabled selected>Selecciona un centro</option>
+                                        </select>
                                     </div>
-                                    <label for="centroAtencion" class="form-label">Centro de atención:</label>
-                                    <select id="centroAtencion" class="form-select" required>
-                                        <option value="" disabled selected>Selecciona un centro</option>
-                                    </select>
+                                    
+                                    <!-- Columna Fecha (visible solo cuando se selecciona centro) -->
+                                    <div class="col-md-6" id="bloque-fecha" style="display: none;">
+                                        <label for="fecha" class="form-label">Selecciona una fecha:</label>
+                                        <input type="date" id="fecha" class="form-control" min="" />
+                                    </div>
                                 </div>
-                                <!-- Calendario -->
-                                <div id="bloque-fecha" class="mb-4" style="display: none;">
-                                    <label for="fecha" class="form-label">Selecciona una fecha:</label>
-                                    <input type="date" id="fecha" class="form-control w-100 w-md-50" min="" />
-                                </div>
+
                                 <!-- Bloques horarios -->
                                 <div id="bloques-horarios" class="row row-cols-2 row-cols-sm-3 row-cols-md-4 g-3 mb-4">
                                     <!-- Se generan dinámicamente -->
                                 </div>
 
-                                <!-- Mensaje si hay horas reservadas -->
-                                <div class="alert alert-warning mt-2" role="alert" id="mensaje-reservadas"
-                                    style="display: none;">
+                                <!-- Mensaje y botón -->
+                                <div class="alert alert-warning mt-2" role="alert" id="mensaje-reservadas" style="display: none;">
                                     <i class="fas fa-exclamation-triangle me-2"></i>
-                                    Las horas en <strong>amarillo</strong> ya han sido reservadas. Si las desmarcas, las
-                                    citas de los pacientes se cancelarán y serán notificados oportunamente.
+                                    Las horas en <strong>amarillo</strong> ya han sido reservadas, si las desmarcas se cancelará la cita...
                                 </div>
-
-                                <!-- Botón guardar -->
                                 <div class="d-flex justify-content-end">
                                     <button id="guardarDisponibilidad" class="btn btn-success px-4 rounded-pill">
                                         Guardar disponibilidad
