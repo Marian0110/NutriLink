@@ -1,0 +1,625 @@
+async function getPacientes() {
+    try {
+        const idNutricionista = sessionStorage.getItem('id_nutricionista');
+
+        const response = await fetch(`https://nutrilinkapi-production.up.railway.app/api_nutrilink/nutricionista/obtener_pacientes_nutricionista/${idNutricionista}`);
+        
+        if (!response.ok) {
+            throw new Error(`Error HTTP: ${response.status}`);
+        }
+
+        const data = await response.json();
+        
+        if (data.status === 'error') {
+            console.error('Error al obtener pacientes:', data.mensaje);
+            return null;
+        }
+
+        return data.data;
+        
+    } catch (error) {
+        console.error('Error al obtener pacientes del nutricionista:', error);
+        return null;
+    }
+}
+
+async function crearGraficos() {
+    try {
+        const pacientes = await getPacientes();
+        
+        if (!pacientes || pacientes.length === 0) {
+            console.log('No hay datos de pacientes para mostrar');
+            return;
+        }
+
+        // Card total pacientes
+        const totalPacientes = pacientes.length;
+        totalPacientesCard(totalPacientes);
+
+        
+        // Card total minutas 
+        const totalMinutas = await obtenerTotalMinutas(63); // Ejemplo con pacidente 63
+        crearCardTotalMinutas(totalMinutas);
+
+        // 1. Gráfico de género
+        const graficoGenero = graficoGeneroTorta(pacientes);
+        
+        if (graficoGenero.data[0].values.some(count => count > 0)) {
+            Plotly.newPlot('grafico-genero', graficoGenero.data, graficoGenero.layout);
+        } else {
+            document.getElementById('grafico-genero').innerHTML = 
+                '<div class="alert alert-info">No hay datos de género disponibles</div>';
+        }
+
+        // 2. Gráfico de edad
+        const edades = pacientes.map(paciente => {
+            if (paciente.fecha_nacimiento) {
+                const birthDate = new Date(paciente.fecha_nacimiento);
+                const ageDifMs = Date.now() - birthDate.getTime();
+                const ageDate = new Date(ageDifMs);
+                return Math.abs(ageDate.getUTCFullYear() - 1970);
+            }
+            return null;
+        }).filter(age => age !== null);
+
+        const graficoEdad = graficoEdadBarras(edades);
+
+        if (edades.length > 0) {
+            Plotly.newPlot('grafico-edad', graficoEdad.data, graficoEdad.layout);
+        } else {
+            document.getElementById('grafico-edad').innerHTML = 
+                '<div class="alert alert-info">No hay datos de edad disponibles</div>';
+        }
+
+    } catch (error) {
+        console.error('Error al crear gráficos:', error);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+    try {
+        // 1. Configurar evento del botón de citas
+        const toggleButton = document.getElementById('toggleCitas');
+        if (toggleButton) {
+            toggleButton.addEventListener('click', function() {
+                const hiddenCitas = document.querySelectorAll('.hidden-citas');
+                const icon = this.querySelector('i');
+                        
+                hiddenCitas.forEach(cita => {
+                    if (cita.style.display === 'none' || !cita.style.display) {
+                        cita.style.display = 'block';
+                        icon.classList.replace('fa-chevron-down', 'fa-chevron-up');
+                        this.innerHTML = '<i class="fas fa-chevron-up me-1"></i> Ocultar citas';
+                    } else {
+                        cita.style.display = 'none';
+                        icon.classList.replace('fa-chevron-up', 'fa-chevron-down');
+                        this.innerHTML = '<i class="fas fa-chevron-down me-1"></i> Ver todas las citas de hoy (3)';
+                    }
+                });
+            });
+        } else {
+        }
+
+        
+        // 3. Debug de pacientes
+        const pacientes = await getPacientes();
+        if (pacientes) {
+            console.log('✅ Pacientes obtenidos:', pacientes.length, 'pacientes');
+        } else {
+            console.log('❌ No se obtuvieron pacientes');
+        }
+        
+        // 4. Crear gráficos
+        await crearGraficos();
+
+    } catch (error) {
+        console.error('Error durante la inicialización:', error);
+    }
+
+
+        const idNutricionista = sessionStorage.getItem('id_nutricionista');
+        
+        if (!idNutricionista) {
+            throw new Error('ID no disponible');
+        }
+        const response = await fetch(`https://nutrilinkapi-production.up.railway.app/api_nutrilink/nutricionista/obtener_nutricionista_id/${idNutricionista}`);
+        
+        if (!response.ok) {
+            throw new Error('Error en la respuesta');
+        }
+        const data = await response.json();
+        const nutricionista = data[0]; 
+        const nombreMostrar = `${nutricionista.primer_nombre} ${nutricionista.apellido_paterno}`;
+
+        document.getElementById('nombre-nutricionista').textContent = nombreMostrar;
+
+         // 2. NUEVA FUNCIONALIDAD: Cargar citas del día dinámicamente
+        await cargarCitasDelDiaConEstados();
+});
+
+// Funciones para gráficos
+function graficoGeneroTorta(pacientes) {
+    const generoData = {
+        'Femenino': 0,
+        'Masculino': 0
+    };
+
+    pacientes.forEach(paciente => {
+        if (paciente.sexo === 'F') {
+            generoData['Femenino']++;
+        } else if (paciente.sexo === 'M') {
+            generoData['Masculino']++;
+        }
+    });
+
+    const filteredGeneroData = Object.fromEntries(
+        Object.entries(generoData).filter(([_, count]) => count > 0)
+    );
+
+    const graficoGenero = {
+        data: [{
+            values: Object.values(filteredGeneroData),
+            labels: Object.keys(filteredGeneroData),
+            type: 'pie',
+            marker: {
+                colors: ['#e83e8c', '#36b9cc']
+            },
+            textinfo: 'percent+label+value',
+            hoverinfo: 'label+percent+value',
+            textposition: 'inside',
+            insidetextorientation: 'radial',
+            hovertemplate: '<b>Género:</b> %{label}<br>' +
+                          '<b>Cantidad:</b> %{value} pacientes<br>' +
+                          '<b>Porcentaje:</b> %{percent}<br>' +
+                          '<extra></extra>'
+        }],
+        layout: {
+            title: {
+                text: 'Distribución por Género',
+                font: {
+                    size: 16,
+                    family: 'Arial',
+                    color: '#2c3e50'
+                }
+            },
+            height: 200,
+            showlegend: true,
+            legend: {
+                orientation: 'h',
+                y: -0.2
+            },
+            plot_bgcolor: 'rgba(0,0,0,0)',
+            paper_bgcolor: 'rgba(0,0,0,0)',
+            margin: {
+                l: 20,
+                r: 20,
+                b: 20,
+                t: 40,
+                pad: 4
+            }
+        }
+    };
+
+    return graficoGenero;
+}
+
+function graficoEdadBarras(edades) {
+    const gruposEdad = {
+        '18-25': 0,
+        '26-35': 0,
+        '36-45': 0,
+        '46-55': 0,
+        '56-65': 0,
+        '65+': 0
+    };
+
+    edades.forEach(edad => {
+        if (edad >= 18 && edad <= 25) gruposEdad['18-25']++;
+        else if (edad >= 26 && edad <= 35) gruposEdad['26-35']++;
+        else if (edad >= 36 && edad <= 45) gruposEdad['36-45']++;
+        else if (edad >= 46 && edad <= 55) gruposEdad['46-55']++;
+        else if (edad >= 56 && edad <= 65) gruposEdad['56-65']++;
+        else if (edad > 65) gruposEdad['65+']++;
+    });
+
+    const graficoEdad = {
+        data: [{
+            x: Object.keys(gruposEdad),
+            y: Object.values(gruposEdad),
+            type: 'bar',
+            marker: {
+                color: ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD'],
+                line: {
+                    color: 'rgba(255,255,255,0.8)',
+                    width: 2
+                }
+            },
+            text: Object.values(gruposEdad).map(val => val > 0 ? val : ''),
+            textposition: 'auto',
+            hovertemplate: '<b>Grupo de edad:</b> %{x}<br>' +
+                          '<b>Cantidad:</b> %{y} pacientes<br>' +
+                          '<extra></extra>'
+        }],
+        layout: {
+            title: {
+                text: 'Distribución por grupos de edad',
+                font: {
+                    size: 16,
+                    family: 'Arial',
+                    color: '#2c3e50'
+                }
+            },
+            xaxis: {
+                title: 'Grupos de Edad',
+                tickangle: -45,
+                showgrid: false
+            },
+            yaxis: {
+                title: 'Cantidad de Pacientes',
+                showgrid: true,
+                gridcolor: 'rgba(0,0,0,0.1)'
+            },
+            height: 200,
+            plot_bgcolor: 'rgba(0,0,0,0)',
+            paper_bgcolor: 'rgba(0,0,0,0)',
+            margin: {
+                l: 50,
+                r: 30,
+                b: 80,
+                t: 50,
+                pad: 4
+            }
+        }
+    };
+
+    return graficoEdad;
+}
+
+function totalPacientesCard(totalPacientes) {
+    const cardHTML = `
+        <div style="text-align: start; padding: 20px;">
+            <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 15px;">
+                <div style="font-size: 3rem; font-weight: bold; color: #333;" 
+                     class="counter" data-target="${totalPacientes}">0</div>
+                <div style="
+                    background-color: #62f485; 
+                    border-radius: 30%; 
+                    width: 60px; 
+                    height: 60px; 
+                    display: flex; 
+                    align-items: center; 
+                    justify-content: center;
+                    box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
+                    margin-left: 200px;">
+                    <i class="bi bi-people-fill" style="color: white; font-size: 1.5rem;"></i>
+                </div>
+            </div>
+            <div style="font-size: 1.2rem; color: #666;">
+                Total Pacientes
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('total-pacientes').innerHTML = cardHTML;
+    
+    animarContador();
+}
+
+function crearCardTotalMinutas(totalMinutas) {
+    const cardHTML = `
+        <div style="text-align: start; padding: 20px;">
+            <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 15px;">
+                <div style="font-size: 3rem; font-weight: bold; color: #333;" 
+                     class="counter-minutas" data-target="${totalMinutas}">0</div>
+                <div style="
+                    background-color: #4e73df; 
+                    border-radius: 30%; 
+                    width: 60px; 
+                    height: 60px; 
+                    display: flex; 
+                    align-items: center; 
+                    justify-content: center;
+                    box-shadow: 0 2px 8px rgba(78, 115, 223, 0.3);
+                    margin-left: 200px;">
+                    <i class="bi bi-file-text-fill" style="color: white; font-size: 1.5rem;"></i>
+                </div>
+            </div>
+            <div style="font-size: 1.2rem; color: #666;">
+                Total Minutas
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('total-minutas').innerHTML = cardHTML;
+    animarContador('.counter-minutas'); // Extender función animarContador
+}
+
+async function obtenerTotalMinutas(pacienteId) {
+    try {
+        const response = await fetch(`https://nutrilinkapi-production.up.railway.app/api_nutrilink/minuta/minutas_por_fecha/?pacienteId=${pacienteId}`);
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+            return data.data.length;
+        } else {
+            console.error('Error al obtener minutas:', data.mensaje);
+            return 0; 
+        }
+    } catch (error) {
+        console.error('Error en obtenerTotalMinutas:', error);
+        return 0;
+    }
+}
+
+// animación del contador para multiples cards
+function animarContador(selector = '.counter') {
+    const counters = document.querySelectorAll(selector);
+    
+    counters.forEach(counter => {
+        const target = parseInt(counter.getAttribute('data-target'));
+        let current = 0;
+        const duration = 500;
+        const increment = target / (duration / 16);
+        
+        const timer = setInterval(() => {
+            current += increment;
+            counter.textContent = Math.floor(current);
+            
+            if (current >= target) {
+                counter.textContent = target;
+                clearInterval(timer);
+            }
+        }, 16);
+    });
+}
+
+//APARTADO DE CITAS DEL DIA
+window.manejarIniciarConsulta = manejarIniciarConsulta;
+
+// Guardar estado de consulta iniciada
+function guardarConsultaIniciada(idPaciente) {
+    const consultasIniciadas = JSON.parse(localStorage.getItem('consultasIniciadas') || '[]');
+    if (!consultasIniciadas.includes(idPaciente)) {
+        consultasIniciadas.push(idPaciente);
+        localStorage.setItem('consultasIniciadas', JSON.stringify(consultasIniciadas));
+    }
+}
+
+// Verificar si la consulta está iniciada ono
+function estaConsultaIniciada(idPaciente) {
+    const consultasIniciadas = JSON.parse(localStorage.getItem('consultasIniciadas') || '[]');
+    return consultasIniciadas.includes(idPaciente);
+}
+
+// Obtener las citas del nutricionista
+async function obtenerCitasNutricionista() {
+    try {
+        const idNutricionista = sessionStorage.getItem('id_nutricionista');
+        
+        if (!idNutricionista) {
+            console.error('No se encontró el ID del nutricionista en sessionStorage');
+            return [];
+        }
+
+        const response = await fetch(`https://nutrilinkapi-production.up.railway.app/api_nutrilink/agenda/citas_nutricionista/${idNutricionista}`);
+        
+        if (!response.ok) {
+            throw new Error(`Error HTTP: ${response.status}`);
+        }
+
+        const data = await response.json();
+        
+        if (data.status === 'error') {
+            console.error('Error al obtener citas:', data.mensaje);
+            return [];
+        }
+
+        return data.citas || [];
+        
+    } catch (error) {
+        console.error('Error al obtener citas del nutricionista:', error);
+        return [];
+    }
+}
+
+// Filtrar citas del día actual
+function filtrarCitasDelDia(citas) {
+    const hoy = new Date();
+    const fechaHoy = hoy.toISOString().split('T')[0]; // YYYY-MM-DD
+    
+    return citas.filter(cita => {
+        const fechaCita = new Date(cita.fecha).toISOString().split('T')[0];
+        return fechaCita === fechaHoy;
+    });
+}
+
+// Configuración del botón "Ver más"
+function botonVerMas() {
+    const toggleButton = document.getElementById('toggleCitas');
+    if (toggleButton) {
+        toggleButton.addEventListener('click', function() {
+            const hiddenCitas = document.querySelectorAll('.hidden-citas');
+            const icon = this.querySelector('i');
+            const totalCitas = document.querySelectorAll('.cita-card').length;
+            
+            hiddenCitas.forEach(cita => {
+                if (cita.style.display === 'none' || !cita.style.display) {
+                    cita.style.display = 'block';
+                    icon.classList.replace('fa-chevron-down', 'fa-chevron-up');
+                    this.innerHTML = '<i class="fas fa-chevron-up me-1"></i> Ocultar citas';
+                } else {
+                    cita.style.display = 'none';
+                    icon.classList.replace('fa-chevron-up', 'fa-chevron-down');
+                    this.innerHTML = `<i class="fas fa-chevron-down me-1"></i> Ver todas las citas de hoy (${totalCitas})`;
+                }
+            });
+        });
+    }
+}
+
+// Manejador click en "Iniciar consulta"
+function manejarIniciarConsulta(event, cita) {
+    event.preventDefault();
+    
+    const btnIniciar = event.target.closest('.btn-primary');
+    
+    // Guardar estado de consulta iniciada
+    guardarConsultaIniciada(cita.id_paciente);
+    
+    // Cambiar botón inmediatamente
+    btnIniciar.innerHTML = '<i class="fas fa-arrow-right me-1"></i> Volver a la consulta';
+    btnIniciar.className = 'btn btn-warning btn-sm btn-consult mb-1';
+    btnIniciar.disabled = false;
+    
+    // Hacer que navegue al perfil
+    btnIniciar.onclick = function() {
+        window.location.href = `/patients/${cita.id_paciente}/info-general/`;
+    };
+    
+    console.log('✅ Consulta iniciada, redirigiendo al perfil...');
+    
+    // Redirigir al perfil inmediatamente
+    window.location.href = `/patients/${cita.id_paciente}/info-general/`;
+}
+
+// Generar HTML de citas
+function generarHTMLCitaConEstados(cita, index) {
+    const fechaCita = new Date(`2000-01-01T${cita.hora}`);
+    const horaInicio = fechaCita.toLocaleTimeString('es-ES', { 
+        hour: '2-digit', 
+        minute: '2-digit', 
+        hour12: true 
+    });
+    
+    const fechaFin = new Date(fechaCita.getTime() + 60 * 60 * 1000);
+    const horaFin = fechaFin.toLocaleTimeString('es-ES', { 
+        hour: '2-digit', 
+        minute: '2-digit', 
+        hour12: true 
+    });
+
+    const colores = ['4e73df', '1cc88a', 'f6c23e', 'e74a3b', '6f42c1', 'fd7e14'];
+    const colorAvatar = colores[index % colores.length];
+    
+    // Determinar estado del botón
+    const horaActual = new Date();
+    const horaInicioCita = new Date(`${new Date().toDateString()} ${cita.hora}`);
+    const puedeIniciar = horaActual >= horaInicioCita && cita.estado === 'Reservada';
+    const estaCompletada = cita.estado === 'Completada';
+    
+    // VERIFICAR SI LA CONSULTA FUE INICIADA LOCALMENTE (persistencia)
+    const consultaIniciadaLocalmente = estaConsultaIniciada(cita.id_paciente);
+    const estaEnProceso = cita.estado === 'En proceso' || consultaIniciadaLocalmente;
+
+    const claseOculta = index >= 2 ? 'hidden-citas' : '';
+    const estiloOculto = index >= 2 ? 'style="display: none;"' : '';
+
+    // Configurar botón principal
+    let configBotonPrincipal = {
+        clase: 'btn-secondary',
+        texto: '<i class="fas fa-clock me-1"></i> Esperar turno',
+        habilitado: false,
+        onclick: ''
+    };
+
+    if (estaCompletada) {
+        configBotonPrincipal = {
+            clase: 'btn-success',
+            texto: '<i class="fas fa-check-circle me-1"></i> Completada',
+            habilitado: false,
+            onclick: ''
+        };
+    } else if (estaEnProceso) {
+        // Si está en proceso mostrar "Volver a la consulta"
+        configBotonPrincipal = {
+            clase: 'btn-warning',
+            texto: '<i class="fas fa-arrow-right me-1"></i> Volver a la consulta',
+            habilitado: true,
+            onclick: `onclick="window.location.href='/patients/${cita.id_paciente}/info-general/'"`
+        };
+    } else if (puedeIniciar) {
+        // Si puede iniciar
+        configBotonPrincipal = {
+            clase: 'btn-primary',
+            texto: '<i class="fas fa-play me-1"></i> Iniciar consulta',
+            habilitado: true,
+            onclick: `onclick="manejarIniciarConsulta(event, ${JSON.stringify(cita).replace(/"/g, '&quot;')})"`
+        };
+    }
+
+    return `
+        <div class="cita-card ${claseOculta}" ${estiloOculto}>
+            <div class="py-3">
+                <div class="row align-items-center p-2">
+                    <div class="col-3 text-center">
+                        <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(cita.primer_nombre + '+' + cita.apellido_paterno)}&background=${colorAvatar}&color=fff" 
+                             alt="Paciente" class="patient-avatar rounded-circle">
+                    </div>
+                    <div class="col-5">
+                        <h6 class="mb-1">${cita.primer_nombre} ${cita.apellido_paterno}</h6>
+                        <p class="text-muted small mb-1">
+                            <i class="far fa-clock me-1"></i>${horaInicio} - ${horaFin}
+                        </p>
+                        <p class="text-muted small mb-0">
+                            <i class="fas fa-notes-medical me-1"></i>${cita.nombre_centro}
+                        </p>
+                    </div>
+                    <div class="col-4">
+                        <button class="btn ${configBotonPrincipal.clase} btn-sm btn-consult" 
+                                ${!configBotonPrincipal.habilitado ? 'disabled' : ''}
+                                ${configBotonPrincipal.onclick}>
+                            ${configBotonPrincipal.texto}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+// Función principal para cargar citas
+async function cargarCitasDelDiaConEstados() {
+    try {
+        const todasLasCitas = await obtenerCitasNutricionista();
+        const citasHoy = filtrarCitasDelDia(todasLasCitas);
+        citasHoy.sort((a, b) => a.hora.localeCompare(b.hora));
+        
+        let citasHTML = '';
+        citasHoy.forEach((cita, index) => {
+            citasHTML += generarHTMLCitaConEstados(cita, index);
+        });
+        
+        if (citasHoy.length === 0) {
+            citasHTML = `
+                <div class="text-center py-4">
+                    <i class="fas fa-calendar-check fa-3x text-muted mb-3"></i>
+                    <h6 class="text-muted">No tienes citas programadas para hoy</h6>
+                    <p class="text-muted small">¡Disfruta tu día libre!</p>
+                </div>
+            `;
+        }
+        
+        const cardBody = document.getElementById('citas-container');
+        if (cardBody) {
+            cardBody.innerHTML = citasHTML;
+            
+            if (citasHoy.length > 2) {
+                cardBody.innerHTML += `
+                    <div class="text-center mt-3">
+                        <button id="toggleCitas" class="btn btn-link expand-btn">
+                            <i class="fas fa-chevron-down me-1"></i> Ver todas las citas de hoy (${citasHoy.length})
+                        </button>
+                    </div>
+                `;
+                botonVerMas();
+            }
+        } else {
+            console.error('❌ No se encontró el contenedor de citas');
+        }
+        
+        console.log(`✅ Cargadas ${citasHoy.length} citas con persistencia de estado`);
+        
+    } catch (error) {
+        console.error('Error al cargar citas del día:', error);
+    }
+}

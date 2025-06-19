@@ -6,12 +6,11 @@ from django.contrib import messages
 def registro(request):
     if request.method == 'POST':
         # Traer datos del formulario
-        rut_completo = request.POST.get('rut', '').replace('.', '').replace('-', '')
-        rut_numerico = rut_completo[:-1]
-        dv = rut_completo[-1].upper()
+        rut = request.POST.get('rut', '').replace('.', '').replace('-', '').strip()
+        dv = request.POST.get('dv', '').strip().upper()  # Dígito verificador por separado
         
         data = {
-            "rut_nutricionista": rut_numerico,
+            "rut_nutricionista": rut,
             "dv": dv,
             "primer_nombre": request.POST.get('primerNombre'),
             "apellido_paterno": request.POST.get('apellidoP'),
