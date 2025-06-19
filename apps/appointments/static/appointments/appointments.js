@@ -610,10 +610,11 @@ if (centroSelect) {
     const id_nutricionista = sessionStorage.getItem('id_nutricionista');
     console.log('📦 ID del nutricionista desde sessionStorage:', id_nutricionista);
     if (id_nutricionista) {
-        cargarResumenAgenda(parseInt(id_nutricionista));
-        console.log('Antes de la función cargar Nutri :', id_nutricionista);
-        cargarResumenCitas(parseInt(id_nutricionista));
+        console.log("Antes de Cargar centros");
         await cargarCentrosAtencion(id_nutricionista);
+        console.log("Centros cargados, ahora se puede cargar el resumen");
+        cargarResumenAgenda(parseInt(id_nutricionista));
+        cargarResumenCitas(parseInt(id_nutricionista));
         verificarCancelacionesPendientesNutricionista(parseInt(id_nutricionista));
         verificarSolicitudesPendientesNutricionista(parseInt(id_nutricionista));
     }
