@@ -8,12 +8,10 @@
   <div class="metrica-card w-100">
     <div class="card-body">
       <h3 class="card-title mb-1 text-center mt-2">Datos Antropométricos</h3>
-      <h6 class="text-muted mb-4 text-center">Registra peso, talla, circunferencias, entre otros datos</h6>
+      <h6 class="text-muted mb-4 text-center">Registra peso, talla, circunferencias, entre otros datos. Se guardarán con la fecha actual.</h6>
       
       <form method="#" action="#" id="form-antropometrico">
         {% csrf_token %}
-
-        
         
         <div class="row">
           <!-- Peso -->
@@ -80,11 +78,6 @@
               <span class="input-group-text">mm</span>
             </div>
           </div>
-          <!-- Fecha -->
-          <div class="col-md-4 mb-3">
-            <label for="id_fecha" class="form-label">Fecha</label>
-            <input type="date" class="form-control" id="id_fecha" name="fecha">
-          </div>
 
           <!-- Porcentaje de macronutrientes -->
         <h3 class="card-title mb-1 text-center mt-2">Porcentaje de macronutrientes</h3>
@@ -115,9 +108,9 @@
         <!-- Fin Sección Porcentajes -->
 
         </div>
-        <!-- Boton -->
-        <div class="d-flex justify-content-center mt-4"> <!-- Añadido mt-4 para espaciado -->
-          <button type="button" class="btn btn-save">Guardar Datos y Calcular Requerimientos</button> <!-- Texto del botón actualizado -->
+        <!-- Botón -->
+        <div class="d-flex justify-content-center mt-4"> 
+          <button type="button" class="btn btn-save">Guardar Datos y Calcular Requerimientos</button>
         </div>
       </form>
     </div>
@@ -126,7 +119,7 @@
   <div class="mt-1">
     <div class="historial-card w-100">
       <div class="card-body py-3">
-        <h3 class="card-title mb-2">Historial de Mediciones</h3>
+        <h3 class="card-title mb-2">Historial de Mediciones Antropométricas</h3>
         <h6 class="text-muted mb-3">Visualiza los registros antropométricos por fecha</h6>
         <div class="table-responsive">
           <table class="table table-striped table-bordered mt-3" id="tabla_mediciones">
@@ -182,9 +175,9 @@
               <h6 class="text-muted mb-3">Visualiza los diagnósticos antropométricos</h6>
               <select class="form-select" id="id_fecha_select" name="fecha" required>
                 <option value="">-- Selecciona una fecha --</option>
-                  {% for fecha in fechas_disponibles %}
-                    <option value="{{ fecha }}" {% if fecha_seleccionada == fecha %}selected{% endif %}>
-                      {{ fecha }}
+                  {% for fecha_item in fechas_disponibles %}
+                    <option value="{{ fecha_item }}" {% if fecha_seleccionada == fecha_item %}selected{% endif %}>
+                      {{ fecha_item }}
                     </option>
                   {% endfor %}
               </select>
@@ -293,7 +286,6 @@
     {% endif %}
 </div>
 
-<!-- Script aqui por el momento -->
 <script>
 
 function validarFormulario() {
@@ -302,26 +294,28 @@ function validarFormulario() {
     let sumaPorcentajes = 0;
     const camposPorcentaje = ['id_porc_carbohidratos', 'id_porc_proteinas', 'id_porc_lipidos'];
     
-    // Validacion de campos vacios (incluyendo los nuevos de porcentaje)
-    form.querySelectorAll('input[type="number"], input[type="date"]').forEach(input => {
-        if (!input.value) {
+    // Validación de campos vacios
+    form.querySelectorAll('input[type="number"]').forEach(input => {
+        // Campos obligatorios: peso, talla, y los porcentajes
+        const camposObligatorios = ['id_peso', 'id_talla', 'id_porc_carbohidratos', 'id_porc_proteinas', 'id_porc_lipidos'];
+        if (camposObligatorios.includes(input.id) && !input.value) {
             isValid = false;
             input.classList.add('is-invalid');
-        } else {
+        } else if (input.value) { // Solo si tiene valor, quitar is-invalid y sumar si es porcentaje
             input.classList.remove('is-invalid');
-            // Sumar porcentajes si son campos de macronutrientes
             if (camposPorcentaje.includes(input.id) && parseFloat(input.value) >= 0) {
                 sumaPorcentajes += parseFloat(input.value);
             }
+        } else { // Si es opcional y está vacío, quitar is-invalid
+            input.classList.remove('is-invalid');
         }
     });
 
     // Validacion de valores negativos
     form.querySelectorAll('input[type="number"]').forEach(input => {
-        if (parseFloat(input.value) < 0) {
+        if (input.value && parseFloat(input.value) < 0) { // Solo validar si hay valor
             isValid = false;
             input.classList.add('is-invalid');
-             // Si ya es inválido por estar vacío, no mostrar doble alerta
             if (input.value) { 
                 Swal.fire({
                     title: 'Datos inválidos',
@@ -332,8 +326,7 @@ function validarFormulario() {
         }
     });
 
-    // Validacion de suma de porcentajes (opcional, pero buena práctica)
-    // Permitir un pequeño margen de error por decimales, ej. 99.9 a 100.1
+    // Validacion de suma de porcentajes
     if (isValid && (sumaPorcentajes < 99.9 || sumaPorcentajes > 100.1) && (
         document.getElementById('id_porc_carbohidratos').value ||
         document.getElementById('id_porc_proteinas').value ||
@@ -348,8 +341,7 @@ function validarFormulario() {
         });
     }
 
-
-    if (!isValid && !Swal.isVisible()) { // Evitar múltiples popups si ya hay uno de valor negativo o suma
+    if (!isValid && !Swal.isVisible()) {
         Swal.fire({
             title: 'Datos incompletos o inválidos',
             text: 'Por favor complete todos los campos requeridos con valores válidos.',
@@ -362,115 +354,92 @@ function validarFormulario() {
 // Func para enviar datos a la API
 async function enviarDatosAntropometricosYRequerimientos() {
     const pacienteId = JSON.parse("{{ paciente.id_paciente|escapejs }}");
-    const fecha = document.getElementById('id_fecha').value;
 
+    // Validaciones previas de actividad física y factor patológico 
     try {
-        // 1. Verificar Actividad Física
         const actividadFisicaResponse = await fetch(`https://nutrilinkapi-production.up.railway.app/api_nutrilink/paciente/obtener_actividad_fisica/${pacienteId}`);
         if (!actividadFisicaResponse.ok) {
-            // Si la API devuelve un error al consultar, es un problema, pero no necesariamente que falte el dato.
-            // Podríamos decidir si mostrar un error genérico o intentar continuar. Por ahora, asumimos que si no es OK, es un problema.
             let errorMsg = 'Error al verificar la actividad física.';
-            try {
-                const errorData = await actividadFisicaResponse.json();
-                errorMsg = errorData.mensaje || errorMsg;
-            } catch (e) { /* No hacer nada si no se puede parsear el JSON del error */ }
-            Swal.fire('Atención', errorMsg, 'warning');
-            return; // Detener la ejecución si hay un error al consultar
+            try { const errorData = await actividadFisicaResponse.json(); errorMsg = errorData.mensaje || errorMsg; } catch (e) {}
+            Swal.fire('Atención', errorMsg, 'warning'); return;
         }
         const actividadFisicaData = await actividadFisicaResponse.json();
         if (actividadFisicaData.id_actividad_fisica === null || actividadFisicaData.valor_naf === null) {
-            Swal.fire(
-                'Falta Información',
-                'Recuerda agregar el factor de actividad física en la sección de historial clínico.',
-                'warning'
-            );
-            return; // Detener la ejecución
+            Swal.fire('Falta Información', 'Recuerda agregar el factor de actividad física en la sección de historial clínico.', 'warning'); return;
         }
 
-        // 2. Verificar Factor Patológico
         const factorPatologicoResponse = await fetch(`https://nutrilinkapi-production.up.railway.app/api_nutrilink/paciente/obtener_factor_patologico/${pacienteId}`);
         if (!factorPatologicoResponse.ok) {
             let errorMsg = 'Error al verificar el factor patológico.';
-            try {
-                const errorData = await factorPatologicoResponse.json();
-                errorMsg = errorData.mensaje || errorMsg;
-            } catch (e) { /* No hacer nada */ }
-            Swal.fire('Atención', errorMsg, 'warning');
-            return;
+            try { const errorData = await factorPatologicoResponse.json(); errorMsg = errorData.mensaje || errorMsg; } catch (e) {}
+            Swal.fire('Atención', errorMsg, 'warning'); return;
         }
         const factorPatologicoData = await factorPatologicoResponse.json();
         if (factorPatologicoData.descripcion === null || factorPatologicoData.valor_factor === null) {
-            Swal.fire(
-                'Falta Información',
-                'Recuerda agregar el factor patológico en la sección de historial clínico.',
-                'warning'
-            );
-            return; // Detener la ejecución
+            Swal.fire('Falta Información', 'Recuerda agregar el factor patológico en la sección de historial clínico.', 'warning'); return;
         }
-
     } catch (error) {
         console.error('Error en validaciones previas:', error);
-        Swal.fire(
-            'Error de Conexión',
-            `No se pudieron verificar los datos previos del paciente: ${error.message}. Asegúrate de tener conexión a internet.`,
-            'error'
-        );
-        return; // Detener la ejecución si hay un error de red en las validaciones
+        Swal.fire('Error de Conexión', `No se pudieron verificar los datos previos del paciente: ${error.message}. Asegúrate de tener conexión a internet.`, 'error'); return;
     }
+    // Fin validaciones previas
 
+    const parseNumericOrNull = (id) => {
+        const value = document.getElementById(id).value;
+        if (value === null || value.trim() === '') return null;
+        const num = parseFloat(value);
+        return isNaN(num) ? null : num; // Devuelve null si no es un número válido después de ser no vacío
+    };
+    
     const formData = {
         pacienteId: pacienteId,
-        fecha: fecha, // El backend debería poder manejar YYYY-MM-DD
-        pesoKg: parseFloat(document.getElementById('id_peso').value),
-        tallaCm: parseFloat(document.getElementById('id_talla').value),
-        circCinturaCm: parseFloat(document.getElementById('id_cintura').value),
-        perimBraquialMm: parseFloat(document.getElementById('id_braquial').value), 
-        pliegueTricipitalMm: parseFloat(document.getElementById('id_tricipital').value),
-        pliegueBicipitalMm: parseFloat(document.getElementById('id_bicipital').value),
-        pliegueSuprailiacoMm: parseFloat(document.getElementById('id_suprailiaco').value),
-        pliegueSubescapularMm: parseFloat(document.getElementById('id_subescapular').value),
-        porcentajeCarbohidratos: parseFloat(document.getElementById('id_porc_carbohidratos').value),
-        porcentajeProteinas: parseFloat(document.getElementById('id_porc_proteinas').value),
-        porcentajeLipidos: parseFloat(document.getElementById('id_porc_lipidos').value)
+        pesoKg: parseNumericOrNull('id_peso'),
+        tallaCm: parseNumericOrNull('id_talla'),
+        circCinturaCm: parseNumericOrNull('id_cintura'),
+        perimBraquialMm: parseNumericOrNull('id_braquial'), 
+        pliegueTricipitalMm: parseNumericOrNull('id_tricipital'),
+        pliegueBicipitalMm: parseNumericOrNull('id_bicipital'),
+        pliegueSuprailiacoMm: parseNumericOrNull('id_suprailiaco'),
+        pliegueSubescapularMm: parseNumericOrNull('id_subescapular'),
+        porcentajeCarbohidratos: parseNumericOrNull('id_porc_carbohidratos'),
+        porcentajeProteinas: parseNumericOrNull('id_porc_proteinas'),
+        porcentajeLipidos: parseNumericOrNull('id_porc_lipidos')
     };
 
-    // Ajuste para perimBraquialMm si el input está en cm y el backend espera mm
-    const perimBraquialInput = document.getElementById('id_braquial').value;
-    if (perimBraquialInput && !isNaN(parseFloat(perimBraquialInput))) {
-        formData.perimBraquialMm = parseFloat(perimBraquialInput) * 10;
-    }
-
-    if (isNaN(formData.pesoKg) || isNaN(formData.tallaCm) ||
-        isNaN(formData.porcentajeCarbohidratos) || isNaN(formData.porcentajeProteinas) || isNaN(formData.porcentajeLipidos)) {
-        Swal.fire('Campos Incompletos', 'Asegúrate de llenar Peso, Talla y los porcentajes de macronutrientes.', 'warning');
+    // Validar campos obligatorios que deben ser números válidos
+    if (formData.pesoKg === null || formData.tallaCm === null ||
+        formData.porcentajeCarbohidratos === null || formData.porcentajeProteinas === null || formData.porcentajeLipidos === null) {
+        Swal.fire('Campos Incompletos o Inválidos', 'Asegúrate de llenar Peso, Talla y los porcentajes de macronutrientes con valores numéricos válidos.', 'warning');
         return;
     }
+    
+    // Ajuste para perimBraquialMm si el input está en cm y el backend espera mm
+    if (formData.perimBraquialMm !== null) {
+        formData.perimBraquialMm = formData.perimBraquialMm * 10;
+    }
+
 
     // --- ENVÍO DE DATOS A LA API ---
     try {
-        // Mostrar un loader mientras se procesa
         Swal.fire({
             title: 'Guardando datos...',
             text: 'Por favor, espera.',
             allowOutsideClick: false,
-            didOpen: () => {
-                Swal.showLoading();
-            }
+            didOpen: () => { Swal.showLoading(); }
         });
 
         const response = await fetch('https://nutrilinkapi-production.up.railway.app/api_nutrilink/requerimientos/guardar_antropometria_y_requerimientos', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRFToken': '{{ csrf_token }}' // Asegúrate que este token se renderice correctamente
+                'X-CSRFToken': '{{ csrf_token }}'
             },
-            body: JSON.stringify(formData)
+            body: JSON.stringify(formData) 
         });
 
-        const data = await response.json(); // Intentar parsear JSON siempre
+        const data = await response.json();
 
-        if (response.ok && data.status === 'success') { // HTTP 2xx y status 'success'
+        if (response.ok && data.status === 'success') {
             Swal.fire({
                 title: '¡Éxito!',
                 text: data.mensaje,
@@ -478,15 +447,17 @@ async function enviarDatosAntropometricosYRequerimientos() {
                 timer: 2500,
                 showConfirmButton: false
             }).then(() => {
-                window.location.href = `?fecha=${encodeURIComponent(fecha)}`;
+                // Recargar para ver el nuevo registro de hoy.
+                window.location.reload(); 
             });
         } else {
-            // Si la respuesta no fue OK (ej. 400, 404, 500) o si fue OK pero data.status es 'error'
             let errorMessage = data.mensaje || 'Error desconocido al guardar los datos.';
-            if (data.detalle_db) {
-                errorMessage += ` (Detalle: ${data.detalle_db})`;
+            if (data.detalle_db && typeof data.detalle_db === 'string' && data.detalle_db.includes("fecha")) {
+                errorMessage = "Ocurrió un error interno relacionado con la fecha al procesar su solicitud. Por favor, intente más tarde.";
+            } else if (data.detalle_db) {
+                 errorMessage += ` (Detalle: ${data.detalle_db})`;
             }
-            // Si el status es 400, es probable que sea un error de validación de los datos enviados
+            
             if (response.status === 400) {
                  Swal.fire('Error de Validación', errorMessage, 'error');
             } else if (response.status === 404) {
@@ -495,34 +466,26 @@ async function enviarDatosAntropometricosYRequerimientos() {
                  Swal.fire('Error del Servidor', errorMessage, 'error');
             }
         }
-    } catch (error) { // Errores de red o al parsear JSON (si la respuesta no es JSON válido)
+    } catch (error) {
         console.error('Error en fetch o procesamiento:', error);
-        Swal.fire(
-            'Error de Comunicación',
-            `Ocurrió un problema al intentar guardar los datos: ${error.message}. Verifica tu conexión o inténtalo más tarde.`,
-            'error'
-        );
+        Swal.fire('Error de Comunicación', `Ocurrió un problema al intentar guardar los datos: ${error.message}. Verifica tu conexión o inténtalo más tarde.`, 'error');
     }
 }
 
 // Evento del btn guardar
 document.querySelector('.btn-save').addEventListener('click', function(e) {
     e.preventDefault();
-    
-    if (!validarFormulario()) {
-        return;
-    }
-
+    if (!validarFormulario()) { return; }
     Swal.fire({
         title: '¿Confirmar datos?',
-        text: 'Se guardarán las mediciones y se calcularán los requerimientos.', // Mensaje de confirmación actualizado
+        text: 'Se guardarán las mediciones con la fecha actual y se calcularán los requerimientos.',
         icon: 'question',
         showCancelButton: true,
-        confirmButtonText: 'Sí, registrar y calcular', // Texto del botón de confirmación actualizado
+        confirmButtonText: 'Sí, registrar y calcular',
         cancelButtonText: 'Cancelar'
     }).then((result) => {
         if (result.isConfirmed) {
-            enviarDatosAntropometricosYRequerimientos(); // Llamar a la función actualizada
+            enviarDatosAntropometricosYRequerimientos();
         }
     });
 });
@@ -532,5 +495,6 @@ function formatearFecha(fechaStr) {
     const opciones = { year: 'numeric', month: 'short', day: 'numeric' };
     return new Date(fechaStr).toLocaleDateString('es-ES', opciones);
 }
+
 </script>
 {% endblock %}
