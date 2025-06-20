@@ -71,6 +71,8 @@ async function crearGraficos() {
                 '<div class="alert alert-info">No hay datos de edad disponibles</div>';
         }
 
+        // 4. Gráfico de evolución de minutas (NUEVO)
+        await graficoMinutasPorMes();
     } catch (error) {
         console.error('Error al crear gráficos:', error);
     }
@@ -355,6 +357,162 @@ async function obtenerTotalMinutas() {
     } catch (error) {
         console.error('Error en obtenerTotalMinutas:', error);
         return 0;
+    }
+}
+
+// Minutas por mes 
+async function obtenerMinutasPorMes() {
+    try {
+        const idNutricionista = sessionStorage.getItem('id_nutricionista');
+        
+        const response = await fetch(`https://nutrilinkapi-production.up.railway.app/api_nutrilink/minuta/cant_minutas_por_mes_nutricionista/${idNutricionista}`);
+        
+        if (!response.ok) {
+            throw new Error(`Error HTTP: ${response.status}`);
+        }
+
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+            return data.data;
+        } else {
+            console.error('Error al obtener minutas por mes:', data.mensaje);
+            return []; 
+        }
+    } catch (error) {
+        console.error('Error en obtenerMinutasPorMes:', error);
+        return [];
+    }
+}
+
+//Gráfico de minutas por mes
+async function graficoMinutasPorMes() {
+    try {
+        const response = await obtenerMinutasPorMes();
+        
+        if (!response || response.length === 0) {
+            document.getElementById('grafico-detallado').innerHTML = `
+                <div class="alert alert-info text-center py-4">
+                    <i class="fas fa-chart-line fa-3x text-muted mb-3"></i>
+                    <h6 class="text-muted">No hay suficientes datos históricos</h6>
+                    <p class="text-muted small">Aún no tienes suficiente actividad para mostrar la evolución de minutas.</p>
+                </div>
+            `;
+            return;
+        }
+
+        // Procesamiento de datos
+        const datos = response.sort((a, b) => {
+            const [mesA, anioA] = a.mes_anio.split('-').map(Number);
+            const [mesB, anioB] = b.mes_anio.split('-').map(Number);
+            return new Date(anioA, mesA-1) - new Date(anioB, mesB-1);
+        });
+
+        // Obtener el año para el título
+        const primerDato = datos[0].mes_anio.split('-');
+        const anioTitulo = primerDato[1];
+
+        // Formateo etiquetas
+        const etiquetas = datos.map(item => {
+            const [mes] = item.mes_anio.split('-');
+            const fecha = new Date(2000, mes-1);
+            return fecha.toLocaleDateString('es-ES', { month: 'long' });
+        });
+
+        const valores = datos.map(item => item.cantidad_minutas);
+
+        // Configuración del gráfico de puntos
+        const trace = {
+            x: etiquetas,
+            y: valores,
+            type: 'scatter',
+            mode: 'markers+lines',
+            name: 'Minutas creadas',
+            marker: {
+                color: '#4e73df',
+                size: 12,
+                line: {
+                    color: '#ffffff',
+                    width: 2
+                },
+                symbol: 'circle',
+                opacity: 0.9
+            },
+            line: {
+                color: '#4e73df',
+                width: 2,
+                dash: 'dot',
+                shape: 'spline'
+            },
+            hovertemplate: '<b>%{x}</b><br>Minutas: %{y}<extra></extra>',
+            text: valores,
+            textposition: 'top center'
+        };
+
+        // Calcular máximo para el eje Y
+        const maxValor = Math.max(...valores);
+        const yMax = maxValor % 1 === 0 ? maxValor : Math.ceil(maxValor);
+        
+        const layout = {
+            title: {
+                text: `<b>EVOLUCIÓN DE MINUTAS - ${anioTitulo}</b>`,
+                font: {
+                    size: 16,
+                    family: 'Arial',
+                    color: '#2c3e50'
+                },
+                pad: { t: 10, b: 0 }
+            },
+            xaxis: {
+                tickangle: -45,
+                tickfont: {
+                    size: 12
+                },
+                showgrid: true,
+                automargin: true
+            },
+            yaxis: {
+                title: {
+                    text: 'Cantidad de Minutas',
+                    font: {
+                        size: 12,
+                        color: '#7f8c8d'
+                    }
+                },
+                dtick: 1,
+                range: [0, yMax + 0.5],
+                gridcolor: 'rgba(0,0,0,0.05)'
+            },
+            plot_bgcolor: 'rgba(0,0,0,0)',
+            paper_bgcolor: 'rgba(0,0,0,0)',
+            margin: {
+                l: 50,
+                r: 30,
+                b: 80,
+                t: 60,
+                pad: 4
+            },
+            hovermode: 'closest',
+            showlegend: false
+        };
+
+        const config = {
+            responsive: true,
+            displayModeBar: true,
+            displaylogo: false
+        };
+
+        Plotly.newPlot('grafico-detallado', [trace], layout, config);
+
+    } catch (error) {
+        console.error('Error al crear gráfico de minutas:', error);
+        document.getElementById('grafico-detallado').innerHTML = `
+            <div class="alert alert-danger text-center py-4">
+                <i class="fas fa-exclamation-triangle fa-2x mb-3"></i>
+                <h6>Error al cargar los datos</h6>
+                <p class="small">No se pudo generar el gráfico de evolución.</p>
+            </div>
+        `;
     }
 }
 
