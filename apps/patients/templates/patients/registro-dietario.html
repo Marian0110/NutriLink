@@ -77,16 +77,16 @@
         <div class="modal fade" id="agregarAlimentoModal" tabindex="-1" aria-labelledby="agregarAlimentoModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered modal-lg">
                 <div class="modal-content">
-                    <div class="modal-header background"> <!-- Asegúrate que la clase 'background' esté definida o usa una genérica -->
+                    <div class="modal-header background"> 
                         <h5 class="modal-title" id="agregarAlimentoModalLabel">
                             <i class="fas fa-plus-circle me-2"></i>
                             Agregar Nuevo Alimento
                         </h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button> <!-- Ajustar clase si es necesario -->
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button> 
                     </div>
                     <div class="modal-body">
-                        <form id="nuevoAlimentoFormRegistro"> <!-- ID ÚNICO para este form -->
-                            {% csrf_token %} <!-- Ya tienes uno global, pero no hace daño tenerlo específico aquí -->
+                        <form id="nuevoAlimentoFormRegistro">
+                            {% csrf_token %} 
                             <fieldset class="info-basica-section mb-4">
                                 <legend class="section-title">Información Básica</legend>
                                 <div class="row g-3">
@@ -98,7 +98,6 @@
                                         <label class="form-label">Grupo alimenticio: <span class="text-danger">*</span></label>
                                         <select class="form-select" name="id_grupo_alimenticio" required>
                                             <option value="">Seleccionar grupo</option>
-                                            <!-- Los grupos se cargarán por JS -->
                                         </select>
                                     </div>
                                     <div class="col-md-4">
@@ -113,7 +112,7 @@
                                         <label class="form-label">N° medidas por porción: <span class="text-danger">*</span></label>
                                         <input type="number" step="0.01" min="0" class="form-control" name="numero_medida" required>
                                     </div>
-                                    <div class="col-md-6"> <!-- Era col-md-6, no había 12 -->
+                                    <div class="col-md-6"> 
                                         <label class="form-label">Masa (total por porción): <span class="text-danger">*</span></label>
                                         <div class="input-group">
                                             <input type="number" step="0.01" min="0" class="form-control" name="cantidad_porcion" required>
@@ -346,9 +345,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const headerDiv = document.createElement('div');
         headerDiv.classList.add('tiempo-comida-header');
-        headerDiv.style.display = 'flex';  // Añadido: flex container
-        headerDiv.style.alignItems = 'center';  // Añadido: centrar verticalmente
-        headerDiv.style.gap = '30px';  // Añadido: espacio entre elementos
+        headerDiv.style.display = 'flex';  
+        headerDiv.style.alignItems = 'center';  
+        headerDiv.style.gap = '30px';  
 
         // Crear contenedor para el select de tiempo
         const tiempoContainer = document.createElement('div');
@@ -564,7 +563,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         btnEliminarAlimentoRow.title = "Eliminar alimento";
         const btnNuevoAlimentoRow = document.createElement('button');
       btnNuevoAlimentoRow.type = 'button';
-      btnNuevoAlimentoRow.classList.add('button-accion-fila', 'button-nuevo-alimento'); // Nueva clase
+      btnNuevoAlimentoRow.classList.add('button-accion-fila', 'button-nuevo-alimento'); 
       btnNuevoAlimentoRow.innerHTML = '<i class="fas fa-plus"></i>'; // Icono
       btnNuevoAlimentoRow.title = "Crear nuevo alimento";
       btnNuevoAlimentoRow.dataset.bsToggle = "modal"; // Atributo para Bootstrap
@@ -581,7 +580,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
 
       cellAcciones.appendChild(btnEliminarAlimentoRow);
-      cellAcciones.appendChild(btnNuevoAlimentoRow); // AÑADIR EL NUEVO BOTÓN
+      cellAcciones.appendChild(btnNuevoAlimentoRow); 
 
         const otherCellsHTML = `
             <td><input type="text" class="input-tabla input-medida-equiv" name="medida_equiv_${foodRowId}" readonly></td>
@@ -683,7 +682,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         let rawResponse; // Para inspeccionar la respuesta cruda si es necesario
 
         try {
-            // NO usar fetchAPI aquí para tener más control sobre la respuesta y evitar que lance error si el status interno no es "success"
+            
             rawResponse = await fetch('https://nutrilinkapi-production.up.railway.app/api_nutrilink/alimento/guardar_alimento', {
                 method: 'POST',
                 headers: {
@@ -768,7 +767,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     blockDiv.dataset.tiempoId = currentlySelectedValueInDOM;
                  } else {
                     blockDiv.dataset.tiempoId = "";
-                    if (currentSelect.options.length > 0) currentSelect.selectedIndex = 0; // Default a placeholder
+                    if (currentSelect.options.length > 0) currentSelect.selectedIndex = 0; 
                  }
             } else if (!currentValueForThisSelect && currentSelect.value !== "") {
                 blockDiv.dataset.tiempoId = currentSelect.value;
@@ -782,7 +781,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         if (isViewingHistoricalRegistro) {
             btnAnadirTiempoComida.style.display = 'none';
-            // btnAnadirTiempoComida.disabled = true; // Redundante si está oculto
+            
             return;
         }
 
@@ -794,7 +793,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             btnAnadirTiempoComida.disabled = false;
         } else {
             btnAnadirTiempoComida.style.display = 'none';
-            // btnAnadirTiempoComida.disabled = true; // Redundante si está oculto
+            
         }
     }
 
@@ -806,7 +805,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const tiempoComidaId = blockDiv.dataset.tiempoId;
         const nombreTiempoComida = ALL_TIEMPOS_COMIDA_DATA.find(tc => tc.id_tiempo_comida.toString() === tiempoComidaId)?.descripcion || `ID ${tiempoComidaId}`;
 
-        if (!tiempoComidaId) { // Bloque no guardado aún
+        if (!tiempoComidaId) { 
             blockDiv.remove();
             updateAllMealTimeSelects();
             reorderMealTimeBlocksByTime();
@@ -875,7 +874,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (tbody && tbody.rows.length > 1) {
                 datosAlimentoPorFilaDOM.delete(foodRowElement);
                 foodRowElement.remove();
-            } else { // Última fila, resetéala
+            } else { 
                 const dropdownContainer = foodRowElement.querySelector('.alimento-searchable-dropdown');
                 if (dropdownContainer) {
                     dropdownContainer.querySelector('.alimento-dropdown-button').textContent = 'Seleccione alimento...';
@@ -1121,7 +1120,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             let promesasGuardado = [];
             if (detallesAGuardar.length > 0) {
                 // Si hay detalles de alimentos, la nota general se envía con cada uno.
-                // El backend debería manejar esto y tomar la nota del primer detalle o la más reciente.
                 promesasGuardado = detallesAGuardar.map(detalle =>
                     fetchAPI('https://nutrilinkapi-production.up.railway.app/api_nutrilink/dieta/guardar_detalle_dieta', 'detalle de dieta', {
                         method: 'POST',
@@ -1129,14 +1127,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                         body: JSON.stringify(detalle)
                     }).catch(error => ({ error: true, message: error.message, detalle }))
                 );
-            } else if (notasAGuardar.trim()) { // Solo notas si no hay detalles de alimentos
+            } else if (notasAGuardar.trim()) { 
                 // Aquí se envía un payload especial solo con notas.
-                // Es importante que el backend pueda manejar un registro sin alimentos pero con notas.
                 const payloadSoloNotas = {
                     pacienteId: parseInt(pacienteId),
                     notas: notasAGuardar,
-                    // No se envían tiempoComidaId, alimentoId, etc.
-                    // El backend debe identificar que es solo una actualización/creación de notas.
                 };
                 promesasGuardado.push(
                      fetchAPI('https://nutrilinkapi-production.up.railway.app/api_nutrilink/dieta/guardar_detalle_dieta', 'notas de dieta', {
@@ -1172,32 +1167,38 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     
     async function loadRegistroDates() {
-        if (!registroDateSelectorEl) {
-            console.warn("El elemento registroDateSelectorEl no fue encontrado. No se pueden cargar fechas.");
-            return;
-        }
-        registroDateSelectorEl.innerHTML = '<option value="" selected disabled>Cargando fechas...</option>';
-        try {
-            const response = await fetchAPI(`https://nutrilinkapi-production.up.railway.app/api_nutrilink/dieta/registros_dieta_por_fecha?pacienteId=${pacienteId}`, 'fechas de registros');
-            if (response.status === 'success' && response.data) {
-                registroDateSelectorEl.innerHTML = '<option value="current" selected>Registro Actual (Editable)</option>';
-                const sortedDates = response.data.sort((a, b) => new Date(b.fecha_dieta) - new Date(a.fecha_dieta));
-                sortedDates.forEach(registro => {
-                    const option = document.createElement('option');
-                    option.value = registro.id_dieta;
-                    option.dataset.fechaDieta = registro.fecha_dieta;
-                    const fecha = new Date(registro.fecha_dieta);
-                    option.textContent = `Registro del ${fecha.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}`;
-                    registroDateSelectorEl.appendChild(option);
-                });
-                if (response.data.length === 0) {
-                     registroDateSelectorEl.innerHTML += '<option value="" disabled>No hay registros anteriores</option>';
-                }
-            } else {
-                registroDateSelectorEl.innerHTML = '<option value="current" selected>Registro Actual (Editable)</option>';
-                registroDateSelectorEl.innerHTML += '<option value="" disabled>No hay registros anteriores o error</option>';
-                console.warn('No se encontraron fechas de registros o hubo un error al cargar fechas:', response.mensaje);
+    if (!registroDateSelectorEl) {
+        console.warn("El elemento registroDateSelectorEl no fue encontrado. No se pueden cargar fechas.");
+        return;
+    }
+    registroDateSelectorEl.innerHTML = '<option value="" selected disabled>Cargando fechas...</option>';
+    try {
+        const response = await fetchAPI(`https://nutrilinkapi-production.up.railway.app/api_nutrilink/dieta/registros_dieta_por_fecha?pacienteId=${pacienteId}`, 'fechas de registros');
+        if (response.status === 'success' && response.data) {
+            registroDateSelectorEl.innerHTML = '<option value="current" selected>Registro Actual (Editable)</option>';
+            // Ordenar por fecha descendente usando solo el string
+            const sortedDates = response.data.sort((a, b) => b.fecha_dieta.localeCompare(a.fecha_dieta));
+            sortedDates.forEach(registro => {
+                const option = document.createElement('option');
+                option.value = registro.id_dieta;
+                option.dataset.fechaDieta = registro.fecha_dieta;
+                // Formatear manualmente la fecha a DD de mes de YYYY
+                const [year, month, day] = registro.fecha_dieta.split('-');
+                const meses = [
+                    'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+                    'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'
+                ];
+                option.textContent = `Registro del ${parseInt(day)} de ${meses[parseInt(month) - 1]} de ${year}`;
+                registroDateSelectorEl.appendChild(option);
+            });
+            if (response.data.length === 0) {
+                registroDateSelectorEl.innerHTML += '<option value="" disabled>No hay registros anteriores</option>';
             }
+        } else {
+            registroDateSelectorEl.innerHTML = '<option value="current" selected>Registro Actual (Editable)</option>';
+            registroDateSelectorEl.innerHTML += '<option value="" disabled>No hay registros anteriores o error</option>';
+            console.warn('No se encontraron fechas de registros o hubo un error al cargar fechas:', response.mensaje);
+        }
         } catch (error) {
             console.error("Error en loadRegistroDates:", error);
             if (registroDateSelectorEl) {
@@ -1463,7 +1464,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Botones principales de la página
         if (btnAnadirTiempoComida) {
             btnAnadirTiempoComida.style.display = isEditable ? 'inline-block' : 'none';
-            // btnAnadirTiempoComida.disabled = !isEditable; // Gestionado por updateAddMealButtonState
         }
         if (btnGuardarRegistroCompleto) {
             btnGuardarRegistroCompleto.style.display = isEditable ? 'inline-block' : 'none';
@@ -1482,7 +1482,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (inputHora) inputHora.readOnly = !isEditable;
 
             const btnAddAlimento = block.querySelector('.acciones-bloque .button-secondary');
-            const btnDeleteTiempo = block.querySelector('.acciones-bloque .button-eliminar-fila'); // Asumo que este es el de eliminar tiempo
+            const btnDeleteTiempo = block.querySelector('.acciones-bloque .button-eliminar-fila');
             
             if (btnAddAlimento) {
                 btnAddAlimento.style.display = isEditable ? 'inline-block' : 'none';
@@ -1518,7 +1518,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     async function cargarGruposAlimenticiosParaModal() {
       try {
           const response = await fetchAPI('https://nutrilinkapi-production.up.railway.app/api_nutrilink/alimento/obtener_grupos_alimenticios_con_id', 'grupos alimenticios para modal');
-          if (response && Array.isArray(response)) { // Asumiendo que la API devuelve un array directamente
+          if (response && Array.isArray(response)) { 
               ALL_GRUPOS_ALIMENTICIOS_DATA = response;
               const nuevoGrupoSelect = document.querySelector('#nuevoAlimentoFormRegistro select[name="id_grupo_alimenticio"]');
               if (nuevoGrupoSelect) {
@@ -1552,7 +1552,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             await cargarGruposAlimenticiosParaModal(); 
             await loadRegistroDates();
             // Por defecto, se carga el registro actual (editable)
-            // cargarYMostrarResumenNutricionalYDetalles ya se encarga de llamar a toggleEditableStateRegistro
             await cargarYMostrarResumenNutricionalYDetalles(null, null); 
         } catch (error) {
             console.error("Error crítico durante la inicialización:", error);
@@ -1560,7 +1559,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 adecuacionStatusDiv.textContent = `Error al inicializar la página: ${error.message}. Verifique la consola.`;
                 adecuacionStatusDiv.className = 'error';
             }
-            // Los botones ya son deshabilitados por `cargarDatosBase` o por `cargarYMostrar...` si fallan.
         }
     }
 
