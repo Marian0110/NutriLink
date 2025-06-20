@@ -1,4 +1,54 @@
 document.addEventListener('DOMContentLoaded', function () {
+    // ========== NUEVO: Verificación de sesión ==========
+    function getSessionData() {
+        // Primero verificar localStorage (sesión recordada)
+        let nutricionistaId = localStorage.getItem('id_nutricionista');
+        let correo = localStorage.getItem('correo');
+        let isRemembered = localStorage.getItem('remember_session') === 'true';
+        
+        // Si no hay en localStorage, verificar sessionStorage
+        if (!nutricionistaId) {
+            nutricionistaId = sessionStorage.getItem('id_nutricionista');
+            correo = sessionStorage.getItem('correo');
+            isRemembered = false;
+        }
+        
+        return {
+            id_nutricionista: nutricionistaId,
+            correo: correo,
+            isRemembered: isRemembered,
+            isLoggedIn: !!nutricionistaId
+        };
+    }
+
+    // Verificar si hay sesión activa
+    const sessionData = getSessionData();
+    
+    if (!sessionData.isLoggedIn) {
+        // Si no hay sesión, mostrar mensaje y redirigir al login
+        const pacientesTableBody = document.getElementById('pacientes-table-body');
+        if (pacientesTableBody) {
+            pacientesTableBody.innerHTML = `
+                <tr>
+                    <td colspan="5" class="text-center text-danger">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        No se pudo identificar al nutricionista. Redirigiendo al login...
+                    </td>
+                </tr>
+            `;
+        }
+        setTimeout(() => {
+            window.location.href = '/accounts/login/';
+        }, 2000);
+        return;
+    }
+
+    // ========== USAR ID DE SESIÓN ==========
+    const idNutricionista = sessionData.id_nutricionista;
+    console.log('Usuario logueado en pacientes:', sessionData.correo);
+    console.log('Sesión recordada:', sessionData.isRemembered);
+
+    // ========== RESTO DEL CÓDIGO ORIGINAL (con cambios mínimos) ==========
     async function cargarCentrosEnModal(id_nutricionista) {
       const selectCentro = document.getElementById('select-centro-atencion');
       selectCentro.innerHTML = '<option value="">Cargando centros...</option>';
@@ -47,17 +97,20 @@ document.addEventListener('DOMContentLoaded', function () {
     // Listener: cuando cambia el centro, carga las horas disponibles filtradas por ese centro
     selectCentro?.addEventListener('change', async function () {
       const idCentroSeleccionado = this.value;
-      const idNutricionista = sessionStorage.getItem('id_nutricionista');
+      // ========== CAMBIO: Usar función en lugar de sessionStorage directo ==========
+      const currentSessionData = getSessionData();
+      const idNutricionistaActual = currentSessionData.id_nutricionista;
+      
       selectDisponibilidad.innerHTML = '<option value="">Cargando horas...</option>';
       mapaDisponibilidades = {};
 
-      if (!idCentroSeleccionado || !idNutricionista) {
+      if (!idCentroSeleccionado || !idNutricionistaActual) {
         selectDisponibilidad.innerHTML = '<option value="">Seleccione un centro válido</option>';
         return;
       }
 
       try {
-        const res = await fetch(`https://nutrilinkapi-production.up.railway.app/api_nutrilink/agenda/disponibilidad_nutricionista/${idNutricionista}`);
+        const res = await fetch(`https://nutrilinkapi-production.up.railway.app/api_nutrilink/agenda/disponibilidad_nutricionista/${idNutricionistaActual}`);
         const data = await res.json();
 
         if (!res.ok || data.status !== 'ok') throw new Error(data.mensaje || 'No se pudo obtener disponibilidad');
@@ -127,20 +180,22 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Funcion principal cargar lista de pacientes
     async function fetchPacientes() {
-      const idNutricionista = sessionStorage.getItem('id_nutricionista');
-      cargarCentrosEnModal(idNutricionista);
-
-      if (!idNutricionista) {
+      // ========== CAMBIO: Usar función en lugar de sessionStorage directo ==========
+      const currentSessionData = getSessionData();
+      if (!currentSessionData.isLoggedIn) {
         showError('Debe iniciar sesión como nutricionista');
         redirectToLogin();
         return;
       }
+      
+      const idNutricionistaActual = currentSessionData.id_nutricionista;
+      cargarCentrosEnModal(idNutricionistaActual);
 
       try {
         showLoading();
 
         const response = await fetch(
-          `https://nutrilinkapi-production.up.railway.app/api_nutrilink/nutricionista/obtener_pacientes_nutricionista/${idNutricionista}`,
+          `https://nutrilinkapi-production.up.railway.app/api_nutrilink/nutricionista/obtener_pacientes_nutricionista/${idNutricionistaActual}`,
           {
             method: "GET",
             headers: {
@@ -170,7 +225,7 @@ document.addEventListener('DOMContentLoaded', function () {
         pacientesTableBody.innerHTML = `
         <tr>
           <td colspan="5" class="text-center">No se encontraron pacientes registrados</td>
-        /tr>
+        </tr>
         `;
         return;
       }
@@ -428,9 +483,9 @@ document.addEventListener('DOMContentLoaded', function () {
           return;
         }
 
-        // Obtenencion ID nutricionista para acceder a la gestion de pacientes
-        const id_nutricionista = sessionStorage.getItem('id_nutricionista');
-        if (!id_nutricionista) {
+        // ========== CAMBIO: Usar función en lugar de sessionStorage directo ==========
+        const currentSessionData = getSessionData();
+        if (!currentSessionData.isLoggedIn) {
           Swal.fire({
             icon: 'error',
             title: 'Error de sesión',
@@ -439,6 +494,8 @@ document.addEventListener('DOMContentLoaded', function () {
           redirectToLogin();
           return;
         }
+
+        const id_nutricionista = currentSessionData.id_nutricionista;
 
         // Preparacion de datos del paciente
         const pacienteData = {
@@ -540,13 +597,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
         document.getElementById('input-id-paciente').value = idPaciente;
 
-        const idNutricionista = sessionStorage.getItem('id_nutricionista');
-        if (!idNutricionista) {
+        // ========== CAMBIO: Usar función en lugar de sessionStorage directo ==========
+        const currentSessionData = getSessionData();
+        if (!currentSessionData.isLoggedIn) {
           Swal.fire('Error', 'No se encontró sesión de nutricionista', 'error');
           return;
         }
 
-        await cargarCentrosEnModal(idNutricionista);
+        const idNutricionistaActual = currentSessionData.id_nutricionista;
+        await cargarCentrosEnModal(idNutricionistaActual);
 
         document.getElementById('select-disponibilidad').innerHTML = '<option value="">Seleccione un centro primero</option>';
         mapaDisponibilidades = {};

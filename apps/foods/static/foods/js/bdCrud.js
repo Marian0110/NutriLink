@@ -1,4 +1,46 @@
 document.addEventListener('DOMContentLoaded', function () {
+    // ========== Verificación de sesión ==========
+    function getSessionData() {
+        // Verificar localStorage (sesión recordada)
+        let nutricionistaId = localStorage.getItem('id_nutricionista');
+        let correo = localStorage.getItem('correo');
+        let isRemembered = localStorage.getItem('remember_session') === 'true';
+        
+        // Si no hay en localStorage, verificar sessionStorage
+        if (!nutricionistaId) {
+            nutricionistaId = sessionStorage.getItem('id_nutricionista');
+            correo = sessionStorage.getItem('correo');
+            isRemembered = false;
+        }
+        
+        return {
+            id_nutricionista: nutricionistaId,
+            correo: correo,
+            isRemembered: isRemembered,
+            isLoggedIn: !!nutricionistaId
+        };
+    }
+    // Verificar si hay sesión activa
+    const sessionData = getSessionData();
+    
+    if (!sessionData.isLoggedIn) {
+        document.getElementById('alimentosContainer').innerHTML = `
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                No se pudo identificar al nutricionista. Redirigiendo al login...
+            </div>
+        `;
+        setTimeout(() => {
+            window.location.href = '/accounts/login/';
+        }, 2000);
+        return;
+    }
+
+    // ========== USAR ID DE SESIÓN ==========
+    const idNutricionista = sessionData.id_nutricionista;
+    console.log('Usuario logueado en alimentos:', sessionData.correo);
+    console.log('Sesión recordada:', sessionData.isRemembered);
+
     const API_GRUPOS_URL = 'https://nutrilinkapi-production.up.railway.app/api_nutrilink/alimento/obtener_grupos_alimenticios_con_id';
     const API_CREAR_ALIMENTO_URL = 'https://nutrilinkapi-production.up.railway.app/api_nutrilink/alimento/guardar_alimento';
     const API_ACTUALIZAR_ALIMENTO_URL_BASE = 'https://nutrilinkapi-production.up.railway.app/api_nutrilink/alimento/actualizar_alimento/';
@@ -13,19 +55,6 @@ document.addEventListener('DOMContentLoaded', function () {
     // Variables de filtros
     let filtroTexto = '';
     let filtroGrupo = '';
-
-    // Obtener ID del nutricionista
-    const idNutricionista = sessionStorage.getItem('id_nutricionista');
-    
-    if (!idNutricionista) {
-        document.getElementById('alimentosContainer').innerHTML = `
-            <div class="alert alert-danger">
-                <i class="fas fa-exclamation-triangle me-2"></i>
-                No se pudo identificar al nutricionista. Por favor, inicie sesión nuevamente.
-            </div>
-        `;
-        return;
-    }
 
     const API_ALIMENTOS_URL = `https://nutrilinkapi-production.up.railway.app/api_nutrilink/alimento/alimentos/nutricionista/${idNutricionista}`;
 

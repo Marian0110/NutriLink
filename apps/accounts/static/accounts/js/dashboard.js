@@ -1,21 +1,75 @@
+// ========== FUNCIÓN GLOBAL DE SESIÓN ==========
+function getSessionData() {
+    // Verificar localStorage (sesión recordada)
+    let nutricionistaId = localStorage.getItem('id_nutricionista');
+    let correo = localStorage.getItem('correo');
+    let isRemembered = localStorage.getItem('remember_session') === 'true';
+    
+    // Si no hay en localStorage, verificar sessionStorage
+    if (!nutricionistaId) {
+        nutricionistaId = sessionStorage.getItem('id_nutricionista');
+        correo = sessionStorage.getItem('correo');
+        isRemembered = false;
+    }
+    
+    return {
+        id_nutricionista: nutricionistaId,
+        correo: correo,
+        isRemembered: isRemembered,
+        isLoggedIn: !!nutricionistaId
+    };
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
+    // ========== VERIFICACIÓN DE SESIÓN AL INICIO ==========
+
+    // Verificar si hay sesión activa
+    const sessionData = getSessionData();
+    
+    if (!sessionData.isLoggedIn) {
+        // Si no hay sesión, mostrar mensaje y redirigir al login
+        const mainContent = document.querySelector('.main-content') || document.querySelector('main') || document.body;
+        mainContent.innerHTML = `
+            <div class="container mt-5">
+                <div class="alert alert-danger text-center">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    No se pudo identificar al nutricionista. Redirigiendo al login...
+                </div>
+            </div>
+        `;
+        setTimeout(() => {
+            window.location.href = '/accounts/login/';
+        }, 2000);
+        return;
+    }
+
+    // ========== USAR ID DE SESIÓN ==========
+    const idNutricionista = sessionData.id_nutricionista;
+    console.log('Usuario logueado en dashboard:', sessionData.correo);
+    console.log('Sesión recordada:', sessionData.isRemembered);
+
     try {
+        // ========== AHORA SÍ EJECUTAR LAS FUNCIONES ==========
+        // Cargar información del nutricionista
+        await cargarInfoNutricionista(idNutricionista);
+        
         // Botón de citas
         await botonVerMas();
         
         // Crear gráficos
         await crearGraficos();
 
+        // Cargar citas del día dinámicamente
+        await cargarCitasDelDiaConEstados();
+
     } catch (error) {
         console.error('Error durante la inicialización:', error);
     }
+});
 
-
-        const idNutricionista = sessionStorage.getItem('id_nutricionista');
-        
-        if (!idNutricionista) {
-            throw new Error('ID no disponible');
-        }
+// ========== FUNCIÓN PARA CARGAR INFO DEL NUTRICIONISTA ==========
+async function cargarInfoNutricionista(idNutricionista) {
+    try {
         const response = await fetch(`https://nutrilinkapi-production.up.railway.app/api_nutrilink/nutricionista/obtener_nutricionista_id/${idNutricionista}`);
         
         if (!response.ok) {
@@ -26,14 +80,20 @@ document.addEventListener('DOMContentLoaded', async () => {
         const nombreMostrar = `${nutricionista.primer_nombre} ${nutricionista.apellido_paterno}`;
 
         document.getElementById('nombre-nutricionista').textContent = nombreMostrar;
-
-         // Cargar citas del día dinámicamente
-        await cargarCitasDelDiaConEstados();
-});
+    } catch (error) {
+        console.error('Error al cargar info del nutricionista:', error);
+    }
+}
 
 async function getPacientes() {
     try {
-        const idNutricionista = sessionStorage.getItem('id_nutricionista');
+        const sessionData = getSessionData();
+        if (!sessionData.isLoggedIn) {
+            console.error('No hay sesión activa');
+            return null;
+        }
+
+        const idNutricionista = sessionData.id_nutricionista;
 
         const response = await fetch(`https://nutrilinkapi-production.up.railway.app/api_nutrilink/nutricionista/obtener_pacientes_nutricionista/${idNutricionista}`);
         
@@ -59,6 +119,11 @@ async function getPacientes() {
 async function crearGraficos() {
     try {
         const pacientes = await getPacientes();
+
+        if (!pacientes) {
+            console.error('No se pudieron obtener los pacientes');
+            return;
+        }
 
         // Card total pacientes
         const totalPacientes = pacientes.length;
@@ -305,7 +370,13 @@ function crearCardTotalMinutas(totalMinutas) {
 
 async function obtenerTotalMinutas() {
     try {
-        const idNutricionista = sessionStorage.getItem('id_nutricionista');
+        const sessionData = getSessionData();
+        if (!sessionData.isLoggedIn) {
+            console.error('No hay sesión activa');
+            return 0;
+        }
+
+        const idNutricionista = sessionData.id_nutricionista;
 
         const response = await fetch(`https://nutrilinkapi-production.up.railway.app/api_nutrilink/minuta/obtener_cantidad_minutas_nutricionista/${idNutricionista}`);
         
@@ -330,7 +401,13 @@ async function obtenerTotalMinutas() {
 // Minutas por mes 
 async function obtenerMinutasPorMes() {
     try {
-        const idNutricionista = sessionStorage.getItem('id_nutricionista');
+        const sessionData = getSessionData();
+        if (!sessionData.isLoggedIn) {
+            console.error('No hay sesión activa');
+            return [];
+        }
+
+        const idNutricionista = sessionData.id_nutricionista;
         
         const response = await fetch(`https://nutrilinkapi-production.up.railway.app/api_nutrilink/minuta/cant_minutas_por_mes_nutricionista/${idNutricionista}`);
         
@@ -526,12 +603,13 @@ function estaConsultaIniciada(idPaciente) {
 // Obtener las citas del nutricionista
 async function obtenerCitasNutricionista() {
     try {
-        const idNutricionista = sessionStorage.getItem('id_nutricionista');
-        
-        if (!idNutricionista) {
-            console.error('No se encontró el ID del nutricionista en sessionStorage');
+        const sessionData = getSessionData();
+        if (!sessionData.isLoggedIn) {
+            console.error('No se encontró sesión activa');
             return [];
         }
+
+        const idNutricionista = sessionData.id_nutricionista;
 
         const response = await fetch(`https://nutrilinkapi-production.up.railway.app/api_nutrilink/agenda/citas_nutricionista/${idNutricionista}`);
         

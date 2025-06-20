@@ -1,9 +1,45 @@
 document.addEventListener('DOMContentLoaded', async () => {
-    // Variables de sesión
-    let correo = sessionStorage.getItem("correo");
-    let contrasena = sessionStorage.getItem("contrasena");
-    let id_nutricionista = sessionStorage.getItem('id_nutricionista');
-    // Llamado a función de obtención de centros de atención
+    // ========== Verificación de sesión ==========
+    function getSessionData() {
+        // Primero verificar localStorage (sesión recordada)
+        let nutricionistaId = localStorage.getItem('id_nutricionista');
+        let correo = localStorage.getItem('correo');
+        let isRemembered = localStorage.getItem('remember_session') === 'true';
+        
+        // Si no hay en localStorage, verificar sessionStorage
+        if (!nutricionistaId) {
+            nutricionistaId = sessionStorage.getItem('id_nutricionista');
+            correo = sessionStorage.getItem('correo');
+            isRemembered = false;
+        }
+        
+        return {
+            id_nutricionista: nutricionistaId,
+            correo: correo,
+            isRemembered: isRemembered,
+            isLoggedIn: !!nutricionistaId
+        };
+    }
+
+    // Verificar si hay sesión activa
+    const sessionData = getSessionData();
+    
+    if (!sessionData.isLoggedIn) {
+        // Si no hay sesión, redirigir al login
+        window.location.href = '/accounts/login/';
+        return;
+    }
+
+    // ========== USAR DATOS DE SESIÓN ==========
+    const correo = sessionData.correo;
+    const id_nutricionista = sessionData.id_nutricionista;
+    
+    // NOTA: Ya no usamos contraseña almacenada por seguridad
+    // Si tu API la necesita, tendrás que pedirla al usuario cuando sea necesario
+    console.log('Usuario logueado:', correo);
+    console.log('Sesión recordada:', sessionData.isRemembered);
+
+    
     obtenerCentrosAtencion(id_nutricionista);
 
     // Función para deshabilitar opciones ya seleccionadas
