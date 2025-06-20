@@ -343,7 +343,6 @@ centroForm.addEventListener("submit", async function (e) {
     async function obtenerCentrosAtencion(id_nutricionista) {
       const contenedor = document.getElementById('lista-centros');
       contenedor.innerHTML = '<p class="text-muted">Cargando centros registrados...</p>';
-      console.log('Id para centro de atención' + id_nutricionista)
 
       try {
         const respuesta = await fetch(`https://nutrilinkapi-production.up.railway.app/api_nutrilink/nutricionista/centros_atencion/${id_nutricionista}`);

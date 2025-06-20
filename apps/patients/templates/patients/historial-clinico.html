@@ -286,10 +286,7 @@
             if (allDates.length > 0) {
                 const fechaMasReciente = allDates[0]; // Ya están ordenadas descendente
                 url = `https://nutrilinkapi-production.up.railway.app/api_nutrilink/paciente/obtener_historial_clinico/${PACIENTE_ID}/${fechaMasReciente}`;
-                console.log(`Cargando "Registro Actual" desde el historial más reciente: ${fechaMasReciente}`);
             } else {
-                // No hay historial previo, es un paciente nuevo o sin registros.
-                // Preparamos el formulario para una nueva entrada. No hay URL para llamar.
                 resetAndPrepareNewEntryForm();
                 return; // Salir de la función, no hay nada que fetchear
             }
@@ -348,7 +345,6 @@
 
      if (valorSeleccionado === "S" && isEditable) {
          inputSemanasEl.readOnly = false;
-         // inputSemanasEl.focus(); // Evitar focus automático al cargar
      } else {
          inputSemanasEl.readOnly = true;
      }
@@ -404,10 +400,10 @@ async function actualizarPerfilClinicoCompleto() {
         data.semana_gestacion = null; 
     }
     
-    // Limpiar campos nulos si es necesario para el backend
+    // Limpiar campos nulos
     for (const key in data) {
         if (data[key] === null && key !== 'semana_gestacion') { // semana_gestacion puede ser legítimamente null
-            delete data[key]; // O asignar string vacío "" si el backend prefiere eso a omitir la clave
+            delete data[key]; // O asignar string vacío 
         }
     }
 

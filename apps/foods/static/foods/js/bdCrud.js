@@ -50,7 +50,6 @@ document.addEventListener('DOMContentLoaded', function () {
             if (!response.ok) throw new Error(`Error ${response.status}`);
             
             todosLosGrupos = await response.json();
-            console.log('Grupos cargados:', todosLosGrupos.length, todosLosGrupos);
             
             // Poblar select de grupos en filtros
             const grupoSelect = document.getElementById('grupoSelect');
@@ -76,8 +75,6 @@ document.addEventListener('DOMContentLoaded', function () {
                     nuevoGrupoSelect.appendChild(option2);
                 });
 
-            console.log('Grupos populados en selects');
-
         } catch (error) {
             console.error('Error cargando grupos:', error);
         }
@@ -94,7 +91,6 @@ document.addEventListener('DOMContentLoaded', function () {
             if (data.status === 'success' && data.data) {
                 todosLosAlimentos = data.data;
                 
-                // Mapear id_grupo_alimenticio si es necesario y asegurar nombre_grupo_alimenticio
                 todosLosAlimentos.forEach(alimento => {
                     if (!alimento.id_grupo_alimenticio && alimento.nombre_grupo_alimenticio) {
                         const grupo = todosLosGrupos.find(g => g.descripcion === alimento.nombre_grupo_alimenticio);
@@ -103,7 +99,6 @@ document.addEventListener('DOMContentLoaded', function () {
                         }
                     }
                     
-                    // Si tiene id_grupo_alimenticio pero no nombre_grupo_alimenticio, agregarlo
                     if (alimento.id_grupo_alimenticio && !alimento.nombre_grupo_alimenticio) {
                         const grupo = todosLosGrupos.find(g => g.id_grupo_alimenticio === alimento.id_grupo_alimenticio);
                         if (grupo) {
@@ -112,8 +107,6 @@ document.addEventListener('DOMContentLoaded', function () {
                     }
                 });
                 
-                console.log(`Cargados ${todosLosAlimentos.length} alimentos`);
-                console.log('Primer alimento:', todosLosAlimentos[0]); // Debug
             } else {
                 throw new Error(data.mensaje || 'Error en la respuesta de la API');
             }
@@ -125,9 +118,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Aplicar filtros
     function aplicarFiltros() {
-        console.log('Aplicando filtros:', { filtroTexto, filtroGrupo });
-        console.log('Total alimentos antes de filtrar:', todosLosAlimentos.length);
-        
         alimentosFiltrados = todosLosAlimentos.filter(alimento => {
             // Filtro por texto (nombre del alimento)
             const coincideTexto = !filtroTexto || 
@@ -137,13 +127,10 @@ document.addEventListener('DOMContentLoaded', function () {
             const coincideGrupo = !filtroGrupo || 
                 (alimento.nombre_grupo_alimenticio && alimento.nombre_grupo_alimenticio === filtroGrupo);
             
-            console.log(`Alimento: ${alimento.nombre_alimento}, Grupo: ${alimento.nombre_grupo_alimenticio}, Coincide texto: ${coincideTexto}, Coincide grupo: ${coincideGrupo}`);
-            
             return coincideTexto && coincideGrupo;
         });
         
         paginaActual = 1; // Resetear a primera página al filtrar
-        console.log(`Filtros aplicados: ${alimentosFiltrados.length} alimentos de ${todosLosAlimentos.length} totales`);
     }
 
     // Renderizar alimentos con paginación
@@ -605,7 +592,6 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('filtrosForm').addEventListener('submit', function(e) {
         e.preventDefault();
         filtroTexto = document.getElementById('searchInput').value.trim();
-        console.log('Filtro de búsqueda aplicado:', filtroTexto);
         aplicarFiltros();
         renderizarAlimentos();
     });
@@ -613,14 +599,12 @@ document.addEventListener('DOMContentLoaded', function () {
     // Filtrar en tiempo real al escribir
     document.getElementById('searchInput').addEventListener('input', function() {
         filtroTexto = this.value.trim();
-        console.log('Filtro de búsqueda en tiempo real:', filtroTexto);
         aplicarFiltros();
         renderizarAlimentos();
     });
 
     document.getElementById('grupoSelect').addEventListener('change', function() {
         filtroGrupo = this.value;
-        console.log('Filtro de grupo aplicado:', filtroGrupo);
         aplicarFiltros();
         renderizarAlimentos();
     });
