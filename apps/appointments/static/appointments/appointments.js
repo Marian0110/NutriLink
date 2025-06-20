@@ -1,4 +1,27 @@
 console.log('appointments.js cargado');
+
+// ========== FUNCIÓN GLOBAL DE SESIÓN ==========
+function getSessionData() {
+    // Verificar localStorage (sesión recordada)
+    let nutricionistaId = localStorage.getItem('id_nutricionista');
+    let correo = localStorage.getItem('correo');
+    let isRemembered = localStorage.getItem('remember_session') === 'true';
+    
+    // Si no hay en localStorage, verificar sessionStorage
+    if (!nutricionistaId) {
+        nutricionistaId = sessionStorage.getItem('id_nutricionista');
+        correo = sessionStorage.getItem('correo');
+        isRemembered = false;
+    }
+    
+    return {
+        id_nutricionista: nutricionistaId,
+        correo: correo,
+        isRemembered: isRemembered,
+        isLoggedIn: !!nutricionistaId
+    };
+}
+
 const mapaCentros = {}; // 🔒 Disponible para todo el script
 
 function generarBloquesHorarios(horasSeleccionadas = [], horasBloqueadas = []) {
@@ -471,6 +494,31 @@ listaCitas.forEach((cita, index) => {
 document.addEventListener('DOMContentLoaded', async function () {
     console.log('✅ DOMContentLoaded se ejecutó');
 
+    // ========== VERIFICACIÓN DE SESIÓN AL INICIO ==========
+    const sessionData = getSessionData();
+    
+    if (!sessionData.isLoggedIn) {
+        // Si no hay sesión, mostrar mensaje y redirigir al login
+        const mainContent = document.querySelector('.main-content') || document.querySelector('main') || document.body;
+        mainContent.innerHTML = `
+            <div class="container mt-5">
+                <div class="alert alert-danger text-center">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    No se pudo identificar al nutricionista. Redirigiendo al login...
+                </div>
+            </div>
+        `;
+        setTimeout(() => {
+            window.location.href = '/accounts/login/';
+        }, 2000);
+        return;
+    }
+
+    // ========== USAR ID DE SESIÓN ==========
+    const idNutricionista = sessionData.id_nutricionista;
+    console.log('Usuario logueado en appointments:', sessionData.correo);
+    console.log('Sesión recordada:', sessionData.isRemembered);
+
     const inputFecha = document.getElementById('fecha');
     const btnGuardar = document.getElementById('guardarDisponibilidad');
     const centroSelect = document.getElementById('centroAtencion');
@@ -507,10 +555,17 @@ if (centroSelect) {
     if (inputFecha) {
         inputFecha.addEventListener('change', () => {
             const fechaSeleccionada = inputFecha.value;
-            const id_nutricionista = sessionStorage.getItem('id_nutricionista');
+            // ========== CAMBIO: Usar función en lugar de sessionStorage directo ==========
+            const currentSessionData = getSessionData();
+            if (!currentSessionData.isLoggedIn) {
+                Swal.fire('Error de sesión', 'Debe iniciar sesión nuevamente', 'error');
+                window.location.href = '/accounts/login/';
+                return;
+            }
+            const id_nutricionista = currentSessionData.id_nutricionista;
             const id_centro = document.getElementById('centroAtencion')?.value;
 
-            console.log('📦 ID del nutricionista desde sessionStorage:', id_nutricionista);
+            console.log('📦 ID del nutricionista desde sessionData:', id_nutricionista);
             console.log('🏥 ID del centro seleccionado:', id_centro);
 
             // Validar que no se seleccione una fecha pasada
@@ -537,10 +592,9 @@ if (centroSelect) {
     if (btnGuardar) {
         btnGuardar.addEventListener('click', async function () {
             console.log("Click detectado en botón");
-            const id_nutricionista = sessionStorage.getItem('id_nutricionista');
-            console.log("ID nutricionista rescatado: " + id_nutricionista);
-
-            if (!id_nutricionista) {
+            // ========== CAMBIO: Usar función en lugar de sessionStorage directo ==========
+            const currentSessionData = getSessionData();
+            if (!currentSessionData.isLoggedIn) {
                 Swal.fire({
                     icon: 'error',
                     title: 'Error de sesión',
@@ -550,6 +604,8 @@ if (centroSelect) {
                 });
                 return;
             }
+            const id_nutricionista = currentSessionData.id_nutricionista;
+            console.log("ID nutricionista rescatado: " + id_nutricionista);
 
             const fecha = inputFecha.value;
             if (!fecha) {
@@ -607,16 +663,15 @@ if (centroSelect) {
         });
     }
 
-    const id_nutricionista = sessionStorage.getItem('id_nutricionista');
-    console.log('📦 ID del nutricionista desde sessionStorage:', id_nutricionista);
-    if (id_nutricionista) {
+    console.log('📦 ID del nutricionista desde sessionData:', idNutricionista);
+    if (idNutricionista) {
         console.log("Antes de Cargar centros");
-        await cargarCentrosAtencion(id_nutricionista);
+        await cargarCentrosAtencion(idNutricionista);
         console.log("Centros cargados, ahora se puede cargar el resumen");
-        cargarResumenAgenda(parseInt(id_nutricionista));
-        cargarResumenCitas(parseInt(id_nutricionista));
-        verificarCancelacionesPendientesNutricionista(parseInt(id_nutricionista));
-        verificarSolicitudesPendientesNutricionista(parseInt(id_nutricionista));
+        cargarResumenAgenda(parseInt(idNutricionista));
+        cargarResumenCitas(parseInt(idNutricionista));
+        verificarCancelacionesPendientesNutricionista(parseInt(idNutricionista));
+        verificarSolicitudesPendientesNutricionista(parseInt(idNutricionista));
     }
 });
 
