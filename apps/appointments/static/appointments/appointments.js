@@ -709,6 +709,7 @@ async function verificarCancelacionesPendientesNutricionista(id_nutricionista) {
 
                     if (resConfirmacion.status === 'ok') {
                         await Swal.fire('Notificación confirmada', 'El estado de la cita ha sido actualizado.', 'success');
+                        location.reload();
                     } else {
                         throw new Error(resConfirmacion.mensaje);
                     }
@@ -776,6 +777,7 @@ async function verificarSolicitudesPendientesNutricionista(id_nutricionista) {
 
                     if (resConfirmacion.status === 'ok') {
                         await Swal.fire('Cita confirmada', 'La cita ha sido marcada como reservada.', 'success');
+                        location.reload();
                     } else {
                         throw new Error(resConfirmacion.mensaje);
                     }
