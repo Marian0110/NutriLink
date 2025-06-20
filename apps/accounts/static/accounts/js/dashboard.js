@@ -1,3 +1,36 @@
+document.addEventListener('DOMContentLoaded', async () => {
+    try {
+        // Botón de citas
+        await botonVerMas();
+        
+        // Crear gráficos
+        await crearGraficos();
+
+    } catch (error) {
+        console.error('Error durante la inicialización:', error);
+    }
+
+
+        const idNutricionista = sessionStorage.getItem('id_nutricionista');
+        
+        if (!idNutricionista) {
+            throw new Error('ID no disponible');
+        }
+        const response = await fetch(`https://nutrilinkapi-production.up.railway.app/api_nutrilink/nutricionista/obtener_nutricionista_id/${idNutricionista}`);
+        
+        if (!response.ok) {
+            throw new Error('Error en la respuesta');
+        }
+        const data = await response.json();
+        const nutricionista = data[0]; 
+        const nombreMostrar = `${nutricionista.primer_nombre} ${nutricionista.apellido_paterno}`;
+
+        document.getElementById('nombre-nutricionista').textContent = nombreMostrar;
+
+         // Cargar citas del día dinámicamente
+        await cargarCitasDelDiaConEstados();
+});
+
 async function getPacientes() {
     try {
         const idNutricionista = sessionStorage.getItem('id_nutricionista');
@@ -26,11 +59,6 @@ async function getPacientes() {
 async function crearGraficos() {
     try {
         const pacientes = await getPacientes();
-        
-        if (!pacientes || pacientes.length === 0) {
-            console.log('No hay datos de pacientes para mostrar');
-            return;
-        }
 
         // Card total pacientes
         const totalPacientes = pacientes.length;
@@ -77,67 +105,6 @@ async function crearGraficos() {
         console.error('Error al crear gráficos:', error);
     }
 }
-
-document.addEventListener('DOMContentLoaded', async () => {
-    try {
-        // 1. Configurar evento del botón de citas
-        const toggleButton = document.getElementById('toggleCitas');
-        if (toggleButton) {
-            toggleButton.addEventListener('click', function() {
-                const hiddenCitas = document.querySelectorAll('.hidden-citas');
-                const icon = this.querySelector('i');
-                        
-                hiddenCitas.forEach(cita => {
-                    if (cita.style.display === 'none' || !cita.style.display) {
-                        cita.style.display = 'block';
-                        icon.classList.replace('fa-chevron-down', 'fa-chevron-up');
-                        this.innerHTML = '<i class="fas fa-chevron-up me-1"></i> Ocultar citas';
-                    } else {
-                        cita.style.display = 'none';
-                        icon.classList.replace('fa-chevron-up', 'fa-chevron-down');
-                        this.innerHTML = '<i class="fas fa-chevron-down me-1"></i> Ver todas las citas de hoy (3)';
-                    }
-                });
-            });
-        } else {
-        }
-
-        
-        // 3. Debug de pacientes
-        const pacientes = await getPacientes();
-        if (pacientes) {
-            console.log('✅ Pacientes obtenidos:', pacientes.length, 'pacientes');
-        } else {
-            console.log('❌ No se obtuvieron pacientes');
-        }
-        
-        // 4. Crear gráficos
-        await crearGraficos();
-
-    } catch (error) {
-        console.error('Error durante la inicialización:', error);
-    }
-
-
-        const idNutricionista = sessionStorage.getItem('id_nutricionista');
-        
-        if (!idNutricionista) {
-            throw new Error('ID no disponible');
-        }
-        const response = await fetch(`https://nutrilinkapi-production.up.railway.app/api_nutrilink/nutricionista/obtener_nutricionista_id/${idNutricionista}`);
-        
-        if (!response.ok) {
-            throw new Error('Error en la respuesta');
-        }
-        const data = await response.json();
-        const nutricionista = data[0]; 
-        const nombreMostrar = `${nutricionista.primer_nombre} ${nutricionista.apellido_paterno}`;
-
-        document.getElementById('nombre-nutricionista').textContent = nombreMostrar;
-
-         // 2. NUEVA FUNCIONALIDAD: Cargar citas del día dinámicamente
-        await cargarCitasDelDiaConEstados();
-});
 
 // Funciones para gráficos
 function graficoGeneroTorta(pacientes) {
@@ -538,7 +505,7 @@ function animarContador(selector = '.counter') {
     });
 }
 
-//APARTADO DE CITAS DEL DIA
+//----------------------APARTADO DE CITAS DEL DIA-----------------------------------------
 window.manejarIniciarConsulta = manejarIniciarConsulta;
 
 // Guardar estado de consulta iniciada
@@ -641,8 +608,6 @@ function manejarIniciarConsulta(event, cita) {
         window.location.href = `/patients/${cita.id_paciente}/info-general/`;
     };
     
-    console.log('✅ Consulta iniciada, redirigiendo al perfil...');
-    
     // Redirigir al perfil inmediatamente
     window.location.href = `/patients/${cita.id_paciente}/info-general/`;
 }
@@ -671,6 +636,7 @@ function generarHTMLCitaConEstados(cita, index) {
     const horaInicioCita = new Date(`${new Date().toDateString()} ${cita.hora}`);
     const puedeIniciar = horaActual >= horaInicioCita && cita.estado === 'Reservada';
     const estaCompletada = cita.estado === 'Completada';
+    const estaCancelada = cita.estado === 'Cancelada Por Nutricionista';
     
     // VERIFICAR SI LA CONSULTA FUE INICIADA LOCALMENTE (persistencia)
     const consultaIniciadaLocalmente = estaConsultaIniciada(cita.id_paciente);
@@ -682,7 +648,7 @@ function generarHTMLCitaConEstados(cita, index) {
     // Configurar botón principal
     let configBotonPrincipal = {
         clase: 'btn-secondary',
-        texto: '<i class="fas fa-clock me-1"></i> Esperar turno',
+        texto: '<i class="fas fa-clock me-1"></i> Pendiente',
         habilitado: false,
         onclick: ''
     };
@@ -694,6 +660,13 @@ function generarHTMLCitaConEstados(cita, index) {
             habilitado: false,
             onclick: ''
         };
+    } else if (estaCancelada) {
+        configBotonPrincipal = {
+            clase: 'btn-danger',
+            texto: '<i class="fas fa-times-circle me-1"></i> Cancelada',
+            habilitado: false,
+            onclick: ''
+        }; 
     } else if (estaEnProceso) {
         // Si está en proceso mostrar "Volver a la consulta"
         configBotonPrincipal = {
