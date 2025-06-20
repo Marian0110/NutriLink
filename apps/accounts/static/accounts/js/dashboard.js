@@ -38,7 +38,7 @@ async function crearGraficos() {
 
         
         // Card total minutas 
-        const totalMinutas = await obtenerTotalMinutas(63); // Ejemplo con pacidente 63
+        const totalMinutas = await obtenerTotalMinutas();
         crearCardTotalMinutas(totalMinutas);
 
         // 1. Gráfico de género
@@ -334,13 +334,20 @@ function crearCardTotalMinutas(totalMinutas) {
     animarContador('.counter-minutas'); // Extender función animarContador
 }
 
-async function obtenerTotalMinutas(pacienteId) {
+async function obtenerTotalMinutas() {
     try {
-        const response = await fetch(`https://nutrilinkapi-production.up.railway.app/api_nutrilink/minuta/minutas_por_fecha/?pacienteId=${pacienteId}`);
+        const idNutricionista = sessionStorage.getItem('id_nutricionista');
+
+        const response = await fetch(`https://nutrilinkapi-production.up.railway.app/api_nutrilink/minuta/obtener_cantidad_minutas_nutricionista/${idNutricionista}`);
+        
+        if (!response.ok) {
+            throw new Error(`Error HTTP: ${response.status}`);
+        }
+
         const data = await response.json();
         
         if (data.status === 'success') {
-            return data.data.length;
+            return data.data.cantidad_minutas; 
         } else {
             console.error('Error al obtener minutas:', data.mensaje);
             return 0; 
