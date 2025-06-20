@@ -61,7 +61,6 @@
     padding: 10px 20px;
     border-radius: 5px;
     border: none;
-    margin-top: 5%;
     width: 30%;
   }
   
@@ -96,16 +95,12 @@
     flex: 1;
     min-width: 250px;
   }
-  
-/*seccion embarazo*/
 
-.pregnancy-card {
+.historial-card {
   background-color: white;
   border-radius: 10px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  padding: 30px;
-  width: 100%;
-  max-width: 500px;
+  width: 50%;
 }
 
 .card-header {
@@ -199,16 +194,13 @@
   margin-left: 5px;
 }
 
-
 /*seccion informacion nutricional adicional*/
-
 .rejection-card {
   background-color: white;
   border-radius: 10px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   padding: 30px;
   width: 60%;
-  margin-top: 40px;
   margin-bottom: 40px;
 }
 

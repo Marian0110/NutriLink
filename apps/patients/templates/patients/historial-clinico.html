@@ -5,15 +5,13 @@
 {% block perfilcontent %}
 <div class="row">
   <div class="container-fluid">
-    <form id="perfilClinicoCompletoForm" method="POST">
+    <form class="clinical-card" id="perfilClinicoCompletoForm" method="POST">
       {% csrf_token %}
       <input type="hidden" name="id_paciente" id="id_paciente_hidden" value="{{ paciente.id_paciente }}">
-
       <div class="row g-3 align-items-start">
-        <!-- Columna izquierda: Perfil clínico -->
+        <!-- Columna izquierda: Perfil clínico con condición de embarazo -->
         <div class="col-md-7">
-          <!-- EL FORM INTERNO SE ELIMINA, YA ESTÁ ENVUELTO POR perfilClinicoCompletoForm -->
-          <div class="clinical-card">
+          <div>
             <h1 class="card-title mb-2">
                 Perfil clínico
                 <span class="tooltip-container">
@@ -22,18 +20,22 @@
                 </span>
             </h1>
             <p class="text-muted mb-4">Datos relevantes del paciente para el manejo nutricional</p>
+            
             <div class="mb-3">
               <label class="clinical-label d-block">Notas:</label>
               <textarea class="form-control" name="notas_varias" id="notas_varias"></textarea>
             </div>
+            
             <div class="mb-3">
               <label class="clinical-label d-block">Etapa de cambio psicológico:</label>
               <input type="text" class="form-control form-control-custom" name="etapa_cambio_psicologico" id="cambio_psicologico"/>
             </div>
+            
             <div class="mb-3">
               <label class="clinical-label d-block">Medicamentos actuales:</label>
               <input type="text" class="form-control form-control-custom" name="medicamentos_actuales" id="medicamentos_actuales"/>
             </div>
+            
             <div class="mb-3">
               <label class="clinical-label d-block">Actividad física:</label>
               <select class="form-select form-control-custom" name="actividad_fisica" id="actividadFisicaSelect">
@@ -47,85 +49,97 @@
                 {% endfor %}
               </select>
             </div>
-            <div class="mb-3 factors" style="width: 60%;">
+            <!-- Condición de embarazo -->
+            <div style="border: 1px solid #e0e0e0; border-radius: 8px; padding: 20px; background-color: #fafafa;">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <h2 class="section-title h5 mb-0">¿Condición de embarazo?</h2>
+                <div class="radio-group">
+                  <label class="radio-option">
+                    <input type="radio" name="condicion_embarazo" value="S" id="embarazo_si" {% if paciente.condicion_embarazo == 'S' %}checked{% endif %}> SI
+                  </label>
+                  <label class="radio-option">
+                    <input type="radio" name="condicion_embarazo" value="N" id="embarazo_no" {% if paciente.condicion_embarazo != 'S' %}checked{% endif %}> NO
+                  </label>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-md-4">
+                  <div class="form-group">
+                    <label class="form-label">Semanas de gestación:</label>
+                    <input type="number" name="semana_gestacion" id="inputSemanas" class="form-control" 
+                          placeholder="Ingresar valor" value="{{ paciente.semana_gestacion|default_if_none:'' }}"
+                          {% if paciente.condicion_embarazo != 'S' %}readonly{% endif %}>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="form-group">
+                    <label class="form-label">Trimestre calculado:</label>
+                    <div class="readonly-field p-2 bg-light rounded" id="trimestreCalculado">N/A</div>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="form-group">
+                    <label class="form-label">Energía extra:</label>
+                    <div class="readonly-field p-2 bg-light rounded" id="energiaExtra">0 kcal</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Factores patológicos -->
+        <div class="col-md-5">
+          <div style="margin-top: 0%;">
+            <div class="factors">
               <h2 class="section-title h5">Factores patológicos <span>(Seleccione una opción)</span></h2>
               {% if error_factores %}
               <div class="alert alert-danger">Error al cargar factores: {{ error_factores }}</div>
               {% endif %}
-              {% for factor in factores_patologicos %}
-              <div class="form-check mb-2" style="margin-left: 5%;">
-                  <input class="form-check-input" type="radio" 
-                         name="factor_patologico" 
-                         id="factor{{ factor.id_factor_patologico }}"
-                         value="{{ factor.id_factor_patologico }}"
-                         {% if not factores_patologicos_seleccionado and forloop.first %}checked{% elif factor.id_factor_patologico == factores_patologicos_seleccionado %}checked{% endif %}>
-                  <label class="form-check-label" for="factor{{ factor.id_factor_patologico }}">
-                      {{ factor.descripcion }} ({{ factor.valor_factor }})
-                  </label>
+              
+              <div style="max-height: 400px; overflow-y: auto; padding-right: 10px;">
+                {% for factor in factores_patologicos %}
+                <div class="form-check mb-2" style="margin-left: 5%;">
+                    <input class="form-check-input" type="radio" 
+                           name="factor_patologico" 
+                           id="factor{{ factor.id_factor_patologico }}"
+                           value="{{ factor.id_factor_patologico }}"
+                           {% if not factores_patologicos_seleccionado and forloop.first %}checked{% elif factor.id_factor_patologico == factores_patologicos_seleccionado %}checked{% endif %}>
+                    <label class="form-check-label" for="factor{{ factor.id_factor_patologico }}">
+                        {{ factor.descripcion }} ({{ factor.valor_factor }})
+                    </label>
+                </div>
+                {% empty %}
+                <div class="alert alert-warning">No se encontraron factores patológicos disponibles</div>
+                {% endfor %}
               </div>
-              {% empty %}
-              <div class="alert alert-warning">No se encontraron factores patológicos disponibles</div>
-              {% endfor %}
-            </div>
-          </div>
-        </div>
-        
-        <!-- Columna derecha: Condición de embarazo -->
-        <div class="col-md-5">
-          <div class="pregnancy-card" style="margin-top: 0%;">
-            <div class="card-header d-flex justify-content-between align-items-center">
-              <h1 class="card-title mb-0">¿Condición de embarazo?</h1>
-              <div class="radio-group">
-                <label class="radio-option">
-                  <input type="radio" name="condicion_embarazo" value="S" id="embarazo_si" {% if paciente.condicion_embarazo == 'S' %}checked{% endif %}> SI
-                </label>
-                <label class="radio-option">
-                  <input type="radio" name="condicion_embarazo" value="N" id="embarazo_no" {% if paciente.condicion_embarazo != 'S' %}checked{% endif %}> NO
-                </label>
-              </div>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Semanas de gestación:</label>
-              <input type="number" name="semana_gestacion" id="inputSemanas" class="form-control" 
-                    placeholder="Ingresar valor" value="{{ paciente.semana_gestacion|default_if_none:'' }}"
-                    {% if paciente.condicion_embarazo != 'S' %}readonly{% endif %}>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Trimestre calculado:</label>
-              <div class="readonly-field p-2 bg-light rounded" id="trimestreCalculado">N/A</div>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Energía extra:</label>
-              <div class="readonly-field p-2 bg-light rounded" id="energiaExtra">0 kcal</div>
             </div>
             <div class="divider"></div>
           </div>
-
-          <!-- NUEVO: Selector de Historial Clínico -->
-          <div class="historical-selector-card mt-3">
-              <label for="historialDateSelector" class="form-label fw-bold">Seleccionar Historial Anterior:</label>
-              <select id="historialDateSelector" class="form-select">
-                  <option value="current" selected>Registro Actual (Editable)</option>
-                  <!-- Las fechas se cargarán aquí por JS -->
-              </select>
-          </div>
         </div>
-        <!-- FIN Columna derecha -->
       </div>
-      
-      <div class="row mt-3">
+      <div class="row">
         <div class="col-12 d-flex justify-content-center">
           <button type="button" class="btn btn-save" id="btnActualizarPerfilCompleto">ACTUALIZAR DATOS</button>
         </div>
       </div>
-    </form> <!-- FIN de perfilClinicoCompletoForm -->
+    </form>
 
-    <!-- Información nutricional (separada) -->
-    <div class="row mt-4">
-      <div class="col-md-7"> <!-- Ajustado para que no sea tan ancho -->
+    <!-- Selector de Historial Clínico -->
+    <div class="historial-card mt-3">
+      <label for="historialDateSelector" class="h4 card-title mb-2">Seleccionar Historial Anterior:</label>
+      <p class="text-muted card-subtitle mb-4">Selecciona una fecha para revisar historiales previos o el registro actual para editar.</p>
+      <select id="historialDateSelector" class="form-select">
+        <option value="current" selected>Registro Actual (Editable)</option>
+          <!-- Las fechas se cargarán aquí -->
+      </select>
+    </div>
+
+    <!-- Información nutricional -->
+    <div class="row">
+      <div class="col-md-7">
         <form id="formRechazoAlimentario" method="POST">
           {% csrf_token %}
-          <div class="rejection-card"> <!-- Quitado width: 50% para que se ajuste mejor -->
+          <div class="rejection-card">
             <h1 class="h4 card-title mb-2">Información nutricional</h1>
             <p class="text-muted card-subtitle mb-4">Los rechazos alimenticios serán excluidos en los planes alimenticios.</p>
             <div class="mb-4">
@@ -154,16 +168,13 @@
     </div>
   </div>
 </div>
-
 <script>
- const PACIENTE_ID = "{{ paciente.id_paciente }}"; // Definir globalmente para fácil acceso
-
+ const PACIENTE_ID = "{{ paciente.id_paciente }}"; // globalmente para fácil acceso
  // --- Selectores de Elementos DOM ---
  const notasVariasEl = document.getElementById('notas_varias');
  const cambioPsicologicoEl = document.getElementById('cambio_psicologico');
  const medicamentosActualesEl = document.getElementById('medicamentos_actuales');
  const actividadFisicaSelectEl = document.getElementById('actividadFisicaSelect');
- // Para factor patológico, necesitarás iterar o tener una forma de seleccionar el correcto
  const inputSemanasEl = document.getElementById('inputSemanas');
  const trimestreCalculadoEl = document.getElementById('trimestreCalculado');
  const energiaExtraEl = document.getElementById('energiaExtra');
@@ -181,9 +192,9 @@
  }
 
  function setFormEditable(isEditable) {
-     notasVariasEl.readOnly = !isEditable;
-     cambioPsicologicoEl.readOnly = !isEditable;
-     medicamentosActualesEl.readOnly = !isEditable;
+     notasVariasEl.disabled = !isEditable;
+     cambioPsicologicoEl.disabled = !isEditable;
+     medicamentosActualesEl.disabled = !isEditable;
      actividadFisicaSelectEl.disabled = !isEditable;
      document.querySelectorAll('input[name="factor_patologico"]').forEach(radio => radio.disabled = !isEditable);
      document.querySelectorAll('input[name="condicion_embarazo"]').forEach(radio => radio.disabled = !isEditable);
@@ -224,7 +235,7 @@
     }
 
  // --- Carga y Muestra de Datos del Perfil (Actual o Histórico) ---
- function populateFormWithData(data, isEditableContext) { // Añadido isEditableContext
+ function populateFormWithData(data, isEditableContext) { // isEditableContext
         notasVariasEl.value = data.notas_varias || '';
         cambioPsicologicoEl.value = data.etapa_cambio_psicologico || '';
         medicamentosActualesEl.value = data.medicamentos_actuales || '';
@@ -254,7 +265,7 @@
         }
         // Asegurar que el estado de solo lectura se aplique después de poblar, basado en isEditableContext
         setFormEditable(isEditableContext); 
-        actualizarInputEmbarazo(); // Esto también considera si el form es editable
+        actualizarInputEmbarazo();
     }
 
     function resetAndPrepareNewEntryForm() {
@@ -284,7 +295,7 @@
         } else { // Cargando "Registro Actual (Editable)"
             isEditableContext = true;
             if (allDates.length > 0) {
-                const fechaMasReciente = allDates[0]; // Ya están ordenadas descendente
+                const fechaMasReciente = allDates[0]; // Orden descendente
                 url = `https://nutrilinkapi-production.up.railway.app/api_nutrilink/paciente/obtener_historial_clinico/${PACIENTE_ID}/${fechaMasReciente}`;
             } else {
                 resetAndPrepareNewEntryForm();
@@ -478,7 +489,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
  // --- Función para guardar el rechazo alimentario ---
  async function guardarRechazoAlimentario() {
-     // ... (tu función guardarRechazoAlimentario existente, sin cambios)
      const alimentoSelect = document.getElementById('rechazo-alimenticio');
      const alimentoId = alimentoSelect.value;
      const motivoRechazo = document.getElementById('motivo_rechazo').value.trim();
