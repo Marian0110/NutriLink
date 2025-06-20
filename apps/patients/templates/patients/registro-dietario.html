@@ -1004,18 +1004,53 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     tiemposComidaContainer.addEventListener('click', (event) => {
-        if (event.target.classList.contains('button-eliminar-alimento')) { // Se permite click incluso si isViewingHistoricalRegistro para mostrar el Swal de advertencia
-            const foodRow = event.target.closest('tr[data-food-row-id]');
+
+        const clickedDeleteButton = event.target.closest('.button-eliminar-alimento');
+        const clickedNewAlimentoButton = event.target.closest('.button-nuevo-alimento');
+
+        if (clickedDeleteButton) {
+            const foodRow = clickedDeleteButton.closest('tr[data-food-row-id]');
             if (foodRow) {
                 handleDeleteFoodRow(foodRow);
             }
+            return; 
         }
+        
+        if (clickedNewAlimentoButton) {
+            if (isViewingHistoricalRegistro) {
+                 Swal.fire('Acción no permitida', 'No se pueden crear nuevos alimentos en un registro histórico.', 'warning');
+                 return; // Salir
+            }
+            // Guardar referencia a la fila desde donde se hizo clic para el nuevo alimento
+            currentTargetFoodRowForNewAlimento = clickedNewAlimentoButton.closest('tr[data-food-row-id]');
+            
+            const nuevoAlimentoForm = document.getElementById('nuevoAlimentoFormRegistro');
+            if (nuevoAlimentoForm) nuevoAlimentoForm.reset(); // Limpiar form del modal
+
+            // Asegurar que los grupos estén cargados en el modal
+            if (ALL_GRUPOS_ALIMENTICIOS_DATA.length === 0) {
+                cargarGruposAlimenticiosParaModal(); // Cargar si aún no se han cargado
+            }
+            
+            // Mostrar el modal de Bootstrap
+            const agregarAlimentoModalEl = document.getElementById('agregarAlimentoModal');
+            if (agregarAlimentoModalEl) {
+                // Obtener la instancia del modal si ya existe, o crear una nueva.
+                let modalInstance = bootstrap.Modal.getInstance(agregarAlimentoModalEl);
+                if (!modalInstance) {
+                    modalInstance = new bootstrap.Modal(agregarAlimentoModalEl);
+                }
+                modalInstance.show();
+            }
+            return;
+        }
+
     });
 
     if (btnAnadirTiempoComida) {
         btnAnadirTiempoComida.addEventListener('click', () => {
             if (isViewingHistoricalRegistro) return; // Doble check
-            createMealTimeBlock(); // Esta función ya llama a toggleEditableState y updateAllMealTimeSelects
+            createMealTimeBlock(); 
             reorderMealTimeBlocksByTime();
         });
     }
@@ -1208,7 +1243,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    async function cargarYMostrarResumenNutricionalYDetalles(idDietaParaCargar = null, fechaDietaParaCargar = null) {
+        async function cargarYMostrarResumenNutricionalYDetalles(idDietaParaCargar = null, fechaDietaParaCargar = null) {
         if (!pacienteId) {
             if (adecuacionStatusDiv) {
                 adecuacionStatusDiv.textContent = "ID de paciente no disponible.";
@@ -1218,6 +1253,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         graficoAdecuacionContainerEl = document.querySelector('.grafico-adecuacion-container');
 
+        // --- VERIFICACIÓN DE DATOS DE HISTORIAL CLÍNICO (NAF, Factor Patológico) ---
         try {
             const urlActividadFisica = `https://nutrilinkapi-production.up.railway.app/api_nutrilink/paciente/obtener_actividad_fisica/${pacienteId}`;
             const actividadFisicaResponse = await fetchAPI(urlActividadFisica, 'factor de actividad física');
@@ -1251,6 +1287,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             toggleEditableStateRegistro(false); if (btnAnadirTiempoComida) btnAnadirTiempoComida.disabled = true; if (btnGuardarRegistroCompleto) btnGuardarRegistroCompleto.disabled = true; return;
         }
 
+        // --- VERIFICACIÓN DE REQUERIMIENTOS NUTRICIONALES ---
         try {
             const urlRequerimientos = `https://nutrilinkapi-production.up.railway.app/api_nutrilink/requerimientos/obtener_requerimientos?pacienteId=${pacienteId}`;
             const requerimientosResponse = await fetchAPI(urlRequerimientos, 'requerimientos del paciente');
@@ -1268,11 +1305,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             toggleEditableStateRegistro(false); if (btnAnadirTiempoComida) btnAnadirTiempoComida.disabled = true; if (btnGuardarRegistroCompleto) btnGuardarRegistroCompleto.disabled = true; return;
         }
 
+        // --- CONFIGURACIÓN INICIAL Y LIMPIEZA DE UI ---
         const esRegistroHistorico = !!idDietaParaCargar;
-        isViewingHistoricalRegistro = esRegistroHistorico; // Actualizar estado global
+        isViewingHistoricalRegistro = esRegistroHistorico;
 
         const tituloFecha = esRegistroHistorico && fechaDietaParaCargar 
-            ? `del ${new Date(fechaDietaParaCargar + 'T00:00:00').toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}`
+            ? `del ${new Date(fechaDietaParaCargar + 'T00:00:00Z').toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}` // Asegurar UTC para consistencia
             : 'actual';
         if (adecuacionStatusDiv) {
             adecuacionStatusDiv.textContent = `Cargando datos del registro ${tituloFecha}...`;
@@ -1290,16 +1328,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         if (graficoAdecuacionContainerEl) {
             graficoAdecuacionContainerEl.innerHTML = '<p>Cargando gráfico...</p>';
-        } else {
+        } else { // Recrear si no existe
             const adecuacionSection = document.getElementById('adecuacion-registro-section');
             if (adecuacionSection) {
                 graficoAdecuacionContainerEl = document.createElement('div');
                 graficoAdecuacionContainerEl.classList.add('grafico-adecuacion-container');
                 graficoAdecuacionContainerEl.innerHTML = '<p>Cargando gráfico...</p>';
                 const statusDivSibling = adecuacionSection.querySelector('#adecuacion-status');
-                if (statusDivSibling) {
-                    adecuacionSection.insertBefore(graficoAdecuacionContainerEl, statusDivSibling);
-                } else {
+                if (statusDivSibling) adecuacionSection.insertBefore(graficoAdecuacionContainerEl, statusDivSibling);
+                else {
                     const h3Adecuacion = adecuacionSection.querySelector('h3');
                     if (h3Adecuacion && h3Adecuacion.nextSibling) adecuacionSection.insertBefore(graficoAdecuacionContainerEl, h3Adecuacion.nextSibling);
                     else if (h3Adecuacion) adecuacionSection.appendChild(graficoAdecuacionContainerEl);
@@ -1307,6 +1344,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         }
 
+        // --- LÓGICA PRINCIPAL DE CARGA DE DATOS ---
         try {
             let urlResumen, urlDetalles;
             let idDietaParamQuery = '';
@@ -1322,7 +1360,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 urlDetalles = `https://nutrilinkapi-production.up.railway.app/api_nutrilink/dieta/detalles_dieta?pacienteId=${pacienteId}`;
             }
             
-            // Cargar gráfico HTML
+            // 1. Cargar gráfico HTML
             const urlGraficoHtml = `/patients/${pacienteId}/grafico_adecuacion_dieta/?${idDietaParamQuery.startsWith('&') ? idDietaParamQuery.substring(1) : idDietaParamQuery}`;
             try {
                 const responseHtmlGrafico = await fetch(urlGraficoHtml, { headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'text/html' } });
@@ -1334,7 +1372,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     scripts.forEach(oldScript => {
                         const newScript = document.createElement('script');
                         Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
-                        newScript.textContent = oldScript.textContent; // Para scripts inline
+                        newScript.textContent = oldScript.textContent;
                         oldScript.parentNode.replaceChild(newScript, oldScript);
                     });
                 }
@@ -1343,118 +1381,187 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (graficoAdecuacionContainerEl) {
                     const retryButtonId = idDietaParaCargar ? `'${idDietaParaCargar}'` : 'null';
                     const retryButtonFecha = fechaDietaParaCargar ? `'${fechaDietaParaCargar}'` : 'null';
-                    graficoAdecuacionContainerEl.innerHTML = `<div class="plotly-graph-error"><p>Error al cargar gráfico</p><button onclick="cargarYMostrarResumenNutricionalYDetalles(${retryButtonId}, ${retryButtonFecha})">Reintentar</button></div>`;
+                    graficoAdecuacionContainerEl.innerHTML = `<div class="plotly-graph-error"><p>Error al cargar gráfico.</p><button onclick="cargarYMostrarResumenNutricionalYDetalles(${retryButtonId}, ${retryButtonFecha})">Reintentar</button></div>`;
                 }
             }
 
-            // Cargar Resumen (notas y mensaje de status)
+            // 2. Cargar Resumen (para tabla de adecuación y notas)
             const resumenResponse = await fetchAPI(urlResumen, `resumen nutricional ${tituloFecha}`);
             if (resumenResponse.status === "success" && resumenResponse.data) {
                 const resumenData = resumenResponse.data;
-
                 if (tablaResumenAdecuacionBodyEl) {
-                    // Mapeo de claves de la API a los data-attributes de la tabla
                     const nutrientMap = {
-                        // Consumido Key            // Requerimiento Key                // Adecuacion Key
-                        'dieta_calorias':        { req: 'requerimiento_calorico',      ade: 'porc_adecuacion_calorico', decimals: 0 },
-                        'dieta_proteinas':       { req: 'requerimiento_proteinas',     ade: 'porc_adec_proteinas',      decimals: 1 },
-                        'dieta_carbohidratos':   { req: 'requerimiento_carbohidratos', ade: 'porc_adec_carbohidratos',  decimals: 1 },
-                        'dieta_lipidos':         { req: 'requerimiento_lipidos',       ade: 'porc_adec_lipidos',        decimals: 1 },
-                        'dieta_n3':              { req: 'requerimiento_n3',            ade: 'porc_adec_n3',             decimals: 2 },
-                        'dieta_vita':            { req: 'requerimiento_vita',          ade: 'porc_adec_vita',           decimals: 1 },
-                        'dieta_b12':             { req: 'requerimiento_b12',           ade: 'porc_adec_b12',            decimals: 1 },
-                        'dieta_calcio':          { req: 'requerimiento_calcio',        ade: 'porc_adec_calcio',         decimals: 1 },
-                        'dieta_hierro':          { req: 'requerimiento_hierro',        ade: 'porc_adec_hierro',         decimals: 1 },
-                        'dieta_selenio':         { req: 'requerimiento_selenio',       ade: 'porc_adec_selenio',        decimals: 1 },
-                        'dieta_zinc':            { req: 'requerimiento_zinc',          ade: 'porc_adec_zinc',           decimals: 1 },
-                        'dieta_potasio':         { req: 'requerimiento_potasio',       ade: 'porc_adec_potasio',        decimals: 0 },
-                        'dieta_sodio':           { req: 'requerimiento_sodio',         ade: 'porc_adec_sodio',          decimals: 0 }
+                        'dieta_calorias': { req: 'requerimiento_calorico', ade: 'porc_adecuacion_calorico', decimals: 0 },
+                        'dieta_proteinas': { req: 'requerimiento_proteinas', ade: 'porc_adec_proteinas', decimals: 1 },
+                        'dieta_carbohidratos': { req: 'requerimiento_carbohidratos', ade: 'porc_adec_carbohidratos', decimals: 1 },
+                        'dieta_lipidos': { req: 'requerimiento_lipidos', ade: 'porc_adec_lipidos', decimals: 1 },
+                        'dieta_n3': { req: 'requerimiento_n3', ade: 'porc_adec_n3', decimals: 2 },
+                        'dieta_vita': { req: 'requerimiento_vita', ade: 'porc_adec_vita', decimals: 1 },
+                        'dieta_b12': { req: 'requerimiento_b12', ade: 'porc_adec_b12', decimals: 1 },
+                        'dieta_calcio': { req: 'requerimiento_calcio', ade: 'porc_adec_calcio', decimals: 1 },
+                        'dieta_hierro': { req: 'requerimiento_hierro', ade: 'porc_adec_hierro', decimals: 1 },
+                        'dieta_selenio': { req: 'requerimiento_selenio', ade: 'porc_adec_selenio', decimals: 1 },
+                        'dieta_zinc': { req: 'requerimiento_zinc', ade: 'porc_adec_zinc', decimals: 1 },
+                        'dieta_potasio': { req: 'requerimiento_potasio', ade: 'porc_adec_potasio', decimals: 0 },
+                        'dieta_sodio': { req: 'requerimiento_sodio', ade: 'porc_adec_sodio', decimals: 0 }
                     };
-
                     for (const [consumidoKey, mapInfo] of Object.entries(nutrientMap)) {
                         const cellConsumido = tablaResumenAdecuacionBodyEl.querySelector(`td[data-consumido="${consumidoKey}"]`);
                         const cellRequerimiento = tablaResumenAdecuacionBodyEl.querySelector(`td[data-requerimiento="${mapInfo.req}"]`);
                         const cellAdecuacion = tablaResumenAdecuacionBodyEl.querySelector(`td[data-adecuacion="${mapInfo.ade}"]`);
-
                         if (resumenData.totales_consumidos && typeof resumenData.totales_consumidos[consumidoKey] !== 'undefined' && cellConsumido) {
                             const valor = parseFloat(resumenData.totales_consumidos[consumidoKey]);
                             cellConsumido.textContent = isNaN(valor) ? '-' : valor.toFixed(mapInfo.decimals);
-                        } else if (cellConsumido) {
-                            cellConsumido.textContent = '-';
-                        }
-
+                        } else if (cellConsumido) cellConsumido.textContent = '-';
                         if (resumenData.requerimientos && typeof resumenData.requerimientos[mapInfo.req] !== 'undefined' && cellRequerimiento) {
                             const valor = parseFloat(resumenData.requerimientos[mapInfo.req]);
                             cellRequerimiento.textContent = isNaN(valor) ? '-' : valor.toFixed(mapInfo.decimals);
-                        } else if (cellRequerimiento) {
-                            cellRequerimiento.textContent = '-';
-                        }
-                        
+                        } else if (cellRequerimiento) cellRequerimiento.textContent = '-';
                         if (resumenData.adecuacion && typeof resumenData.adecuacion[mapInfo.ade] !== 'undefined' && cellAdecuacion) {
                             const valor = parseFloat(resumenData.adecuacion[mapInfo.ade]);
                             cellAdecuacion.textContent = isNaN(valor) ? '- %' : `${valor.toFixed(1)} %`;
-                        } else if (cellAdecuacion) {
-                            cellAdecuacion.textContent = '- %';
-                        }
+                        } else if (cellAdecuacion) cellAdecuacion.textContent = '- %';
                     }
                 }
-
                 if (resumenData.totales_consumidos && resumenData.totales_consumidos.notas && !esRegistroHistorico) {
                     notasGeneralesTextarea.value = resumenData.totales_consumidos.notas;
                 } else if (esRegistroHistorico && resumenData.notas_generales_dieta) {
                      notasGeneralesTextarea.value = resumenData.notas_generales_dieta;
                 }
-                 if (adecuacionStatusDiv) {
-                    adecuacionStatusDiv.textContent = `Resumen y adecuación del registro ${tituloFecha} cargados.`;
+                if (adecuacionStatusDiv) {
+                    adecuacionStatusDiv.textContent = !esRegistroHistorico ? 'Datos del registro actual cargados.' : `Resumen y adecuación del registro ${tituloFecha} cargados.`;
                     adecuacionStatusDiv.className = 'success';
                 }
-            } else {
-                if (tablaResumenAdecuacionBodyEl) { // Asegurar que la tabla se limpie si no hay datos
-                    tablaResumenAdecuacionBodyEl.querySelectorAll('td[data-consumido], td[data-requerimiento], td[data-adecuacion]').forEach(td => td.textContent = '-');
-                }
+            } else if (resumenResponse.status === "not_found" && !esRegistroHistorico) {
+                if (tablaResumenAdecuacionBodyEl) tablaResumenAdecuacionBodyEl.querySelectorAll('td[data-consumido], td[data-requerimiento], td[data-adecuacion]').forEach(td => td.textContent = '-');
+                if (notasGeneralesTextarea) notasGeneralesTextarea.value = '';
                 if (adecuacionStatusDiv) {
-                adecuacionStatusDiv.textContent = `No se pudieron cargar datos de resumen para ${tituloFecha}. ${resumenResponse.mensaje || ''}`;
-                adecuacionStatusDiv.className = 'info';
+                    adecuacionStatusDiv.textContent = 'Listo para ingresar un nuevo registro.';
+                    adecuacionStatusDiv.className = 'info';
+                }
+                if (graficoAdecuacionContainerEl && !graficoAdecuacionContainerEl.querySelector('div')) {
+                    graficoAdecuacionContainerEl.innerHTML = '<p>Guarde un nuevo registro para ver el gráfico de adecuación.</p>';
+               }
+            } else if (resumenResponse.status === "not_found" && esRegistroHistorico) {
+                if (tablaResumenAdecuacionBodyEl) tablaResumenAdecuacionBodyEl.querySelectorAll('td[data-consumido], td[data-requerimiento], td[data-adecuacion]').forEach(td => td.textContent = '-');
+                if (adecuacionStatusDiv) {
+                    adecuacionStatusDiv.textContent = `No se encontraron datos de resumen para ${tituloFecha}. ${resumenResponse.mensaje || ''}`;
+                    adecuacionStatusDiv.className = 'info';
+                }
+            } else {
+                if (tablaResumenAdecuacionBodyEl) tablaResumenAdecuacionBodyEl.querySelectorAll('td[data-consumido], td[data-requerimiento], td[data-adecuacion]').forEach(td => td.textContent = '-');
+                if (adecuacionStatusDiv) {
+                   adecuacionStatusDiv.textContent = `Error al cargar datos de resumen para ${tituloFecha}: ${resumenResponse.mensaje || 'Respuesta inesperada.'}`;
+                   adecuacionStatusDiv.className = 'error';
                 }
             }
 
-            // Cargar Detalles de la Dieta (Alimentos)
+            // 3. Cargar Detalles de la Dieta (Alimentos)
             const detallesResponse = await fetchAPI(urlDetalles, `detalles de dieta ${tituloFecha}`);
-            if (detallesResponse.status === "success" && detallesResponse.data) {
-                const datosDieta = detallesResponse.data;
-                // Priorizar notas del resumen, pero si no hay, tomar de detalles
-                if (datosDieta.notas && !notasGeneralesTextarea.value) { 
-                    notasGeneralesTextarea.value = datosDieta.notas;
-                }
+            let detallesDeDietaArray = [];
 
-                if (datosDieta.detalles && datosDieta.detalles.length > 0) {
-                    const detallesAgrupados = datosDieta.detalles.reduce((acc, detalle) => {const key = `${detalle.id_tiempo_comida}-${detalle.hora_tiempo_comida}`; if (!acc[key]) { acc[key] = { id_tiempo_comida: detalle.id_tiempo_comida, hora_tiempo_comida: detalle.hora_tiempo_comida, alimentos: [] }; } acc[key].alimentos.push({ alimento_id_alimento: detalle.alimento_id_alimento, numero_porciones_dieta: detalle.numero_porciones_dieta }); return acc;}, {});
-                    Object.values(detallesAgrupados).forEach(grupo => { createMealTimeBlock(grupo.id_tiempo_comida, grupo.hora_tiempo_comida, grupo.alimentos); });
+            if (detallesResponse.status === "success") {
+                if (detallesResponse.data && Array.isArray(detallesResponse.data.detalles)) { // Estructura anidada como Postman
+                    detallesDeDietaArray = detallesResponse.data.detalles;
+                    if (detallesResponse.data.notas && !notasGeneralesTextarea.value) {
+                        notasGeneralesTextarea.value = detallesResponse.data.notas;
+                    }
+                    console.log("Detalles recibidos dentro de data.detalles (esperado).");
+                } else if (detallesResponse.data && Array.isArray(detallesResponse.data)) { // Estructura de array directo 
+                     detallesDeDietaArray = detallesResponse.data;
+                     console.warn("Detalles recibidos como array directo. La API debería ser consistente.");
+                } else if (detallesResponse.data && !detallesResponse.data.detalles && !Array.isArray(detallesResponse.data)) {
+                    // Si data existe pero no tiene 'detalles' y no es un array en sí mismo, es probable que no haya detalles.
+                    console.log("No se encontraron detalles de alimentos en la respuesta (data no es array ni tiene 'detalles').");
+                     if (tiemposComidaContainer && esRegistroHistorico) {
+                        tiemposComidaContainer.innerHTML = `<p>No se encontraron alimentos registrados para ${tituloFecha}.</p>`;
+                    }
                 } else {
-                    if (tiemposComidaContainer && esRegistroHistorico) tiemposComidaContainer.innerHTML = `<p>No se encontraron alimentos registrados para ${tituloFecha}.</p>`;
+                    console.warn("Formato inesperado para detalles de dieta:", detallesResponse.data);
+                     if (tiemposComidaContainer && esRegistroHistorico) {
+                        tiemposComidaContainer.innerHTML = `<p>Formato de datos de alimentos inesperado para ${tituloFecha}.</p>`;
+                    }
                 }
             } else if (detallesResponse.status === "not_found") {
-                 if (tiemposComidaContainer) tiemposComidaContainer.innerHTML = `<p>No se encontraron detalles de alimentos para el registro ${tituloFecha}.</p>`;
+                 if (tiemposComidaContainer) {
+                     tiemposComidaContainer.innerHTML = `<p>No se encontraron detalles de alimentos para el registro ${tituloFecha}.</p>`;
+                 }
             } else {
-                throw new Error(detallesResponse.mensaje || `No se pudieron cargar los detalles de alimentos para ${tituloFecha}.`);
+                 console.error(`Error al cargar detalles de dieta ${tituloFecha}: ${detallesResponse.mensaje || 'Respuesta inesperada.'}`);
+                 if (tiemposComidaContainer) tiemposComidaContainer.innerHTML = '';
+                 throw new Error(detallesResponse.mensaje || `No se pudieron cargar los detalles de alimentos para ${tituloFecha}.`);
             }
+
+            if (detallesDeDietaArray.length > 0) {
+                console.log("Detalles CRUDOS a procesar:", JSON.stringify(detallesDeDietaArray));
+                let detallesFiltradosParaVista = [];
+
+                if (!esRegistroHistorico) {
+                    const idsDietaPrevia = [...new Set(detallesDeDietaArray.map(d => d.dieta_diaria_id_dieta_previa))].filter(id => id != null);
+                    if (idsDietaPrevia.length > 0) {
+                        const idDietaPreviaMasReciente = Math.max(...idsDietaPrevia);
+                        detallesFiltradosParaVista = detallesDeDietaArray.filter(d => d.dieta_diaria_id_dieta_previa === idDietaPreviaMasReciente);
+                    } else {
+                        detallesFiltradosParaVista = detallesDeDietaArray; 
+                    }
+                } else {
+                    detallesFiltradosParaVista = detallesDeDietaArray.filter(d => d.dieta_diaria_id_dieta_previa == idDietaParaCargar);
+                    if (detallesFiltradosParaVista.length === 0 && detallesDeDietaArray.length > 0) {
+                        const idsDietaPreviaUnicos = [...new Set(detallesDeDietaArray.map(d => d.dieta_diaria_id_dieta_previa))].filter(id => id != null);
+                        if (idsDietaPreviaUnicos.length > 0) {
+                           const primerIdDietaPrevia = Math.max(...idsDietaPreviaUnicos); 
+                           detallesFiltradosParaVista = detallesDeDietaArray.filter(d => d.dieta_diaria_id_dieta_previa === primerIdDietaPrevia);
+                        }
+                    }
+                }
+
+                if (detallesFiltradosParaVista.length > 0) {
+                    const detallesAgrupados = detallesFiltradosParaVista.reduce((acc, detalle) => {
+                        const key = `${detalle.id_tiempo_comida}-${detalle.hora_tiempo_comida}`;
+                        if (!acc[key]) {
+                            acc[key] = { id_tiempo_comida: detalle.id_tiempo_comida, hora_tiempo_comida: detalle.hora_tiempo_comida, alimentos: [] };
+                        }
+                        acc[key].alimentos.push({ alimento_id_alimento: detalle.alimento_id_alimento, numero_porciones_dieta: detalle.numero_porciones_dieta });
+                        return acc;
+                    }, {});
+                    Object.values(detallesAgrupados).forEach(grupo => { 
+                        createMealTimeBlock(grupo.id_tiempo_comida, grupo.hora_tiempo_comida, grupo.alimentos); 
+                    });
+                } else if (esRegistroHistorico) {
+                    tiemposComidaContainer.innerHTML = `<p>No se encontraron alimentos para el registro seleccionado.</p>`;
+                }
+            }
+            // FIN Lógica de detalles
 
             if (tiemposComidaContainer && tiemposComidaContainer.children.length === 0 && ALL_TIEMPOS_COMIDA_DATA && ALL_TIEMPOS_COMIDA_DATA.length > 0 && !isViewingHistoricalRegistro) {
                 createMealTimeBlock();
             }
 
         } catch (error) {
-            console.error(`Error al cargar datos del registro ${tituloFecha}:`, error);
+            console.error(`Error general al cargar datos del registro ${tituloFecha}:`, error);
             if (adecuacionStatusDiv) {
                 adecuacionStatusDiv.textContent = `Error al cargar datos del registro ${tituloFecha}: ${error.message}`;
                 adecuacionStatusDiv.className = 'error';
             }
             if (graficoAdecuacionContainerEl) graficoAdecuacionContainerEl.innerHTML = `<p style="color:red;">Error al cargar datos: ${error.message}</p>`;
+            if (tablaResumenAdecuacionBodyEl) {
+                tablaResumenAdecuacionBodyEl.querySelectorAll('td[data-consumido], td[data-requerimiento], td[data-adecuacion]').forEach(td => td.textContent = '-');
+            }
             if (tiemposComidaContainer && tiemposComidaContainer.children.length === 0 && ALL_TIEMPOS_COMIDA_DATA && ALL_TIEMPOS_COMIDA_DATA.length > 0 && !isViewingHistoricalRegistro) {
                 createMealTimeBlock();
             }
         } finally {
             toggleEditableStateRegistro(!isViewingHistoricalRegistro);
+            setTimeout(() => {
+                if (adecuacionStatusDiv && (adecuacionStatusDiv.className === 'success' || 
+                                           (adecuacionStatusDiv.className === 'info' && 
+                                            (adecuacionStatusDiv.textContent === 'Listo para ingresar un nuevo registro.' || adecuacionStatusDiv.textContent.startsWith('No se encontraron datos de resumen'))
+                                           ))) {
+                    // No limpiar estos mensajes informativos o de éxito inmediatamente
+                } else if (adecuacionStatusDiv && adecuacionStatusDiv.className === 'loading') {
+                    
+                }
+            }, 7000);
         }
     }
 
@@ -1574,10 +1681,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 
             if (selectedValue === "current") {
-                // cargarYMostrarResumenNutricionalYDetalles(null, null) se encarga de poner isViewingHistoricalRegistro = false y llamar a toggleEditableStateRegistro(true)
                 await cargarYMostrarResumenNutricionalYDetalles(null, null);
             } else if (selectedValue && fechaDieta) {
-                // cargarYMostrarResumenNutricionalYDetalles(id, fecha) se encarga de poner isViewingHistoricalRegistro = true y llamar a toggleEditableStateRegistro(false)
                 await cargarYMostrarResumenNutricionalYDetalles(selectedValue, fechaDieta);
             }
         });
