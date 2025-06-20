@@ -1,5 +1,3 @@
-console.log('appointments.js cargado');
-
 // ========== FUNCIÓN GLOBAL DE SESIÓN ==========
 function getSessionData() {
     // Verificar localStorage (sesión recordada)
@@ -22,8 +20,9 @@ function getSessionData() {
     };
 }
 
-const mapaCentros = {}; // 🔒 Disponible para todo el script
+const mapaCentros = {};
 
+// Función para generar los bloques horarios de disponibilización
 function generarBloquesHorarios(horasSeleccionadas = [], horasBloqueadas = []) {
     const contenedor = document.getElementById('bloques-horarios');
     contenedor.innerHTML = '';
@@ -98,6 +97,7 @@ function generarBloquesHorarios(horasSeleccionadas = [], horasBloqueadas = []) {
         : '';
 }
 
+// Función para marcar las horas ya reservadas
 async function cargarHorasDesdeBD(fecha, id_nutricionista, id_centro) {
     try {
         // 1. Obtener horas del centro actual
@@ -124,9 +124,6 @@ async function cargarHorasDesdeBD(fecha, id_nutricionista, id_centro) {
             return mismaFecha && otroCentro;
         });
 
-        console.log(`✅ Horas seleccionadas para centro ${id_centro}:`, horasCentro);
-        console.log(`🔒 Horas bloqueadas de otros centros:`, horasBloqueadas);
-
         generarBloquesHorarios(horasCentro, horasBloqueadas);
 
     } catch (error) {
@@ -136,6 +133,7 @@ async function cargarHorasDesdeBD(fecha, id_nutricionista, id_centro) {
     }
 }
 
+// Función para cargar el resumen de la agenda
 async function cargarResumenAgenda(id_nutricionista) {
     const contenedor = document.getElementById('resumen-agenda');
     contenedor.innerHTML = '<p class="text-muted">Cargando resumen...</p>';
@@ -252,16 +250,14 @@ async function cargarResumenAgenda(id_nutricionista) {
     }
 }
 
+// Función para cargar el resumen de las citas tomadas
 async function cargarResumenCitas(id_nutricionista) {
     const contenedor = document.getElementById('resumen-citas');
     contenedor.innerHTML = '<p class="text-muted">Cargando citas...</p>';
-    console.log('🔄 Iniciando carga de citas para nutricionista ID:', id_nutricionista);
 
     try {
         const response = await fetch(`https://nutrilinkapi-production.up.railway.app/api_nutrilink/agenda/citas_nutricionista/${id_nutricionista}`);
         const result = await response.json();
-
-        console.log('📥 Respuesta recibida del servidor:', result);
 
         if (!response.ok || result.status !== 'ok') {
             console.warn('⚠️ Respuesta NO OK del servidor:', result);
@@ -269,7 +265,6 @@ async function cargarResumenCitas(id_nutricionista) {
         }
 
         const citas = result.citas || [];
-        console.log(`📋 Total de citas recibidas: ${citas.length}`);
 
         if (citas.length === 0) {
             contenedor.innerHTML = '<p class="text-muted">No hay citas agendadas.</p>';
@@ -311,18 +306,12 @@ async function cargarResumenCitas(id_nutricionista) {
             listaCitas.sort((a, b) => a.hora.localeCompare(b.hora)); // Ordenar por hora
 
 listaCitas.forEach((cita, index) => {
-    console.log(`➡️ Procesando cita ${index + 1}:`, cita);
 
     // Aseguramos formato YYYY-MM-DD
     const fechaISO = cita.fecha?.split('T')[0] ?? '';
     // Aseguramos formato HH:mm
     const horaISO = cita.hora?.substring(0, 5) ?? '';
     const fechaHora = `${fechaISO}T${horaISO}:00`;
-
-    // Logs de depuración claros
-    console.log(`🗓 Fecha ISO cita ${index + 1}:`, fechaISO);
-    console.log(`⏰ Hora ISO cita ${index + 1}:`, horaISO);
-    console.log(`📦 FechaHora compuesta cita ${index + 1}:`, fechaHora);
 
     let borderClass = 'border-secondary';
     let badgeClass = 'bg-secondary';
@@ -390,7 +379,6 @@ listaCitas.forEach((cita, index) => {
             contenedor.appendChild(lista);
         });
 
-        console.log('✅ Renderizado exitoso de todas las citas.');
     } catch (error) {
         console.error('❌ Error al cargar resumen de citas:', error);
         contenedor.innerHTML = '<p class="text-danger">Error al cargar las citas agendadas.</p>';
@@ -492,7 +480,6 @@ listaCitas.forEach((cita, index) => {
 
 // DOM
 document.addEventListener('DOMContentLoaded', async function () {
-    console.log('✅ DOMContentLoaded se ejecutó');
 
     // ========== VERIFICACIÓN DE SESIÓN AL INICIO ==========
     const sessionData = getSessionData();
@@ -516,8 +503,6 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     // ========== USAR ID DE SESIÓN ==========
     const idNutricionista = sessionData.id_nutricionista;
-    console.log('Usuario logueado en appointments:', sessionData.correo);
-    console.log('Sesión recordada:', sessionData.isRemembered);
 
     const inputFecha = document.getElementById('fecha');
     const btnGuardar = document.getElementById('guardarDisponibilidad');
@@ -565,9 +550,6 @@ if (centroSelect) {
             const id_nutricionista = currentSessionData.id_nutricionista;
             const id_centro = document.getElementById('centroAtencion')?.value;
 
-            console.log('📦 ID del nutricionista desde sessionData:', id_nutricionista);
-            console.log('🏥 ID del centro seleccionado:', id_centro);
-
             // Validar que no se seleccione una fecha pasada
             if (fechaSeleccionada < hoy) {
                 Swal.fire('Fecha inválida', 'No puedes seleccionar una fecha anterior a hoy.', 'warning');
@@ -591,7 +573,6 @@ if (centroSelect) {
 
     if (btnGuardar) {
         btnGuardar.addEventListener('click', async function () {
-            console.log("Click detectado en botón");
             // ========== CAMBIO: Usar función en lugar de sessionStorage directo ==========
             const currentSessionData = getSessionData();
             if (!currentSessionData.isLoggedIn) {
@@ -605,7 +586,6 @@ if (centroSelect) {
                 return;
             }
             const id_nutricionista = currentSessionData.id_nutricionista;
-            console.log("ID nutricionista rescatado: " + id_nutricionista);
 
             const fecha = inputFecha.value;
             if (!fecha) {
@@ -663,11 +643,8 @@ if (centroSelect) {
         });
     }
 
-    console.log('📦 ID del nutricionista desde sessionData:', idNutricionista);
     if (idNutricionista) {
-        console.log("Antes de Cargar centros");
         await cargarCentrosAtencion(idNutricionista);
-        console.log("Centros cargados, ahora se puede cargar el resumen");
         cargarResumenAgenda(parseInt(idNutricionista));
         cargarResumenCitas(parseInt(idNutricionista));
         verificarCancelacionesPendientesNutricionista(parseInt(idNutricionista));
@@ -675,6 +652,7 @@ if (centroSelect) {
     }
 });
 
+// Función que verifica si hay citas "Cancelada por Paciente" para mostrar notificación de lectura
 async function verificarCancelacionesPendientesNutricionista(id_nutricionista) {
     try {
         const response = await fetch(`https://nutrilinkapi-production.up.railway.app/api_nutrilink/agenda/citas_nutricionista/${id_nutricionista}`);
@@ -712,19 +690,12 @@ async function verificarCancelacionesPendientesNutricionista(id_nutricionista) {
                     const horaISO = cita.hora?.substring(0, 5); // ✅ 'HH:mm'
                     const fechaHora = `${fechaISO}T${horaISO}:00`;
 
-                    // 🔍 Logs de depuración
-                    console.log('🗓 Fecha ISO:', fechaISO);
-                    console.log('⏰ Hora ISO:', horaISO);
-                    console.log('📅 Composición final fecha_hora:', fechaHora);
-
                     const payload = {
                         id_paciente: cita.id_paciente,
                         id_nutricionista: id_nutricionista,
                         fecha_hora: fechaHora,
                         rol: 'nutricionista'
                     };
-
-                    console.log('📤 Enviando PATCH /confirmar_notificacion_cancelacion con:', JSON.stringify(payload));
 
                     const confirmar = await fetch('https://nutrilinkapi-production.up.railway.app/api_nutrilink/agenda/confirmar_notificacion_cancelacion', {
                         method: 'PATCH',
@@ -751,6 +722,7 @@ async function verificarCancelacionesPendientesNutricionista(id_nutricionista) {
     }
 }
 
+// Función para revisar solicitudes de citas por parte de pacientes
 async function verificarSolicitudesPendientesNutricionista(id_nutricionista) {
     try {
         const response = await fetch(`https://nutrilinkapi-production.up.railway.app/api_nutrilink/agenda/citas_nutricionista/${id_nutricionista}`);
@@ -792,8 +764,6 @@ async function verificarSolicitudesPendientesNutricionista(id_nutricionista) {
                         fecha_hora: `${fechaISO} ${cita.hora}`
                     };
 
-                    console.log('🔄 Enviando solicitud PATCH a /confirmar_solicitud_cita con:', datos);
-
                     const confirmar = await fetch('https://nutrilinkapi-production.up.railway.app/api_nutrilink/agenda/confirmar_solicitud_cita', {
                         method: 'PATCH',
                         headers: {
@@ -803,7 +773,6 @@ async function verificarSolicitudesPendientesNutricionista(id_nutricionista) {
                     });
 
                     const resConfirmacion = await confirmar.json();
-                    console.log('📥 Respuesta de confirmación:', resConfirmacion);
 
                     if (resConfirmacion.status === 'ok') {
                         await Swal.fire('Cita confirmada', 'La cita ha sido marcada como reservada.', 'success');
@@ -820,12 +789,12 @@ async function verificarSolicitudesPendientesNutricionista(id_nutricionista) {
     }
 }
 
+// Función para cargar los centros de atención ingresados por el nutricionista
 async function cargarCentrosAtencion(id_nutricionista) {
     const selectCentro = document.getElementById('centroAtencion');
     selectCentro.innerHTML = '<option value="" disabled selected>Cargando...</option>';
 
     try {
-        console.log("Cargando centros de atención con id_nutricionista = " + id_nutricionista)
         const response = await fetch(`https://nutrilinkapi-production.up.railway.app/api_nutrilink/nutricionista/centros_atencion/${id_nutricionista}`);
         const result = await response.json();
 
