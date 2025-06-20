@@ -421,7 +421,7 @@
     background-color: white;
     border: 1px solid #ccc;
     border-top: none; /* Si el botón ya tiene borde */
-    z-index: 1000; /* Para que esté sobre otros elementos */
+    z-index: 9999; /* Para que esté sobre otros elementos */
     width: 100%; /* Que coincida con el botón */
     max-height: 250px; /* Altura máxima con scroll */
     overflow-y: auto;

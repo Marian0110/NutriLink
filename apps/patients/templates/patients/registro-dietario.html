@@ -62,16 +62,17 @@
         <div id="tiempos-comida-container">
             <!-- Los bloques de tiempo de comida se añadirán aquí dinámicamente -->
         </div>
+        
+        <div class="notas-registro-container" style="margin-top: 25px; margin-bottom: 15px;">
+            <h3>Notas</h3>
+            <textarea id="notas-generales-registro" name="notas_generales_registro" class="textarea-notas" rows="4" placeholder="Suplementos / agua consumida / etc."></textarea>
+        </div>
 
         <div class="acciones-pagina" style="margin-top: 20px; margin-bottom: 25px; display: flex; gap: 10px;">
             <button type="button" id="btn-anadir-tiempo-comida" class="button-secondary" style="margin-left: 10px; background-color: #62f485; color: rgb(0, 0, 0); border: none; padding: 10px 20px; border-radius: 4px; font-weight: bold; cursor: pointer;">Añadir Tiempo de Comida</button>
             <button type="button" id="btn-guardar-registro-completo" class="button-primary" style="display: none; background-color: #173b4c; color: #ffffff; border: none; padding: 10px 20px; border-radius: 4px; font-weight: bold; cursor: pointer;">Guardar y Calcular Adecuación</button>
         </div>
 
-        <div class="notas-registro-container">
-            <h3>Notas</h3>
-            <textarea id="notas-generales-registro" name="notas_generales_registro" class="textarea-notas" rows="4" placeholder="Suplementos / agua consumida / etc."></textarea>
-        </div>
 
         <!-- Modal para agregar alimento -->
         <div class="modal fade" id="agregarAlimentoModal" tabindex="-1" aria-labelledby="agregarAlimentoModalLabel" aria-hidden="true">
