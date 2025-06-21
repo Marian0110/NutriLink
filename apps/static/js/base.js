@@ -1,3 +1,19 @@
+function clearAllStorage() {
+  // Limpiar sessionStorage
+  sessionStorage.removeItem("id_nutricionista");
+  sessionStorage.removeItem("correo");
+  sessionStorage.removeItem("contrasena");
+  
+  // Limpiar localStorage "recordar sesión"
+  localStorage.removeItem('id_nutricionista');
+  localStorage.removeItem('correo');
+  localStorage.removeItem('remember_session');
+  localStorage.removeItem('session_expiry');
+  
+  console.log('Almacenamiento limpiado completamente');
+}
+
+// Logout Manual
 document.getElementById("logout-link").addEventListener("click", function(e) {
   e.preventDefault();
 
@@ -20,17 +36,16 @@ document.getElementById("logout-link").addEventListener("click", function(e) {
         }
       });
 
-      // Limpiar sessionStorage y redirigir
+      // Limpiar TODO el almacenamiento y redirigir
       setTimeout(() => {
-        sessionStorage.removeItem("id_nutricionista");
-        sessionStorage.removeItem("correo");
-        sessionStorage.removeItem("contrasena");
+        clearAllStorage(); // Función que limpia todo
         window.location.href = LOGIN_URL;  // Variable definida en el template
       }, 3000);
     }
   });
 });
 
+// Eliminar Cuenta
 document.getElementById("eliminar-cuenta").addEventListener("click", async function(e) {
   e.preventDefault();
 
@@ -98,13 +113,13 @@ document.getElementById("eliminar-cuenta").addEventListener("click", async funct
       throw new Error(data.error || 'Error al eliminar la cuenta');
     }
 
-    // Exito - limpiar sesion y redirigir a login
+    // impiar sesion y redirigir a login
     Swal.fire({
       title: 'Cuenta eliminada',
       text: data.mensaje || 'Tu cuenta ha sido eliminada permanentemente',
       icon: 'success'
     }).then(() => {
-      sessionStorage.clear();
+      clearAllStorage(); // Limpiar todo almacenamiento
       window.location.href = LOGIN_URL;  // Variable definida en el template
     });
 
