@@ -21,6 +21,7 @@ function getSessionData() {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
+    mostrarFechaHoy();
     // ========== VERIFICACIÓN DE SESIÓN AL INICIO ==========
 
     // Verificar si hay sesión activa
@@ -66,6 +67,31 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.error('Error durante la inicialización:', error);
     }
 });
+function mostrarFechaHoy() {
+    const hoy = new Date();
+    
+    // Opciones para formatear la fecha en español
+    const opciones = {
+        weekday: 'long',    // Día de la semana completo (lunes, martes, etc.)
+        year: 'numeric',    // Año completo
+        month: 'long',      // Mes completo (enero, febrero, etc.)
+        day: 'numeric'      // Día del mes
+    };
+    
+    const fechaFormateada = hoy.toLocaleDateString('es-CL', opciones);
+    
+    // Capitalizar
+    const fechaCapitalizada = fechaFormateada.charAt(0).toUpperCase() + fechaFormateada.slice(1);
+    
+    // Insertar la fecha en el elemento
+    const elementoFecha = document.getElementById('fecha-hoy');
+    if (elementoFecha) {
+        elementoFecha.textContent = fechaCapitalizada;
+        console.log('✅ Fecha cargada:', fechaCapitalizada);
+    } else {
+        console.error('❌ No se encontró el elemento fecha-hoy');
+    }
+}
 
 // ========== FUNCIÓN PARA CARGAR INFO DEL NUTRICIONISTA ==========
 async function cargarInfoNutricionista(idNutricionista) {
