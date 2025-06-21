@@ -422,7 +422,7 @@ listaCitas.forEach((cita, index) => {
 
                 await Swal.fire('¡Cita cancelada!', result.mensaje, 'success');
                 cargarResumenCitas(parseInt(idNutricionista));
-
+                location.reload();
             } catch (error) {
                 console.error('❌ Error al cancelar cita:', error);
                 Swal.fire('Error', error.message || 'No se pudo cancelar la cita', 'error');
@@ -468,7 +468,7 @@ listaCitas.forEach((cita, index) => {
 
                 await Swal.fire('✅ Cita completada', result.mensaje, 'success');
                 cargarResumenCitas(parseInt(idNutricionista));
-
+                location.reload();
             } catch (error) {
                 console.error('❌ Error al completar cita:', error);
                 Swal.fire('Error', error.message || 'No se pudo completar la cita', 'error');
