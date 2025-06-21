@@ -1190,11 +1190,25 @@ document.addEventListener('DOMContentLoaded', async () => {
                     }).join('<br>');
                     Swal.fire('Error al Guardar', `Algunos datos no se pudieron guardar:<br>${mensajesError}`, 'error');
                 } else {
-                    Swal.fire('¡Guardado!', 'El registro dietario ha sido guardado exitosamente.', 'success');
+                    await Swal.fire('¡Guardado!', 'El registro dietario ha sido guardado exitosamente.', 'success');
+                    Swal.fire({
+                        title: 'Actualizando resumen...',
+                        text: 'Por favor, espera.',
+                        allowOutsideClick: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
                     // Después de guardar, recargar los datos del registro actual
-                    await cargarYMostrarResumenNutricionalYDetalles(null, null); 
-                    await loadRegistroDates(); // Recargar las fechas por si se creó un nuevo registro de un día diferente
-                    registroDateSelectorEl.value = "current"; // Asegurar que el selector vuelve a "Registro Actual"
+                    try {
+                        await cargarYMostrarResumenNutricionalYDetalles(null, null); 
+                        await loadRegistroDates(); 
+                        registroDateSelectorEl.value = "current"; 
+                        Swal.close(); // Cerrar el loader de "Actualizando resumen"
+                    } catch (errorCarga) {
+                        console.error("Error al recargar datos después de guardar:", errorCarga);
+                        Swal.fire('Error', 'Los datos se guardaron, pero hubo un problema al actualizar la vista.', 'error');
+                    }
                 }
             } catch (errorGeneral) {
                 Swal.fire('Error Crítico', `Ocurrió un error inesperado al procesar los guardados: ${errorGeneral.message}`, 'error');
@@ -1321,7 +1335,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (tiemposComidaContainer) tiemposComidaContainer.innerHTML = '';
         mealTimeBlockCounter = 0;
         datosAlimentoPorFilaDOM.clear();
-        if (notasGeneralesTextarea) notasGeneralesTextarea.value = '';
+        if (esRegistroHistorico) { 
+            if (notasGeneralesTextarea) notasGeneralesTextarea.value = '';
+        }
 
         if (tablaResumenAdecuacionBodyEl) {
             tablaResumenAdecuacionBodyEl.querySelectorAll('td[data-consumido], td[data-requerimiento], td[data-adecuacion]').forEach(td => td.textContent = '-');
@@ -1467,7 +1483,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                     if (detallesResponse.data.notas && !notasGeneralesTextarea.value) {
                         notasGeneralesTextarea.value = detallesResponse.data.notas;
                     }
-                    console.log("Detalles recibidos dentro de data.detalles (esperado).");
                 } else if (detallesResponse.data && Array.isArray(detallesResponse.data)) { // Estructura de array directo 
                      detallesDeDietaArray = detallesResponse.data;
                      console.warn("Detalles recibidos como array directo. La API debería ser consistente.");
@@ -1494,7 +1509,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
 
             if (detallesDeDietaArray.length > 0) {
-                console.log("Detalles CRUDOS a procesar:", JSON.stringify(detallesDeDietaArray));
                 let detallesFiltradosParaVista = [];
 
                 if (!esRegistroHistorico) {
@@ -1678,7 +1692,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             if (graficoAdecuacionContainerEl) graficoAdecuacionContainerEl.innerHTML = '<p>Cargando nuevo registro...</p>';
             if (tiemposComidaContainer) tiemposComidaContainer.innerHTML = ''; // Limpiar bloques
-            if (notasGeneralesTextarea) notasGeneralesTextarea.value = '';
 
 
             if (selectedValue === "current") {
