@@ -735,6 +735,22 @@ function generarHTMLCitaConEstados(cita, index) {
     const colores = ['4e73df', '1cc88a', 'f6c23e', 'e74a3b', '6f42c1', 'fd7e14'];
     const colorAvatar = colores[index % colores.length];
     
+    // Limpiar y validar los campos para el avatar
+    const primerNombre = (cita.primer_nombre || '').toString().trim();
+    const apellidoPaterno = (cita.apellido_paterno || '').toString().trim();
+    
+    // Extraer iniciales
+    const inicialNombre = primerNombre.charAt(0).toUpperCase() || 'U';
+    const inicialApellido = apellidoPaterno.charAt(0).toUpperCase() || 'S';
+    const iniciales = inicialNombre + inicialApellido;
+    
+    // Generar URL del avatar con las iniciales
+    const avatarURL = `https://ui-avatars.com/api/?name=${encodeURIComponent(iniciales)}&background=${colorAvatar}&color=fff&size=64&bold=true&length=2`;
+    
+    // Nombres para mostrar en el HTML
+    const nombreMostrar = primerNombre || 'Sin nombre';
+    const apellidoMostrar = apellidoPaterno || 'Sin apellido';
+    
     // Determinar estado del botón
     const horaActual = new Date();
     const horaInicioCita = new Date(`${new Date().toDateString()} ${cita.hora}`);
@@ -742,7 +758,7 @@ function generarHTMLCitaConEstados(cita, index) {
     const estaCompletada = cita.estado === 'Completada';
     const estaCancelada = cita.estado === 'Cancelada Por Nutricionista';
     
-    // VERIFICAR SI LA CONSULTA FUE INICIADA LOCALMENTE (persistencia)
+    // Verificar si la consulta fue iniciada localmente
     const consultaIniciadaLocalmente = estaConsultaIniciada(cita.id_paciente);
     const estaEnProceso = cita.estado === 'En proceso' || consultaIniciadaLocalmente;
 
@@ -772,7 +788,6 @@ function generarHTMLCitaConEstados(cita, index) {
             onclick: ''
         }; 
     } else if (estaEnProceso) {
-        // Si está en proceso mostrar "Volver a la consulta"
         configBotonPrincipal = {
             clase: 'btn-warning',
             texto: '<i class="fas fa-arrow-right me-1"></i> Volver a la consulta',
@@ -780,7 +795,6 @@ function generarHTMLCitaConEstados(cita, index) {
             onclick: `onclick="window.location.href='/patients/${cita.id_paciente}/info-general/'"`
         };
     } else if (puedeIniciar) {
-        // Si puede iniciar
         configBotonPrincipal = {
             clase: 'btn-primary',
             texto: '<i class="fas fa-play me-1"></i> Iniciar consulta',
@@ -794,16 +808,18 @@ function generarHTMLCitaConEstados(cita, index) {
             <div class="py-3">
                 <div class="row align-items-center p-2">
                     <div class="col-3 text-center">
-                        <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(cita.primer_nombre + '+' + cita.apellido_paterno)}&background=${colorAvatar}&color=fff" 
-                             alt="Paciente" class="patient-avatar rounded-circle">
+                        <img src="${avatarURL}" 
+                             alt="Avatar de ${nombreMostrar} ${apellidoMostrar} (${iniciales})" 
+                             class="patient-avatar rounded-circle"
+                             style="width: 50px; height: 50px; object-fit: cover;">
                     </div>
                     <div class="col-5">
-                        <h6 class="mb-1">${cita.primer_nombre} ${cita.apellido_paterno}</h6>
+                        <h6 class="mb-1">${nombreMostrar} ${apellidoMostrar}</h6>
                         <p class="text-muted small mb-1">
                             <i class="far fa-clock me-1"></i>${horaInicio} - ${horaFin}
                         </p>
                         <p class="text-muted small mb-0">
-                            <i class="fas fa-notes-medical me-1"></i>${cita.nombre_centro}
+                            <i class="fas fa-notes-medical me-1"></i>${cita.nombre_centro || 'Centro no especificado'}
                         </p>
                     </div>
                     <div class="col-4">
