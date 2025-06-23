@@ -154,7 +154,7 @@ async function crearGraficos() {
                     <i class="fas fa-user-plus fa-3x text-muted mb-3"></i>
                     <h6 class="text-muted">Aún no tienes pacientes registrados</h6>
                     <p class="text-muted small">Registra pacientes para visualizar los resúmenes estadísticos.</p>
-                    <a href="/patients/register/" class="btn btn-primary btn-sm mt-2">Registrar Paciente</a>
+                    <a href="/patients/gestion/" class="btn btn-primary btn-sm mt-2">Registrar Paciente</a>
                 </div>
             `;
             
