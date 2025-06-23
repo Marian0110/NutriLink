@@ -146,21 +146,61 @@ async function crearGraficos() {
     try {
         const pacientes = await getPacientes();
 
-        if (!pacientes) {
-            console.error('No se pudieron obtener los pacientes');
+        // Verificar si no hay pacientes
+        if (!pacientes || pacientes.length === 0) {
+            // Mensaje para secciones de pacientes
+            const mensajeNoPacientes = `
+                <div class="alert alert-info text-center py-4 h-100 w-100">
+                    <i class="fas fa-user-plus fa-3x text-muted mb-3"></i>
+                    <h6 class="text-muted">Aún no tienes pacientes registrados</h6>
+                    <p class="text-muted small">Registra pacientes para visualizar los resúmenes estadísticos.</p>
+                    <a href="/patients/register/" class="btn btn-primary btn-sm mt-2">Registrar Paciente</a>
+                </div>
+            `;
+            
+            // Aplicar solo a secciones relacionadas con pacientes
+            document.getElementById('total-pacientes').innerHTML = mensajeNoPacientes;
+            document.getElementById('grafico-genero').innerHTML = mensajeNoPacientes;
+            document.getElementById('grafico-edad').innerHTML = mensajeNoPacientes;
+            document.getElementById('total-minutas').innerHTML = mensajeNoPacientes;
+            
+            // Para minutas mensaje diferente
+            const mensajeNoMinutas = `
+                <div class="alert alert-info text-center py-4 h-100 w-100">
+                    <i class="fas fa-utensils fa-3x text-muted mb-3 mt-5"></i>
+                    <h6 class="text-muted">Aún no has generado planes alimenticios</h6>
+                    <p class="text-muted small">Crea minutas para visualizar estadísticas.</p>
+                </div>
+            `;
+            
+
+            document.getElementById('grafico-detallado').innerHTML = mensajeNoMinutas;
+            
             return;
         }
 
         // Card total pacientes
         const totalPacientes = pacientes.length;
         totalPacientesCard(totalPacientes);
-
         
         // Card total minutas 
         const totalMinutas = await obtenerTotalMinutas();
-        crearCardTotalMinutas(totalMinutas);
+        if (totalMinutas === 0) {
+            const mensajeNoMinutas = `
+                <div class="alert alert-info text-center py-4">
+                    <i class="fas fa-utensils fa-3x text-muted mb-3"></i>
+                    <h6 class="text-muted">Aún no has generado planes alimenticios</h6>
+                    <p class="text-muted small">Crea minutas para visualizar estadísticas.</p>
+                </div>
+            `;
+            document.getElementById('total-minutas').innerHTML = mensajeNoMinutas;
+            document.getElementById('grafico-detallado').innerHTML = mensajeNoMinutas;
+        } else {
+            crearCardTotalMinutas(totalMinutas);
+            await graficoMinutasPorMes();
+        }
 
-        // 1. Gráfico de género
+        // Gráfico de género
         const graficoGenero = graficoGeneroTorta(pacientes);
         
         if (graficoGenero.data[0].values.some(count => count > 0)) {
@@ -170,7 +210,7 @@ async function crearGraficos() {
                 '<div class="alert alert-info">No hay datos de género disponibles</div>';
         }
 
-        // 2. Gráfico de edad
+        // Gráfico de grupos etarios
         const edades = pacientes.map(paciente => {
             if (paciente.fecha_nacimiento) {
                 const birthDate = new Date(paciente.fecha_nacimiento);
@@ -189,9 +229,9 @@ async function crearGraficos() {
             document.getElementById('grafico-edad').innerHTML = 
                 '<div class="alert alert-info">No hay datos de edad disponibles</div>';
         }
-
-        // 4. Gráfico de evolución de minutas (NUEVO)
+        // Gráfico de evolución de minutas
         await graficoMinutasPorMes();
+
     } catch (error) {
         console.error('Error al crear gráficos:', error);
     }
