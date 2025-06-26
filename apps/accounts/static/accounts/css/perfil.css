@@ -118,6 +118,10 @@ body {
 .profile-picture {
   text-align: center;
   margin-bottom: 3%;
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* Centra horizontalmente los hijos */
+  justify-content: center;
 }
 
 .profile-picture img {
@@ -134,32 +138,45 @@ body {
 }
 
 .user-icon-container {
+  position: relative;
   width: 120px;
   height: 120px;
   border: 3px solid var(--accent-color);
   border-radius: 50%;
-  display: flex; /* Cambiar de inline-flex a flex */
-  align-items: stretch; /* Cambiar de center a stretch */
-  justify-content: stretch; /* Cambiar de center a stretch */
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background-color: #f8f9fa;
   cursor: pointer;
   transition: transform 0.2s ease, background-color 0.2s ease;
   margin: 0 auto;
-  overflow: hidden; /* Agregar para que el border-radius se aplique correctamente */
+  overflow: hidden;
 }
 
-.user-icon-container svg {
-  flex: 1;
+.user-icon-container svg,
+.user-icon-container img {
+  position: absolute;
   width: 100%;
   height: 100%;
   object-fit: cover;
+  border-radius: 50%;
+  top: 0;
+  left: 0;
 }
+
 .user-icon-container:hover {
   transform: scale(1.05);
   background-color: #e9ecef;
 }
 
+/* Asegura que la imagen se muestre encima del SVG si están visibles al mismo tiempo */
+.user-icon-container img {
+  z-index: 2;
+}
 
+.user-icon-container svg {
+  z-index: 1;
+}
 
 @media (min-width: 1800px) {
   /* Ajustes para pantallas grandes ancho card laterales y card perfil*/
